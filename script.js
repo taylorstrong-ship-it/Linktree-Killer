@@ -358,9 +358,12 @@ function populateProfileData(data) {
 // Create default profile for new user (onboarding)
 async function createDefaultProfile(userId) {
     try {
+        // Generate unique name using timestamp to avoid conflicts
+        const uniqueName = 'My Link Page ' + Date.now();
+        
         const defaultProfile = {
-            user_id: userId,
-            name: 'My Link Page',
+            user_id: userId, // This is unique per user (UUID from auth)
+            name: uniqueName, // Unique name to avoid any conflicts
             bio: 'Welcome to your link page! 🎉',
             logo: 'logo.gif',
             bg1: '#E4F3FF',
@@ -382,9 +385,12 @@ async function createDefaultProfile(userId) {
             ]
         };
 
+        // Use upsert instead of insert to handle case where trigger already created profile
         const { data, error } = await supabaseClient
             .from('profiles')
-            .insert([defaultProfile])
+            .upsert([defaultProfile], {
+                onConflict: 'user_id' // If profile exists, update it; otherwise create
+            })
             .select()
             .single();
 
