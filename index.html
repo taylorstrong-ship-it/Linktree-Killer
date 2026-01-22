@@ -550,41 +550,53 @@
             body {
                 flex-direction: column;
                 overflow: hidden;
-                /* Prevent body scroll */
             }
 
-            /* Hide Desktop Elements or Adjust */
+            /* FORCE Hide Desktop Elements */
             .editor {
-                width: 100%;
-                min-width: 100%;
+                width: 100% !important;
+                min-width: 0 !important;
                 border-right: none;
-                height: calc(100vh - 70px);
-                /* Leave room for nav */
-                display: none;
-                /* Hidden by default */
+                height: calc(100vh - 84px) !important;
+                /* Adjust for nav + safe area */
+                display: none !important;
+                padding-bottom: 80px;
+                /* Space for scroll */
             }
 
             .editor.active {
-                display: flex;
+                display: flex !important;
             }
 
             .preview {
-                width: 100%;
-                height: calc(100vh - 70px);
-                padding: 20px;
-                display: none;
-                /* Hidden if not active, but logic sets active default */
+                width: 100% !important;
+                height: calc(100vh - 70px) !important;
+                padding: 0 !important;
+                /* Full bleed */
+                background: #111;
+                /* Dark bg for contrast */
+                display: none !important;
             }
 
             .preview.active {
-                display: flex;
+                display: flex !important;
             }
 
-            /* Scale the phone mockup to fit */
+            /* NATIVE APP FEEL: Remove the "Phone Mockup" styling on mobile */
+            /* Instead, make the iframe fill the screen */
             .phone-mockup {
-                transform: scale(0.65);
-                transform-origin: center center;
-                /* If screen is very small, scale more */
+                width: 100% !important;
+                height: 100% !important;
+                transform: none !important;
+                border: none !important;
+                border-radius: 0 !important;
+                box-shadow: none !important;
+                background: white;
+            }
+
+            /* Hide notch on mobile preview */
+            .phone-mockup::after {
+                display: none !important;
             }
 
             /* Bottom Nav */
@@ -597,8 +609,11 @@
                 height: 70px;
                 background: white;
                 border-top: 1px solid var(--border-subtle);
-                z-index: 9999;
+                z-index: 99999;
+                /* Max Z-index */
                 box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.05);
+                padding-bottom: env(safe-area-inset-bottom);
+                /* iOS Safe Area */
             }
 
             .nav-btn {
@@ -621,13 +636,8 @@
                 color: var(--primary);
             }
 
-            .nav-btn.active i {
-                transform: translateY(-2px);
-            }
-
             .nav-btn i {
-                font-size: 1.2rem;
-                transition: transform 0.2s;
+                font-size: 1.4rem;
             }
         }
     </style>
