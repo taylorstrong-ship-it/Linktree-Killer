@@ -4,295 +4,1424 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Taylored Pet Portraits</title>
-    <meta name="description" content="Custom Pet Portraits - Order online or help shelter pets.">
-
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
-
+    <title>Taylored Builders</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
     <style>
-        /* --- DESIGN SYSTEM (Based on your Brand Card) --- */
         :root {
-            /* Backgrounds */
-            --bg-cool-blue: #E4F3FF;
-            /* Main Background */
-            --bg-soft-lilac: #E0D6FF;
-            /* Secondary Background */
+            /* SaaS Theme Colors */
+            --bg-body: #ffffff;
+            --bg-panel: #ffffff;
+            --bg-input: #f3f4f6;
+            --border-subtle: #e5e7eb;
+            --text-main: #111827;
+            --text-muted: #6b7280;
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --danger: #ef4444;
 
-            /* Accents */
-            --accent-sky-blue: #7DC6FF;
-            /* Primary Accent */
-            --accent-bubblegum: #FF9AC4;
-            /* Secondary Accent */
+            /* Spacing */
+            --spacing-xs: 4px;
+            --spacing-sm: 8px;
+            --spacing-md: 16px;
+            --spacing-lg: 24px;
 
-            /* Text */
-            --text-navy: #1F2A3C;
-            /* Primary Text */
-            --text-charcoal: #444444;
-            /* Secondary Text */
-            --surface-white: #ffffff;
-
-            /* Shapes */
-            --radius-standard: 24px;
-            --radius-button: 50px;
+            /* Other */
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --transition: all 0.2s ease;
         }
 
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            -webkit-tap-highlight-color: transparent;
         }
 
         body {
-            font-family: 'Quicksand', sans-serif;
-            /* Gradient background using Cool Blue to Soft Lilac */
-            background: linear-gradient(180deg, var(--bg-cool-blue) 0%, var(--bg-soft-lilac) 100%);
-            color: var(--text-navy);
-            min-height: 100vh;
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-body);
+            color: var(--text-main);
+            height: 100vh;
             display: flex;
-            justify-content: center;
-            padding: 20px;
-            line-height: 1.5;
-        }
-
-        .container {
-            width: 100%;
-            max-width: 480px;
-            /* Mobile-first column */
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 1.5rem;
-            padding-bottom: 2rem;
-        }
-
-        /* --- HEADER & LOGO --- */
-        .header {
-            text-align: center;
-            margin-top: 2rem;
-            margin-bottom: 1rem;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        .logo-container {
-            width: 140px;
-            height: 140px;
-            border-radius: 50%;
-            background: var(--surface-white);
-            border: 5px solid var(--surface-white);
-            box-shadow: 0 8px 24px rgba(31, 42, 60, 0.12);
             overflow: hidden;
-            margin-bottom: 1rem;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            font-size: 14px;
         }
 
-        .profile-img {
-            width: 90%;
-            /* Reduced slightly to add "breathing room" */
-            height: 90%;
-            /* Keeps it from touching the absolute edges */
-            object-fit: contain;
-            /* UPDATED: Forces the whole image to fit */
-        }
-
-        .brand-name {
-            font-size: 1.8rem;
-            font-weight: 700;
-            color: var(--text-navy);
-            letter-spacing: -0.5px;
-            margin-bottom: 0.25rem;
-        }
-
-        .bio {
-            font-size: 1rem;
-            color: var(--text-charcoal);
-            font-weight: 500;
-        }
-
-        /* --- LINKS GRID --- */
-        .links {
-            width: 100%;
+        /* --- LEFT PANEL: EDITOR --- */
+        .editor {
+            width: 420px;
+            min-width: 420px;
+            background: var(--bg-panel);
+            border-right: 1px solid var(--border-subtle);
             display: flex;
             flex-direction: column;
-            gap: 1rem;
+            z-index: 20;
+            box-shadow: 4px 0 24px rgba(0, 0, 0, 0.02);
         }
 
-        .link-card {
-            position: relative;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            text-decoration: none;
-            background: var(--surface-white);
-            color: var(--text-navy);
+        .editor-header {
+            padding: var(--spacing-lg);
+            border-bottom: 1px solid var(--border-subtle);
+            background: white;
+        }
+
+        .editor-header h2 {
+            font-size: 1.1rem;
             font-weight: 700;
-            font-size: 1.05rem;
-            padding: 18px 60px;
-            /* Increased side padding to clear icons */
-            border-radius: var(--radius-button);
-            box-shadow: 0 4px 12px rgba(31, 42, 60, 0.05);
-            transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-            border: 2px solid transparent;
-        }
-
-        /* Icon positioning inside button */
-        .link-icon {
-            position: absolute;
-            left: 24px;
-            font-size: 1.2rem;
-            color: var(--accent-sky-blue);
-            transition: color 0.2s;
-        }
-
-        /* --- SPECIAL BUTTON STYLES --- */
-
-        /* 1. Primary Call to Action (Sky Blue) */
-        .link-card.primary {
-            background-color: var(--accent-sky-blue);
-            color: var(--surface-white);
-            box-shadow: 0 6px 15px rgba(125, 198, 255, 0.4);
-        }
-
-        .link-card.primary .link-icon {
-            color: var(--surface-white);
-        }
-
-        /* Hover States */
-        .link-card:hover {
-            transform: translateY(-3px) scale(1.01);
-            box-shadow: 0 8px 20px rgba(31, 42, 60, 0.1);
-            border-color: var(--accent-bubblegum);
-        }
-
-        .link-card.primary:hover {
-            background-color: var(--accent-bubblegum);
-            /* Hover changes to Pink */
-            border-color: var(--accent-bubblegum);
-            box-shadow: 0 8px 20px rgba(255, 154, 196, 0.4);
-        }
-
-        /* --- SOCIAL ICONS --- */
-        .socials {
             display: flex;
-            gap: 1.5rem;
-            margin-top: 1.5rem;
+            align-items: center;
+            gap: 10px;
+            color: var(--text-main);
+            letter-spacing: -0.02em;
         }
 
-        .social-link {
+        .editor-header i {
+            color: var(--primary);
+            background: #eff6ff;
+            padding: 8px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+
+        .controls {
+            flex: 1;
+            overflow-y: auto;
+            padding: var(--spacing-lg);
+            display: flex;
+            flex-direction: column;
+            gap: 32px;
+        }
+
+        .control-group h3 {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            margin-bottom: 16px;
+            font-weight: 700;
+        }
+
+        .input-row {
+            margin-bottom: 16px;
+        }
+
+        .input-row label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-bottom: 6px;
+            color: var(--text-main);
+        }
+
+        /* Premium Input Styles */
+        input[type="text"],
+        textarea,
+        input[type="url"] {
+            width: 100%;
+            padding: 10px 12px;
+            background: var(--bg-input);
+            border: 1px solid transparent;
+            border-radius: var(--radius-md);
+            font-family: inherit;
+            font-size: 0.9rem;
+            color: var(--text-main);
+            transition: var(--transition);
+        }
+
+        input[type="text"]:focus,
+        textarea:focus,
+        input[type="url"]:focus {
+            background: #ffffff;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+            outline: none;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        input[type="color"] {
+            width: 100%;
+            height: 42px;
+            background: var(--bg-input);
+            border: 1px solid transparent;
+            border-radius: var(--radius-md);
+            padding: 4px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        input[type="color"]:hover {
+            background: #e5e7eb;
+        }
+
+        /* Card-like Link Items */
+        .link-item {
+            background: #ffffff;
+            border: 1px solid var(--border-subtle);
+            padding: 16px;
+            border-radius: var(--radius-lg);
+            margin-bottom: 12px;
+            position: relative;
+            box-shadow: var(--shadow-sm);
+            transition: var(--transition);
+        }
+
+        .link-item:hover {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            border-color: #d1d5db;
+        }
+
+        .remove-btn {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            color: #9ca3af;
+            /* muted default */
+            cursor: pointer;
+            background: none;
+            border: none;
+            padding: 4px;
+            border-radius: 4px;
+            transition: var(--transition);
+            z-index: 10;
+            /* Ensure it's above other elements */
+        }
+
+        .remove-btn:hover {
+            color: var(--danger);
+            background: #fee2e2;
+        }
+
+        /* Dashed Add Button */
+        .add-btn {
+            width: 100%;
+            padding: 12px;
+            background: #f9fafb;
+            color: var(--text-muted);
+            border: 1px dashed #d1d5db;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: var(--transition);
+        }
+
+        .add-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            background: #eff6ff;
+        }
+
+        /* Sticky Footer */
+        .editor-footer {
+            padding: 20px;
+            /* Reduced for sleeker look */
+            border-top: 1px solid var(--border-subtle);
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(8px);
+            position: sticky;
+            bottom: 0;
+        }
+
+        .download-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            color: white;
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.3);
             display: flex;
             justify-content: center;
             align-items: center;
-            width: 48px;
-            height: 48px;
-            background: var(--surface-white);
-            border-radius: 50%;
-            color: var(--text-navy);
-            font-size: 1.4rem;
-            text-decoration: none;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
-            transition: all 0.2s ease;
+            gap: 8px;
         }
 
-        .social-link:hover {
-            background: var(--accent-bubblegum);
-            color: var(--surface-white);
-            transform: translateY(-3px) rotate(8deg);
+        .download-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 12px -2px rgba(37, 99, 235, 0.4);
+            filter: brightness(110%);
         }
 
-        /* --- FOOTER --- */
-        .footer {
-            margin-top: auto;
-            text-align: center;
-            font-size: 0.85rem;
-            color: var(--text-charcoal);
-            opacity: 0.8;
-            padding-top: 1rem;
+        .download-btn:active {
+            transform: translateY(0);
         }
 
-        .footer span {
+        /* --- RIGHT PANEL: PREVIEW --- */
+        .preview {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #f8fafc;
+            /* Dot Pattern */
+            background-image: radial-gradient(#cbd5e1 1.5px, transparent 1.5px);
+            background-size: 24px 24px;
+            padding: 40px;
+            position: relative;
+        }
+
+        /* Mesh-like gradient overlay for subtle depth */
+        .preview::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at top right, rgba(255, 255, 255, 0.8), transparent 60%),
+                radial-gradient(circle at bottom left, rgba(255, 255, 255, 0.8), transparent 60%);
+            pointer-events: none;
+        }
+
+        .phone-mockup {
+            width: 380px;
+            /* Slightly wider for modern feel */
+            height: 780px;
+            background: white;
+            border-radius: 55px;
+            /* More modern rounded corners */
+            border: 14px solid #1f2937;
+            /* Thick bezel */
+            overflow: hidden;
+            box-shadow: 0 50px 100px -20px rgba(50, 50, 93, 0.25),
+                0 30px 60px -30px rgba(0, 0, 0, 0.3);
+            position: relative;
+            z-index: 10;
+        }
+
+        /* Dynamic Island / Notch */
+        .phone-mockup::after {
+            content: '';
+            position: absolute;
+            top: 18px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 120px;
+            height: 35px;
+            background: #1f2937;
+            border-radius: 20px;
+            z-index: 20;
+        }
+
+        /* The iframe holds the generated site */
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: white;
+            /* Prevent transparent flash */
+        }
+
+        /* --- UI OVERHAULED COMPONENTS --- */
+
+        /* Icon Picker */
+        .icon-preview-btn {
+            width: 44px;
+            height: 44px;
+            border: 1px solid var(--border-subtle);
+            background: white;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            color: var(--text-main);
+            transition: var(--transition);
+        }
+
+        .icon-preview-btn:hover {
+            background: #eff6ff;
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .icon-popover {
+            position: absolute;
+            top: 70px;
+            left: 0;
+            z-index: 100;
+            background: white;
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            border-radius: 12px;
+            padding: 16px;
+            width: 320px;
+            display: none;
+        }
+
+        .icon-popover.open {
             display: block;
-            margin-top: 5px;
-            font-size: 0.75rem;
+            animation: popIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .icon-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 8px;
+            max-height: 240px;
+            overflow-y: auto;
+        }
+
+        .icon-option {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.1s;
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        .icon-option:hover {
+            background: #eff6ff;
+            color: var(--primary);
+            transform: scale(1.1);
+        }
+
+        @keyframes popIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Reordering */
+        .reorder-controls {
+            position: absolute;
+            top: 12px;
+            right: 54px;
+            display: flex;
+            gap: 4px;
+        }
+
+        .reorder-btn {
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--border-subtle);
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            color: var(--text-muted);
+            transition: var(--transition);
+            font-size: 0.8rem;
+        }
+
+        .reorder-btn:hover {
+            color: var(--primary);
+            border-color: var(--primary);
+            background: #eff6ff;
+        }
+
+        /* Accordions */
+        .accordion-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            padding: 16px 0;
+            border-bottom: 1px solid transparent;
+            user-select: none;
+        }
+
+        .accordion-header:hover h3 {
+            color: var(--primary);
+        }
+
+        .accordion-content {
+            display: none;
+            padding-top: 8px;
+            padding-bottom: 24px;
+            animation: slideDown 0.3s ease;
+        }
+
+        .accordion-content.open {
+            display: block;
+        }
+
+        .accordion-icon {
+            transition: transform 0.3s ease;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .accordion-header.open .accordion-icon {
+            transform: rotate(180deg);
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            top: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-150%);
+            background: #059669;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 99px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            z-index: 9999;
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .toast i {
+            font-size: 1.1rem;
+        }
+
+        /* Media Embeds */
+        .media-container {
+            width: 100%;
+            margin-bottom: 24px;
+            position: relative;
+            border-radius: var(--btn-radius);
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            background: #000;
+        }
+
+        .video-wrapper {
+            position: relative;
+            padding-bottom: 56.25%;
+            /* 16:9 */
+            height: 0;
+        }
+
+        .video-wrapper iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        /* --- MOBILE LAYOUT (Max 768px) --- */
+        .mobile-nav {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column;
+                overflow: hidden;
+                /* Prevent body scroll */
+            }
+
+            /* Hide Desktop Elements or Adjust */
+            .editor {
+                width: 100%;
+                min-width: 100%;
+                border-right: none;
+                height: calc(100vh - 70px);
+                /* Leave room for nav */
+                display: none;
+                /* Hidden by default */
+            }
+
+            .editor.active {
+                display: flex;
+            }
+
+            .preview {
+                width: 100%;
+                height: calc(100vh - 70px);
+                padding: 20px;
+                display: none;
+                /* Hidden if not active, but logic sets active default */
+            }
+
+            .preview.active {
+                display: flex;
+            }
+
+            /* Scale the phone mockup to fit */
+            .phone-mockup {
+                transform: scale(0.65);
+                transform-origin: center center;
+                /* If screen is very small, scale more */
+            }
+
+            /* Bottom Nav */
+            .mobile-nav {
+                display: flex;
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                width: 100%;
+                height: 70px;
+                background: white;
+                border-top: 1px solid var(--border-subtle);
+                z-index: 9999;
+                box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.05);
+            }
+
+            .nav-btn {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                border: none;
+                background: none;
+                color: var(--text-muted);
+                font-size: 0.8rem;
+                font-weight: 600;
+                cursor: pointer;
+                gap: 6px;
+                transition: all 0.2s;
+            }
+
+            .nav-btn.active {
+                color: var(--primary);
+            }
+
+            .nav-btn.active i {
+                transform: translateY(-2px);
+            }
+
+            .nav-btn i {
+                font-size: 1.2rem;
+                transition: transform 0.2s;
+            }
         }
     </style>
 </head>
 
 <body>
 
-    <div class="container">
+    <div class="editor">
+        <div class="editor-header">
+            <h2><i class="fa-solid fa-wand-magic-sparkles"></i> Taylored Link Builder</h2>
+        </div>
 
-        <header class="header">
-            <div class="logo-container">
-                <img src="logo.gif" alt="Taylored Pet Portraits Logo" class="profile-img">
+        <div class="controls">
+
+            <div class="control-group">
+                <div class="accordion-header">
+                    <h3>Branding</h3>
+                    <i class="fa-solid fa-chevron-down accordion-icon"></i>
+                </div>
+                <div class="accordion-content">
+                    <div class="input-row">
+                        <label>Business Name</label>
+                        <input type="text" id="brandName" value="Taylored Pet Portraits" oninput="updatePreview()"
+                            placeholder="e.g. Acme Corp">
+                    </div>
+                    <div class="input-row">
+                        <label>Bio</label>
+                        <textarea id="brandBio" rows="2" oninput="updatePreview()"
+                            placeholder="Short description...">Custom portraits & helping shelter pets 🐾</textarea>
+                    </div>
+                    <div class="input-row">
+                        <label>Logo URL</label>
+                        <input type="text" id="logoUrl" value="logo.gif" oninput="updatePreview()"
+                            placeholder="https://...">
+                    </div>
+                </div>
             </div>
-            <h1 class="brand-name">Taylored Pet Portraits</h1>
-            <p class="bio">Custom portraits & helping shelter pets 🐾</p>
-        </header>
 
-        <main class="links">
+            <div class="control-group">
+                <div class="accordion-header">
+                    <h3>Theme Colors</h3>
+                    <i class="fa-solid fa-chevron-down accordion-icon"></i>
+                </div>
+                <div class="accordion-content">
+                    <div class="input-row">
+                        <label>Background Gradient Top</label>
+                        <input type="color" id="colorBg1" value="#E4F3FF" oninput="updatePreview()">
+                    </div>
+                    <div class="input-row">
+                        <label>Background Gradient Bottom</label>
+                        <input type="color" id="colorBg2" value="#E0D6FF" oninput="updatePreview()">
+                    </div>
+                    <div class="input-row">
+                        <label>Button Color</label>
+                        <input type="color" id="colorBtn" value="#7DC6FF" oninput="updatePreview()">
+                    </div>
+                    <div class="input-row">
+                        <label>Button Text Color</label>
+                        <input type="color" id="colorBtnText" value="#ffffff" oninput="updatePreview()">
+                    </div>
+                </div>
+            </div>
 
-            <a href="https://tayloredpetportraits.com/products" class="link-card primary" target="_blank">
-                <i class="fa-solid fa-paintbrush link-icon"></i>
-                Order Your Pet's Portrait
-            </a>
+            <div class="control-group">
+                <div class="accordion-header">
+                    <h3>Featured Media</h3>
+                    <i class="fa-solid fa-chevron-down accordion-icon"></i>
+                </div>
+                <div class="accordion-content">
+                    <div class="input-row">
+                        <label>Featured Video/Audio URL</label>
+                        <input type="url" id="mediaUrl" oninput="updatePreview()"
+                            placeholder="YouTube, Vimeo, or Spotify Link">
+                        <small style="display:block; margin-top:4px; color:#666; font-size:0.75rem;">
+                            Auto-embeds player on your page.
+                        </small>
+                    </div>
 
-            <a href="https://cycles-write-6d5.craft.me/jv1tRUsBN2EO13" class="link-card" target="_blank">
-                <i class="fa-solid fa-paw link-icon"></i>
-                Taylored To Help Shelter Pets
-            </a>
+                    <div style="margin-top: 16px; padding-top: 16px; border-top: 1px dashed var(--border-subtle);">
+                        <button class="add-btn" onclick="downloadQRCode()"
+                            style="background: white; border-style: solid;">
+                            <i class="fa-solid fa-qrcode"></i> Download My QR Code
+                        </button>
+                    </div>
+                </div>
+            </div>
 
-            <a href="https://cycles-write-6d5.craft.me/Gvo5PIWSiCsxKt" class="link-card" target="_blank">
-                <i class="fa-solid fa-graduation-cap link-icon"></i>
-                How it Works & Education Hub
-            </a>
+            <div class="control-group">
+                <div class="accordion-header">
+                    <div style="display: flex; gap: 12px; align-items: center; flex: 1;">
+                        <h3 style="margin-bottom: 0;">Advanced Design</h3>
+                        <a href="#" onclick="resetDesign(); event.stopPropagation();"
+                            style="font-size: 0.75rem; color: var(--primary); text-decoration: none;">Reset Defaults</a>
+                    </div>
+                    <i class="fa-solid fa-chevron-down accordion-icon"></i>
+                </div>
+                <div class="accordion-content">
+                    <div class="input-row">
+                        <label>Button Height</label>
+                        <input type="range" id="btnHeight" min="8" max="32" value="18" oninput="updatePreview()"
+                            style="width: 100%;">
+                    </div>
+                    <div class="input-row">
+                        <label>Corner Radius</label>
+                        <input type="range" id="btnRadius" min="0" max="50" value="50" oninput="updatePreview()"
+                            style="width: 100%;">
+                    </div>
+                </div>
+            </div>
 
-            <a href="https://ig.me/m/tayloredpetportraits" class="link-card" target="_blank">
-                <i class="fa-regular fa-paper-plane link-icon"></i>
-                Need it Today? DM Us!
-            </a>
+            <div class="control-group">
+                <div class="accordion-header">
+                    <h3>Lead Gen & Contacts</h3>
+                    <i class="fa-solid fa-chevron-down accordion-icon"></i>
+                </div>
+                <div class="accordion-content">
+                    <div class="input-row">
+                        <label>Your Name</label>
+                        <input type="text" id="contactName" value="Taylor Strong" oninput="updatePreview()"
+                            placeholder="e.g. John Doe">
+                    </div>
+                    <div class="input-row">
+                        <label>Your Phone</label>
+                        <input type="text" id="contactPhone" value="555-0123" oninput="updatePreview()"
+                            placeholder="e.g. +1 555-0123">
+                    </div>
+                    <div class="input-row">
+                        <label>Your Email (for vCard)</label>
+                        <input type="text" id="contactEmail" value="hello@taylored.com" oninput="updatePreview()"
+                            placeholder="e.g. john@example.com">
+                    </div>
+                    <div class="input-row">
+                        <label>Job Title</label>
+                        <input type="text" id="contactTitle" value="Founder" oninput="updatePreview()"
+                            placeholder="e.g. CEO">
+                    </div>
+                    <div class="input-row">
+                        <label>Website</label>
+                        <input type="text" id="contactWebsite" value="https://tayloredpetportraits.com"
+                            oninput="updatePreview()" placeholder="e.g. https://mybrand.com">
+                    </div>
+                    <div style="margin-top: 16px; padding-top: 16px; border-top: 1px dashed var(--border-subtle);">
+                        <label style="color: var(--primary);">Notification Email (Leads go here)</label>
+                        <input type="text" id="notificationEmail" value="leads@mybrand.com" oninput="updatePreview()"
+                            placeholder="where.leads.go@example.com">
+                    </div>
+                </div>
+            </div>
 
-        </main>
-
-        <div class="socials">
-
-            <a href="https://instagram.com/tayloredpetportraits" class="social-link" target="_blank"
-                aria-label="Instagram">
-                <i class="fa-brands fa-instagram"></i>
-            </a>
-
-            <a href="https://www.facebook.com/profile.php?id=61579179614717" class="social-link" target="_blank"
-                aria-label="Facebook">
-                <i class="fa-brands fa-facebook-f"></i>
-            </a>
-
-            <a href="https://www.tiktok.com/@tayloredpetportraits" class="social-link" target="_blank"
-                aria-label="TikTok">
-                <i class="fa-brands fa-tiktok"></i>
-            </a>
-
-            <a href="https://www.youtube.com/hashtag/tayloredpetportraits" class="social-link" target="_blank"
-                aria-label="YouTube">
-                <i class="fa-brands fa-youtube"></i>
-            </a>
+            <div class="control-group">
+                <div class="accordion-header open">
+                    <h3>Links</h3>
+                    <i class="fa-solid fa-chevron-down accordion-icon"></i>
+                </div>
+                <div class="accordion-content open">
+                    <div id="linksList">
+                        <!-- Links injected here -->
+                    </div>
+                    <button class="add-btn" onclick="addLink()">
+                        <i class="fa-solid fa-plus"></i> Add New Link
+                    </button>
+                </div>
+            </div>
 
         </div>
 
-        <footer class="footer">
-            <p>&copy; 2026 Taylored Pet Portraits</p>
-            <span>Designed to make tails wag.</span>
-        </footer>
+        <div class="editor-footer">
+            <button class="download-btn" onclick="downloadSite()">
+                <i class="fa-solid fa-download"></i> Download Site (.html)
+            </button>
+        </div>
 
+        <div id="toast" class="toast">
+            <i class="fa-solid fa-check-circle"></i>
+            <span>Success! Site Downloaded.</span>
+        </div>
     </div>
 
+    <div class="preview">
+        <div class="phone-mockup">
+            <iframe id="previewFrame"></iframe>
+        </div>
+    </div>
+
+    <!-- Mobile Navigation -->
+    <div class="mobile-nav">
+        <button class="nav-btn" id="btn-editor" onclick="switchTab('editor')">
+            <i class="fa-solid fa-pen-to-square"></i>
+            Editor
+        </button>
+        <button class="nav-btn active" id="btn-preview" onclick="switchTab('preview')">
+            <i class="fa-solid fa-mobile-screen-button"></i>
+            Preview
+        </button>
+    </div>
+
+    <script>
+        // Default Links Data
+        let links = [
+            { label: "Check out the Website", url: "https://tayloredpetportraits.com", icon: "fa-globe" },
+            { label: "Follow on Instagram", url: "https://instagram.com/tayloredpetportraits", icon: "fa-instagram" },
+            { label: "Order a Portrait", url: "https://tayloredpetportraits.com/products", icon: "fa-paintbrush" },
+            { label: "Contact Us", url: "mailto:hello@example.com", icon: "fa-envelope" }
+        ];
+
+        const ICON_LIBRARY = [
+            // Social
+            "fa-instagram", "fa-tiktok", "fa-twitter", "fa-facebook", "fa-youtube", "fa-linkedin", "fa-discord", "fa-whatsapp", "fa-spotify", "fa-twitch",
+            // Contact
+            "fa-envelope", "fa-phone", "fa-paper-plane", "fa-message", "fa-location-dot", "fa-globe", "fa-link",
+            // Commerce / Action
+            "fa-cart-shopping", "fa-bag-shopping", "fa-credit-card", "fa-money-bill", "fa-calendar", "fa-calendar-check", "fa-star", "fa-heart",
+            // General
+            "fa-paw", "fa-user", "fa-music", "fa-camera", "fa-video", "fa-image", "fa-paintbrush", "fa-wand-magic-sparkles", "fa-graduation-cap", "fa-book"
+        ];
+
+        // Init
+        function init() {
+            renderLinks();
+            updatePreview();
+            setupAccordions();
+        }
+
+        // --- RENDER LINKS WITH NEW UI ---
+        function renderLinks() {
+            const container = document.getElementById('linksList');
+            container.innerHTML = '';
+
+            links.forEach((link, index) => {
+                const div = document.createElement('div');
+                div.className = 'link-item';
+                div.innerHTML = `
+                    <!-- Reordering -->
+                    <div class="reorder-controls">
+                        <button class="reorder-btn" onclick="moveLink(${index}, -1)" title="Move Up" ${index === 0 ? 'disabled style="opacity:0.3"' : ''}>
+                            <i class="fa-solid fa-chevron-up"></i>
+                        </button>
+                        <button class="reorder-btn" onclick="moveLink(${index}, 1)" title="Move Down" ${index === links.length - 1 ? 'disabled style="opacity:0.3"' : ''}>
+                            <i class="fa-solid fa-chevron-down"></i>
+                        </button>
+                    </div>
+
+                    <!-- Delete -->
+                    <button class="remove-btn" onclick="removeLink(${index})" title="Remove Link">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+
+                    <!-- Icon Picker -->
+                    <div class="input-row" style="position: relative;">
+                        <label>Icon</label>
+                        <div style="display: flex; gap: 12px; align-items: center;">
+                            <button class="icon-preview-btn" onclick="toggleIconPicker(${index})">
+                                <i class="fa-brands ${link.icon} fa-fw"></i>
+                                <!-- Fallback if it's solid -->
+                                <i class="fa-solid ${link.icon} fa-fw" style="display:none"></i> 
+                            </button>
+                            <span style="font-size: 0.85rem; color: #999;">Click to change</span>
+                        </div>
+
+                        <!-- Popover -->
+                        <div class="icon-popover" id="popover-${index}">
+                            <div class="icon-grid">
+                                ${ICON_LIBRARY.map(icon => `
+                                    <div class="icon-option" onclick="selectIcon(${index}, '${icon}')">
+                                        <i class="fa-brands ${icon}"></i>
+                                    </div>
+                                `).join('')}
+                            </div>
+                            <div style="margin-top: 12px; padding-top: 8px; border-top: 1px solid #eee;">
+                                <input type="text" class="manual-icon-input" 
+                                    placeholder="Or type class (e.g. fa-solid fa-frog)" 
+                                    style="font-size: 0.8rem; padding: 6px;"
+                                    onchange="updateLink(${index}, 'icon', this.value)">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="input-row">
+                        <label>Label</label>
+                        <input type="text" value="${link.label}" oninput="updateLink(${index}, 'label', this.value)" placeholder="Link Title">
+                    </div>
+                    
+                    <div class="input-row">
+                        <label>URL</label>
+                        <input type="text" value="${link.url}" oninput="updateLink(${index}, 'url', this.value)" placeholder="https://...">
+                    </div>
+                `;
+
+                // Fix icon display logic (toggle brands/solid)
+                const iconBtn = div.querySelector('.icon-preview-btn');
+                const iTags = iconBtn.getElementsByTagName('i');
+                // Simple hack: try showing both or assume the user picks valid classes.
+                // For the generated grid, we used fa-brands mostly, but let's be flexible.
+                if (!link.icon.includes('fa-')) {
+                    iTags[0].className = `fa-solid ${link.icon}`;
+                } else {
+                    iTags[0].className = link.icon.includes('instagram') || link.icon.includes('tiktok') || link.icon.includes('twitter') || link.icon.includes('facebook') ? `fa-brands ${link.icon}` : `fa-solid ${link.icon}`;
+                }
+
+                container.appendChild(div);
+            });
+        }
+
+        // --- ICON PICKER LOGIC ---
+        function toggleIconPicker(index) {
+            // Close others
+            document.querySelectorAll('.icon-popover').forEach(el => {
+                if (el.id !== `popover-${index}`) el.classList.remove('open');
+            });
+            const popover = document.getElementById(`popover-${index}`);
+            popover.classList.toggle('open');
+        }
+
+        function selectIcon(index, iconClass) {
+            links[index].icon = iconClass;
+            renderLinks(); // Re-render to show new icon
+            updatePreview();
+        }
+
+        // Close popovers when clicking outside
+        document.addEventListener('click', function (e) {
+            if (!e.target.closest('.icon-preview-btn') && !e.target.closest('.icon-popover')) {
+                document.querySelectorAll('.icon-popover').forEach(el => el.classList.remove('open'));
+            }
+        });
+
+        // --- REORDER LOGIC ---
+        function moveLink(index, direction) {
+            const newIndex = index + direction;
+            if (newIndex < 0 || newIndex >= links.length) return;
+
+            // Swap
+            [links[index], links[newIndex]] = [links[newIndex], links[index]];
+            renderLinks();
+            updatePreview();
+        }
+
+        function addLink() {
+            links.push({ label: "New Link", url: "#", icon: "fa-link" });
+            renderLinks();
+            updatePreview();
+        }
+
+        function removeLink(index) {
+            console.log('Requesting delete for link index:', index);
+            if (confirm('Delete this link permanently?')) {
+                links.splice(index, 1);
+                renderLinks();
+                updatePreview();
+            }
+        }
+
+        function updateLink(index, field, value) {
+            links[index][field] = value;
+            updatePreview();
+        }
+
+        function resetDesign() {
+            document.getElementById('btnHeight').value = "18";
+            document.getElementById('btnRadius').value = "50";
+            updatePreview();
+        }
+
+        // --- MEDIA PARSER ---
+        function getMediaEmbed(url) {
+            if (!url) return '';
+
+            let embedHtml = '';
+
+            // YouTube
+            const ytMatch = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i);
+            if (ytMatch && ytMatch[1]) {
+                embedHtml = `<div class="video-wrapper"><iframe src="https://www.youtube.com/embed/${ytMatch[1]}" allowfullscreen></iframe></div>`;
+            }
+
+            // Vimeo
+            const vimeoMatch = url.match(/(?:vimeo\.com\/)(\d+)/i);
+            if (vimeoMatch && vimeoMatch[1]) {
+                embedHtml = `<div class="video-wrapper"><iframe src="https://player.vimeo.com/video/${vimeoMatch[1]}" allowfullscreen></iframe></div>`;
+            }
+
+            // Spotify
+            if (url.includes('spotify.com')) {
+                let embedUrl = url;
+                if (!url.includes('/embed/')) {
+                    embedUrl = url.replace('open.spotify.com/', 'open.spotify.com/embed/');
+                }
+                embedHtml = `<iframe style="border-radius:12px" src="${embedUrl}" width="100%" height="352" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"></iframe>`;
+            }
+
+            if (embedHtml) {
+                return `<div class="media-container">${embedHtml}</div>`;
+            }
+            return '';
+        }
+
+        // --- QR CODE ---
+        function downloadQRCode() {
+            const url = document.getElementById('contactWebsite').value || document.getElementById('brandName').value;
+            if (!url) { alert('Please enter a Website URL in the "Lead Gen" section first!'); return; }
+
+            const qrApi = `https://api.qrserver.com/v1/create-qr-code/?size=1000x1000&data=${encodeURIComponent(url)}`;
+
+            const btn = event.currentTarget;
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Generating...';
+
+            fetch(qrApi)
+                .then(res => res.blob())
+                .then(blob => {
+                    const downloadLink = document.createElement('a');
+                    downloadLink.href = URL.createObjectURL(blob);
+                    downloadLink.download = 'my-qr-code.png';
+                    document.body.appendChild(downloadLink);
+                    downloadLink.click();
+                    document.body.removeChild(downloadLink);
+
+                    btn.innerHTML = originalHTML;
+
+                    // Show success toast
+                    const toast = document.getElementById('toast');
+                    toast.querySelector('span').innerText = "QR Code Downloaded!";
+                    toast.classList.add('show');
+                    setTimeout(() => toast.classList.remove('show'), 3000);
+                });
+        }
+
+        // --- ACCORDIONS ---
+        function setupAccordions() {
+            document.querySelectorAll('.accordion-header').forEach(header => {
+                header.addEventListener('click', () => {
+                    const content = header.nextElementSibling;
+                    const isOpen = content.classList.contains('open');
+
+                    // Optional: Close others? Let's keep multiple open for ease
+                    // toggle current
+                    content.classList.toggle('open');
+                    header.classList.toggle('open');
+                });
+            });
+        }
+
+        // GENERATE THE TEMPLATE
+        function getTemplate() {
+            const data = {
+                name: document.getElementById('brandName').value,
+                bio: document.getElementById('brandBio').value,
+                logo: document.getElementById('logoUrl').value,
+                bg1: document.getElementById('colorBg1').value,
+                bg2: document.getElementById('colorBg2').value,
+                btn: document.getElementById('colorBtn').value,
+                btnText: document.getElementById('colorBtnText').value,
+                btnPadY: document.getElementById('btnHeight').value,
+                btnRadius: document.getElementById('btnRadius').value,
+                // New Contact Data
+                contactName: document.getElementById('contactName').value || 'My Name',
+                contactPhone: document.getElementById('contactPhone').value || '',
+                contactEmail: document.getElementById('contactEmail').value || '',
+                contactTitle: document.getElementById('contactTitle').value || '',
+                contactWebsite: document.getElementById('contactWebsite').value || '',
+                notificationEmail: document.getElementById('notificationEmail').value || 'test@example.com',
+                // Media
+                mediaUrl: document.getElementById('mediaUrl').value || ''
+            };
+
+            const linksHtml = links.map(l => `
+                <a href="${l.url}" class="link-card" target="_blank">
+                    <i class="fa-solid ${l.icon} link-icon"></i>
+                    ${l.label}
+                </a>
+            `).join('');
+
+            return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+    <title>${data.name}</title>
+    <meta name="description" content="${data.bio}">
+
+    <!-- Mobile App Feel -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="${data.logo}">
+    <link rel="icon" type="image/png" href="${data.logo}">
+
+    <!-- Social Sharing (Open Graph) -->
+    <meta property="og:title" content="${data.name}">
+    <meta property="og:description" content="${data.bio}">
+    <meta property="og:image" content="${data.logo}">
+    <meta property="og:type" content="website">
+
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-grad-1: ${data.bg1};
+            --bg-grad-2: ${data.bg2};
+            --btn-color: ${data.btn};
+            --btn-text: ${data.btnText};
+            --btn-pad-y: ${data.btnPadY}px;
+            --btn-radius: ${data.btnRadius}px;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+        body {
+            font-family: 'Quicksand', sans-serif;
+            background: linear-gradient(180deg, var(--bg-grad-1), var(--bg-grad-2));
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+            color: #1f2a3c;
+            line-height: 1.5;
+        }
+        .container { width: 100%; max-width: 480px; display: flex; flex-direction: column; align-items: center; gap: 1.5rem; padding-bottom: 2rem; }
+        .header { text-align: center; margin-top: 2rem; margin-bottom: 1rem; display: flex; flex-direction: column; align-items: center; }
+        .logo-container {
+            width: 140px; height: 140px; border-radius: 50%; background: white;
+            border: 5px solid white; box-shadow: 0 8px 24px rgba(31, 42, 60, 0.12);
+            overflow: hidden; margin-bottom: 1rem; display: flex; justify-content: center; align-items: center;
+        }
+        .profile-img { width: 90%; height: 90%; object-fit: contain; }
+        .brand-name { font-size: 1.8rem; font-weight: 700; margin-bottom: 0.25rem; letter-spacing: -0.5px; }
+        .bio { font-size: 1rem; color: #444; font-weight: 500; }
+        
+        .links { width: 100%; display: flex; flex-direction: column; gap: 1rem; }
+        .link-card {
+            position: relative; display: flex; align-items: center; justify-content: center;
+            text-align: center; text-decoration: none;
+            background: var(--btn-color); color: var(--btn-text);
+            font-weight: 700; font-size: 1.05rem;
+            padding: var(--btn-pad-y) 60px;
+            border-radius: var(--btn-radius);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05); transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            border: 2px solid transparent;
+        }
+        .link-card:hover { transform: translateY(-3px) scale(1.01); box-shadow: 0 8px 20px rgba(0,0,0,0.15); filter: brightness(105%); }
+        .link-icon { position: absolute; left: 24px; font-size: 1.2rem; }
+        
+        .footer { margin-top: auto; text-align: center; font-size: 0.85rem; color: #444; opacity: 0.8; padding-top: 1rem; }
+        .footer span { display: block; margin-top: 5px; font-size: 0.75rem; }
+
+        /* --- CONTACT FEATURE & MODAL --- */
+        .contact-btn-static {
+            background: white;
+            color: var(--btn-color);
+            border: 2px solid var(--btn-color);
+            border-radius: 99px; /* Pill */
+            padding: 12px 32px;
+            font-weight: 700;
+            font-size: 1rem;
+            text-decoration: none;
+            display: inline-flex; align-items: center; gap: 8px;
+            cursor: pointer;
+            margin-top: 16px;
+            margin-bottom: 24px;
+            transition: transform 0.2s, background 0.2s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        .contact-btn-static:hover { transform: scale(1.02); background: #f9fafb; }
+
+        /* Media */
+        .media-container {
+            width: 100%; margin-bottom: 24px; position: relative;
+            border-radius: var(--btn-radius); overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            background: #000;
+        }
+        .video-wrapper { position: relative; padding-bottom: 56.25%; /* 16:9 */ height: 0; }
+        .video-wrapper iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
+
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px); z-index: 999;
+            display: none; justify-content: center; align-items: flex-end; /* Bottom sheet on mobile */
+        }
+        .modal-overlay.active { display: flex; animation: fadeIn 0.3s ease; }
+        .modal-sheet {
+            background: white; width: 100%; max-width: 440px;
+            border-radius: 24px 24px 0 0; padding: 32px 24px 48px;
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.2);
+            transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+        }
+        @media (min-width: 480px) {
+             .modal-overlay { align-items: center; } /* Center on desktop */
+             .modal-sheet { border-radius: 24px; transform: translateY(20px) scale(0.95); opacity: 0; }
+        }
+        .modal-overlay.active .modal-sheet { transform: translateY(0) scale(1); opacity: 1; }
+
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+        .modal-title { font-size: 1.4rem; font-weight: 800; color: #111; }
+        .close-btn { background: #f3f4f6; border: none; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; color: #666; font-size: 1rem; display: flex; align-items: center; justify-content: center; }
+        
+        .form-group { margin-bottom: 16px; }
+        .form-label { display: block; font-size: 0.85rem; font-weight: 700; margin-bottom: 6px; color: #444; }
+        .form-input {
+            width: 100%; padding: 14px; border-radius: 12px;
+            border: 1px solid #e5e7eb; font-size: 1rem; font-family: inherit;
+            background: #f9fafb; outline: none; transition: all 0.2s;
+        }
+        .form-input:focus { background: white; border-color: var(--btn-color); box-shadow: 0 0 0 3px rgba(0,0,0,0.05); }
+
+        .submit-btn {
+            width: 100%; padding: 16px; border-radius: 14px;
+            background: #111; color: white; font-weight: 700; font-size: 1.05rem;
+            border: none; cursor: pointer; margin-top: 8px;
+            display: flex; justify-content: center; align-items: center; gap: 8px;
+            transition: transform 0.1s;
+        }
+        .submit-btn:active { transform: scale(0.98); }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    </style>
+</head>
+<body>
+    
+    <div class="container">
+        <header class="header">
+            <div class="logo-container"><img src="${data.logo}" class="profile-img" alt="Logo"></div>
+            <h1 class="brand-name">${data.name}</h1>
+            <p class="bio">${data.bio}</p>
+            
+            <!-- Static Connect Button -->
+            <button class="contact-btn-static" onclick="openModal()">
+                <i class="fa-solid fa-user-plus"></i> Connect
+            </button>
+            
+            <!-- Media Embed -->
+            ${getMediaEmbed(data.mediaUrl)}
+
+        </header>
+        <main class="links">
+            ${linksHtml}
+        </main>
+        <footer class="footer">
+            <p>&copy; 2026 ${data.name}</p>
+            <span>Designed to make tails wag.</span>
+        </footer>
+    </div>
+
+    <!-- Lead Gen Modal -->
+    <div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+        <div class="modal-sheet">
+            <div class="modal-header">
+                <div>
+                    <h2 class="modal-title">Let's Connect! 🤝</h2>
+                    <p style="color: #666; font-size: 0.9rem; margin-top: 4px;">Exchange info so we can stay in touch.</p>
+                </div>
+                <button class="close-btn" onclick="document.getElementById('modalOverlay').classList.remove('active')">
+                    <i class="fa-solid fa-times"></i>
+                </button>
+            </div>
+            
+            <form action="https://formsubmit.co/ajax/${data.notificationEmail}" method="POST" onsubmit="handleFormSubmit(event)">
+                <input type="hidden" name="_subject" value="New Lead from ${data.name} Link Tree!">
+                <input type="hidden" name="_captcha" value="false">
+                
+                <div class="form-group">
+                    <label class="form-label">Your Name</label>
+                    <input type="text" name="name" class="form-input" placeholder="Jane Doe" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Your Email</label>
+                    <input type="email" name="email" class="form-input" placeholder="jane@example.com" required>
+                </div>
+                
+                <button type="submit" class="submit-btn" id="submitBtn">
+                    Send & Save My Contact <i class="fa-solid fa-download"></i>
+                </button>
+                <p style="text-align: center; font-size: 0.75rem; color: #888; margin-top: 12px;">
+                    <i class="fa-solid fa-lock"></i> Your info is sent securely.
+                </p>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function openModal() {
+            document.getElementById('modalOverlay').classList.add('active');
+        }
+        
+        function closeModal(e) {
+            if (e.target === document.getElementById('modalOverlay')) {
+                document.getElementById('modalOverlay').classList.remove('active');
+            }
+        }
+
+        function generateVCard() {
+            // vCard 3.0 Generation
+            const vcard = \`BEGIN:VCARD
+VERSION:3.0
+N:${data.contactName};;;
+FN:${data.contactName}
+ORG:${data.name}
+TITLE:${data.contactTitle}
+TEL;TYPE=CELL:${data.contactPhone}
+EMAIL;TYPE=WORK,INTERNET:${data.contactEmail}
+URL:${data.contactWebsite}
+END:VCARD\`;
+
+            const blob = new Blob([vcard], { type: 'text/vcard' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = '${data.contactName.replace(/ /g, '_')}.vcf';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        function handleFormSubmit(e) {
+            e.preventDefault();
+            const btn = document.getElementById('submitBtn');
+            const originalHTML = btn.innerHTML;
+            
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sending...';
+            btn.disabled = true;
+
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData.entries());
+
+            fetch(e.target.action, {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                btn.innerHTML = 'Saved! <i class="fa-solid fa-check"></i>';
+                btn.style.background = '#10b981'; // Green success
+                
+                // Trigger vCard Download
+                generateVCard();
+
+                setTimeout(() => {
+                    document.getElementById('modalOverlay').classList.remove('active');
+                    btn.innerHTML = originalHTML;
+                    btn.style.background = '#111';
+                    btn.disabled = false;
+                    e.target.reset();
+                }, 2500);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('There was an error sending the data, but we will download the card anyway!');
+                generateVCard();
+                btn.innerHTML = originalHTML;
+                btn.disabled = false;
+            });
+        }
+    <\/script>
+</body>
+
+</html>`;
+        }
+
+        function updatePreview() {
+            const frame = document.getElementById('previewFrame');
+            const html = getTemplate();
+            frame.srcdoc = html;
+        }
+
+        function downloadSite() {
+            const html = getTemplate();
+            const blob = new Blob([html], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'index.html';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+
+            // Toast Notification
+            const toast = document.getElementById('toast');
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // Start
+        init();
+
+        // Initial Mobile Check
+        if (window.innerWidth <= 768) {
+            switchTab('preview');
+        }
+    </script>
 </body>
 
 </html>
