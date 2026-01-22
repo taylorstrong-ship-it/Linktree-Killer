@@ -213,6 +213,78 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabaseClient.js"></script>
     <script src="script.js"></script>
+    
+    <!-- Brute Force Mobile Tab Switching -->
+    <script>
+        (function() {
+            // Only run on mobile screens
+            if (window.innerWidth > 768) return;
+            
+            // Wait for DOM to be ready
+            function initMobileTabs() {
+                const editorEl = document.querySelector('.editor');
+                const previewEl = document.querySelector('.preview');
+                const btnEditor = document.getElementById('btn-editor');
+                const btnPreview = document.getElementById('btn-preview');
+                
+                if (!editorEl || !previewEl || !btnEditor || !btnPreview) {
+                    // Retry if elements not ready
+                    setTimeout(initMobileTabs, 100);
+                    return;
+                }
+                
+                // Force initial state: Show Editor, Hide Preview
+                editorEl.style.display = 'flex';
+                previewEl.style.display = 'none';
+                
+                // Editor button click - Show Editor, Hide Preview
+                btnEditor.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    // Force display styles
+                    editorEl.style.display = 'flex';
+                    previewEl.style.display = 'none';
+                    
+                    // Update button states
+                    btnEditor.classList.add('active');
+                    btnPreview.classList.remove('active');
+                    
+                    // Scroll to top
+                    window.scrollTo(0, 0);
+                });
+                
+                // Preview button click - Hide Editor, Show Preview
+                btnPreview.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    // Force display styles
+                    editorEl.style.display = 'none';
+                    previewEl.style.display = 'flex';
+                    
+                    // Update button states
+                    btnEditor.classList.remove('active');
+                    btnPreview.classList.add('active');
+                    
+                    // Scroll to top
+                    window.scrollTo(0, 0);
+                    
+                    // Update preview if needed
+                    if (typeof updatePreview === 'function') {
+                        updatePreview();
+                    }
+                });
+            }
+            
+            // Run immediately and on DOM ready
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initMobileTabs);
+            } else {
+                initMobileTabs();
+            }
+        })();
+    </script>
 </body>
 
 </html>
