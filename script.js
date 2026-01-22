@@ -857,7 +857,7 @@ window.addEventListener('resize', applySmartScale);
 // Start
 init();
 
-// Initial Mobile Check - View Switcher: Default to Preview Mode
+// Initial Mobile Check - View Switcher: Default to Editor Mode
 if (window.innerWidth <= 768) {
     const editor = document.querySelector('.editor');
     const preview = document.querySelector('.preview');
@@ -866,11 +866,11 @@ if (window.innerWidth <= 768) {
     
     // Only run if editor exists (not in profile-only mode)
     if (editor && preview && btnPreview && btnEditor) {
-        // Default to Preview Mode (as per requirement)
-        editor.classList.add('mobile-hidden');
-        preview.classList.remove('mobile-hidden');
-        btnPreview.classList.add('active');
-        btnEditor.classList.remove('active');
+        // Default to Editor Mode (show editor, hide preview)
+        editor.classList.remove('mobile-hidden');
+        preview.classList.add('mobile-hidden');
+        btnEditor.classList.add('active');
+        btnPreview.classList.remove('active');
     }
     
     // Apply smart scale on initial load
