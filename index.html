@@ -1070,6 +1070,37 @@
             });
         }
 
+        // --- MOBILE TAB SWITCHING ---
+        function switchTab(tab) {
+            const editorEl = document.querySelector('.editor');
+            const previewEl = document.querySelector('.preview');
+            const btnEditor = document.getElementById('btn-editor');
+            const btnPreview = document.getElementById('btn-preview');
+
+            if (tab === 'editor') {
+                editorEl.classList.add('active');
+                previewEl.classList.remove('active');
+
+                btnEditor.classList.add('active');
+                btnPreview.classList.remove('active');
+
+                // Ensure editor is visible
+                editorEl.style.display = 'flex';
+                previewEl.style.display = 'none';
+            } else {
+                editorEl.classList.remove('active');
+                previewEl.classList.add('active');
+
+                btnEditor.classList.remove('active');
+                btnPreview.classList.add('active');
+
+                // Ensure preview is visible
+                editorEl.style.display = 'none';
+                previewEl.style.display = 'flex';
+                updatePreview(); // Ensure fresh render
+            }
+        }
+
         // GENERATE THE TEMPLATE
         function getTemplate() {
             const data = {
