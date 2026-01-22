@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Taylored Link Builder - Editor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <div class="editor">
+        <div class="editor-header">
+            <h2><i class="fa-solid fa-wand-magic-sparkles"></i> Taylored Link Builder</h2>
+        </div>
+
+        <div class="demo-section">
+            <button class="demo-btn" onclick="loadDemoData()">
+                <i class="fa-solid fa-rocket"></i> Load Demo Data
+            </button>
+        </div>
+
+        <div class="controls">
+
+            <div class="control-group">
+                <div class="accordion-header">
+                    <h3>Branding</h3>
+                    <i class="fa-solid fa-chevron-down accordion-icon"></i>
+                </div>
+                <div class="accordion-content">
+                    <div class="input-row">
+                        <label>Business Name</label>
+                        <input type="text" id="brandName" value="Taylored Pet Portraits" oninput="updatePreview()"
+                            placeholder="e.g. Acme Corp">
+                    </div>
+                    <div class="input-row">
+                        <label>Bio</label>
+                        <textarea id="brandBio" rows="2" oninput="updatePreview()"
+                            placeholder="Short description...">Custom portraits & helping shelter pets 🐾</textarea>
+                    </div>
+                    <div class="input-row">
+                        <label>Logo URL</label>
+                        <input type="text" id="logoUrl" value="logo.gif" oninput="updatePreview()"
+                            placeholder="https://...">
+                    </div>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <div class="accordion-header">
+                    <h3>Theme Colors</h3>
+                    <i class="fa-solid fa-chevron-down accordion-icon"></i>
+                </div>
+                <div class="accordion-content">
+                    <div class="input-row">
+                        <label>Background Gradient Top</label>
+                        <input type="color" id="colorBg1" value="#E4F3FF" oninput="updatePreview()">
+                    </div>
+                    <div class="input-row">
+                        <label>Background Gradient Bottom</label>
+                        <input type="color" id="colorBg2" value="#E0D6FF" oninput="updatePreview()">
+                    </div>
+                    <div class="input-row">
+                        <label>Button Color</label>
+                        <input type="color" id="colorBtn" value="#7DC6FF" oninput="updatePreview()">
+                    </div>
+                    <div class="input-row">
+                        <label>Button Text Color</label>
+                        <input type="color" id="colorBtnText" value="#ffffff" oninput="updatePreview()">
+                    </div>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <div class="accordion-header">
+                    <h3>Featured Media</h3>
+                    <i class="fa-solid fa-chevron-down accordion-icon"></i>
+                </div>
+                <div class="accordion-content">
+                    <div class="input-row">
+                        <label>Featured Video/Audio URL</label>
+                        <input type="url" id="mediaUrl" oninput="updatePreview()"
+                            placeholder="YouTube, Vimeo, or Spotify Link">
+                        <small style="display:block; margin-top:4px; color:#666; font-size:0.75rem;">
+                            Auto-embeds player on your page.
+                        </small>
+                    </div>
+
+                    <div style="margin-top: 16px; padding-top: 16px; border-top: 1px dashed var(--border-subtle);">
+                        <button class="add-btn" onclick="downloadQRCode()"
+                            style="background: white; border-style: solid;">
+                            <i class="fa-solid fa-qrcode"></i> Download My QR Code
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <div class="accordion-header">
+                    <div style="display: flex; gap: 12px; align-items: center; flex: 1;">
+                        <h3 style="margin-bottom: 0;">Advanced Design</h3>
+                        <a href="#" onclick="resetDesign(); event.stopPropagation();"
+                            style="font-size: 0.75rem; color: var(--primary); text-decoration: none;">Reset Defaults</a>
+                    </div>
+                    <i class="fa-solid fa-chevron-down accordion-icon"></i>
+                </div>
+                <div class="accordion-content">
+                    <div class="input-row">
+                        <label>Button Height</label>
+                        <input type="range" id="btnHeight" min="8" max="32" value="18" oninput="updatePreview()"
+                            style="width: 100%;">
+                    </div>
+                    <div class="input-row">
+                        <label>Corner Radius</label>
+                        <input type="range" id="btnRadius" min="0" max="50" value="50" oninput="updatePreview()"
+                            style="width: 100%;">
+                    </div>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <div class="accordion-header">
+                    <h3>Lead Gen & Contacts</h3>
+                    <i class="fa-solid fa-chevron-down accordion-icon"></i>
+                </div>
+                <div class="accordion-content">
+                    <div class="input-row">
+                        <label>Your Name</label>
+                        <input type="text" id="contactName" value="Taylor Strong" oninput="updatePreview()"
+                            placeholder="e.g. John Doe">
+                    </div>
+                    <div class="input-row">
+                        <label>Your Phone</label>
+                        <input type="text" id="contactPhone" value="555-0123" oninput="updatePreview()"
+                            placeholder="e.g. +1 555-0123">
+                    </div>
+                    <div class="input-row">
+                        <label>Your Email (for vCard)</label>
+                        <input type="text" id="contactEmail" value="hello@taylored.com" oninput="updatePreview()"
+                            placeholder="e.g. john@example.com">
+                    </div>
+                    <div class="input-row">
+                        <label>Job Title</label>
+                        <input type="text" id="contactTitle" value="Founder" oninput="updatePreview()"
+                            placeholder="e.g. CEO">
+                    </div>
+                    <div class="input-row">
+                        <label>Website</label>
+                        <input type="text" id="contactWebsite" value="https://tayloredpetportraits.com"
+                            oninput="updatePreview()" placeholder="e.g. https://mybrand.com">
+                    </div>
+                    <div style="margin-top: 16px; padding-top: 16px; border-top: 1px dashed var(--border-subtle);">
+                        <label style="color: var(--primary);">Notification Email (Leads go here)</label>
+                        <input type="text" id="notificationEmail" value="leads@mybrand.com" oninput="updatePreview()"
+                            placeholder="where.leads.go@example.com">
+                    </div>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <div class="accordion-header open">
+                    <h3>Links</h3>
+                    <i class="fa-solid fa-chevron-down accordion-icon"></i>
+                </div>
+                <div class="accordion-content open">
+                    <div id="linksList">
+                        <!-- Links injected here -->
+                    </div>
+                    <button class="add-btn" onclick="addLink()">
+                        <i class="fa-solid fa-plus"></i> Add New Link
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="editor-footer">
+            <button class="download-btn" onclick="downloadSite()">
+                <i class="fa-solid fa-download"></i> Download Site (.html)
+            </button>
+        </div>
+
+        <div id="toast" class="toast">
+            <i class="fa-solid fa-check-circle"></i>
+            <span>Success! Site Downloaded.</span>
+        </div>
+    </div>
+
+    <div class="preview">
+        <div class="preview-wrapper">
+            <div class="phone-mockup">
+                <iframe id="previewFrame"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile Navigation - View Switcher Architecture -->
+    <div class="mobile-nav">
+        <button class="nav-btn" id="btn-editor" onclick="switchTab('editor')">
+            <i class="fa-solid fa-pen"></i>
+            Design
+        </button>
+        <button class="nav-btn active" id="btn-preview" onclick="switchTab('preview')">
+            <i class="fa-solid fa-mobile"></i>
+            Preview
+        </button>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
