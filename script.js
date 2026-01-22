@@ -18,20 +18,177 @@ const ICON_LIBRARY = [
 ];
 
 // Init
-function init() {
-    renderLinks();
-    
-    // Check if we're on the profile page (index.html) - load from Supabase
-    const isProfilePage = document.querySelector('.preview.profile-only');
-    if (isProfilePage) {
-        loadProfile();
+async function init() {
+    // Check if we're on the builder page - require authentication
+    const isBuilderPage = document.querySelector('.editor');
+    if (isBuilderPage) {
+        await checkAuthAndShowBuilder();
     } else {
-        // Builder page - load from Supabase or use defaults
+        // Profile page - load from Supabase (public access)
         loadProfile();
-        updatePreview();
     }
     
+    renderLinks();
     setupAccordions();
+}
+
+// Authentication gate for builder
+async function checkAuthAndShowBuilder() {
+    const authModal = document.getElementById('authModal');
+    const editor = document.querySelector('.editor');
+    const preview = document.querySelector('.preview');
+    const logoutBtn = document.getElementById('logoutBtn');
+    
+    const { user, error } = await checkAuth();
+    
+    if (!user) {
+        // Not logged in - show auth modal, hide builder
+        if (authModal) authModal.style.display = 'flex';
+        if (editor) editor.style.display = 'none';
+        if (preview) preview.style.display = 'none';
+        if (logoutBtn) logoutBtn.style.display = 'none';
+        return;
+    }
+    
+    // Logged in - hide auth modal, show builder
+    if (authModal) authModal.style.display = 'none';
+    if (editor) editor.style.display = 'flex';
+    if (logoutBtn) logoutBtn.style.display = 'block';
+    
+    // Load user's profile
+    await loadProfile();
+    updatePreview();
+}
+
+// Handle authentication form submission
+let isSignUpMode = false;
+
+function toggleAuthMode() {
+    isSignUpMode = !isSignUpMode;
+    const submitBtn = document.getElementById('authSubmitBtn');
+    const toggleBtn = document.querySelector('.auth-btn-secondary');
+    
+    if (isSignUpMode) {
+        submitBtn.innerHTML = '<i class="fa-solid fa-user-plus"></i> Sign Up';
+        toggleBtn.innerHTML = '<i class="fa-solid fa-sign-in-alt"></i> Sign In Instead';
+    } else {
+        submitBtn.innerHTML = '<i class="fa-solid fa-sign-in-alt"></i> Sign In';
+        toggleBtn.innerHTML = '<i class="fa-solid fa-user-plus"></i> Sign Up Instead';
+    }
+}
+
+async function handleAuth(event) {
+    event.preventDefault();
+    
+    const email = document.getElementById('authEmail').value;
+    const password = document.getElementById('authPassword').value;
+    const errorDiv = document.getElementById('authError');
+    const submitBtn = document.getElementById('authSubmitBtn');
+    const originalHTML = submitBtn.innerHTML;
+    
+    // Clear previous errors
+    errorDiv.style.display = 'none';
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processing...';
+    
+    try {
+        let result;
+        if (isSignUpMode) {
+            result = await signUp(email, password);
+        } else {
+            result = await signIn(email, password);
+        }
+        
+        if (result.error) {
+            errorDiv.textContent = result.error.message || 'Authentication failed';
+            errorDiv.style.display = 'block';
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalHTML;
+            return;
+        }
+        
+        // Success - reload to show builder
+        window.location.reload();
+    } catch (err) {
+        errorDiv.textContent = 'An error occurred. Please try again.';
+        errorDiv.style.display = 'block';
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalHTML;
+    }
+}
+
+// Handle logout
+async function handleLogout() {
+    if (confirm('Are you sure you want to log out?')) {
+        await signOut();
+    }
+}
+
+// --- AUTHENTICATION FUNCTIONS ---
+
+// Check if user is logged in
+async function checkAuth() {
+    try {
+        if (typeof supabaseClient === 'undefined') {
+            return { user: null, session: null };
+        }
+        const { data: { session }, error } = await supabaseClient.auth.getSession();
+        return { user: session?.user || null, session, error };
+    } catch (err) {
+        console.error('Auth check error:', err);
+        return { user: null, session: null, error: err };
+    }
+}
+
+// Sign up new user
+async function signUp(email, password) {
+    try {
+        if (typeof supabaseClient === 'undefined') {
+            throw new Error('Supabase client not loaded');
+        }
+        const { data, error } = await supabaseClient.auth.signUp({
+            email: email,
+            password: password
+        });
+        return { data, error };
+    } catch (err) {
+        console.error('Sign up error:', err);
+        return { data: null, error: err };
+    }
+}
+
+// Sign in existing user
+async function signIn(email, password) {
+    try {
+        if (typeof supabaseClient === 'undefined') {
+            throw new Error('Supabase client not loaded');
+        }
+        const { data, error } = await supabaseClient.auth.signInWithPassword({
+            email: email,
+            password: password
+        });
+        return { data, error };
+    } catch (err) {
+        console.error('Sign in error:', err);
+        return { data: null, error: err };
+    }
+}
+
+// Sign out user
+async function signOut() {
+    try {
+        if (typeof supabaseClient === 'undefined') {
+            throw new Error('Supabase client not loaded');
+        }
+        const { error } = await supabaseClient.auth.signOut();
+        if (!error) {
+            window.location.reload(); // Reload to show login screen
+        }
+        return { error };
+    } catch (err) {
+        console.error('Sign out error:', err);
+        return { error: err };
+    }
 }
 
 // --- SUPABASE FUNCTIONS ---
@@ -68,17 +225,24 @@ async function saveProfile() {
             return;
         }
 
+        // Get current user
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (!session || !session.user) {
+            showToast('You must be logged in to save your profile.', 'fa-exclamation-circle');
+            return;
+        }
+
         const profileData = getProfileData();
         
-        // UPSERT to Supabase (using id = 1 as default profile)
+        // UPSERT to Supabase using user_id
         const { data, error } = await supabaseClient
             .from('profiles')
             .upsert({
-                id: 1, // Default profile ID
+                user_id: session.user.id, // Use authenticated user's ID
                 ...profileData,
                 updated_at: new Date().toISOString()
             }, {
-                onConflict: 'id'
+                onConflict: 'user_id'
             });
 
         if (error) {
@@ -104,54 +268,135 @@ async function loadProfile() {
             return;
         }
 
-        // SELECT from Supabase (using id = 1 as default profile)
-        const { data, error } = await supabaseClient
-            .from('profiles')
-            .select('*')
-            .eq('id', 1)
-            .single();
-
-        if (error) {
-            // If no profile exists yet, use defaults
-            console.log('No profile found, using defaults:', error);
+        // Get current user
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (!session || !session.user) {
+            console.log('No user session, using defaults');
             updatePreview();
             return;
         }
 
-        if (data) {
-            // Populate form fields if they exist (builder page)
-            if (document.getElementById('brandName')) {
-                document.getElementById('brandName').value = data.name || '';
-                document.getElementById('brandBio').value = data.bio || '';
-                document.getElementById('logoUrl').value = data.logo || '';
-                document.getElementById('colorBg1').value = data.bg1 || '#E4F3FF';
-                document.getElementById('colorBg2').value = data.bg2 || '#E0D6FF';
-                document.getElementById('colorBtn').value = data.btn || '#7DC6FF';
-                document.getElementById('colorBtnText').value = data.btnText || '#ffffff';
-                document.getElementById('btnHeight').value = data.btnPadY || '18';
-                document.getElementById('btnRadius').value = data.btnRadius || '50';
-                document.getElementById('contactName').value = data.contactName || '';
-                document.getElementById('contactPhone').value = data.contactPhone || '';
-                document.getElementById('contactEmail').value = data.contactEmail || '';
-                document.getElementById('contactTitle').value = data.contactTitle || '';
-                document.getElementById('contactWebsite').value = data.contactWebsite || '';
-                document.getElementById('notificationEmail').value = data.notificationEmail || '';
-                document.getElementById('mediaUrl').value = data.mediaUrl || '';
-            }
+        // SELECT from Supabase using user_id
+        const { data, error } = await supabaseClient
+            .from('profiles')
+            .select('*')
+            .eq('user_id', session.user.id)
+            .single();
 
-            // Load links if they exist
-            if (data.links && Array.isArray(data.links)) {
-                links = data.links;
-                renderLinks();
+        if (error) {
+            // If no profile exists, create one (onboarding)
+            if (error.code === 'PGRST116') { // No rows returned
+                console.log('No profile found, creating default profile...');
+                await createDefaultProfile(session.user.id);
+                // Retry loading
+                const { data: newData, error: newError } = await supabaseClient
+                    .from('profiles')
+                    .select('*')
+                    .eq('user_id', session.user.id)
+                    .single();
+                
+                if (newError || !newData) {
+                    console.log('Error creating profile, using defaults:', newError);
+                    updatePreview();
+                    return;
+                }
+                
+                // Use the newly created profile
+                populateProfileData(newData);
+                return;
             }
-
-            // Update preview
+            
+            // Other errors - use defaults
+            console.log('Error loading profile, using defaults:', error);
             updatePreview();
+            return;
         }
+
+        // Populate profile data
+        populateProfileData(data);
     } catch (err) {
         console.error('Error loading profile:', err);
         // Use defaults on error
         updatePreview();
+    }
+}
+
+// Helper function to populate profile data into form
+function populateProfileData(data) {
+    if (!data) return;
+    
+    // Populate form fields if they exist (builder page)
+    if (document.getElementById('brandName')) {
+        document.getElementById('brandName').value = data.name || '';
+        document.getElementById('brandBio').value = data.bio || '';
+        document.getElementById('logoUrl').value = data.logo || '';
+        document.getElementById('colorBg1').value = data.bg1 || '#E4F3FF';
+        document.getElementById('colorBg2').value = data.bg2 || '#E0D6FF';
+        document.getElementById('colorBtn').value = data.btn || '#7DC6FF';
+        document.getElementById('colorBtnText').value = data.btnText || '#ffffff';
+        document.getElementById('btnHeight').value = data.btnPadY || '18';
+        document.getElementById('btnRadius').value = data.btnRadius || '50';
+        document.getElementById('contactName').value = data.contactName || '';
+        document.getElementById('contactPhone').value = data.contactPhone || '';
+        document.getElementById('contactEmail').value = data.contactEmail || '';
+        document.getElementById('contactTitle').value = data.contactTitle || '';
+        document.getElementById('contactWebsite').value = data.contactWebsite || '';
+        document.getElementById('notificationEmail').value = data.notificationEmail || '';
+        document.getElementById('mediaUrl').value = data.mediaUrl || '';
+    }
+
+    // Load links if they exist
+    if (data.links && Array.isArray(data.links)) {
+        links = data.links;
+        renderLinks();
+    }
+
+    // Update preview
+    updatePreview();
+}
+
+// Create default profile for new user (onboarding)
+async function createDefaultProfile(userId) {
+    try {
+        const defaultProfile = {
+            user_id: userId,
+            name: 'My Link Page',
+            bio: 'Welcome to your link page! 🎉',
+            logo: 'logo.gif',
+            bg1: '#E4F3FF',
+            bg2: '#E0D6FF',
+            btn: '#7DC6FF',
+            btnText: '#ffffff',
+            btnPadY: '18',
+            btnRadius: '50',
+            contactName: '',
+            contactPhone: '',
+            contactEmail: '',
+            contactTitle: '',
+            contactWebsite: '',
+            notificationEmail: '',
+            mediaUrl: '',
+            links: [
+                { label: "My Website", url: "https://example.com", icon: "fa-globe" },
+                { label: "Contact Me", url: "mailto:hello@example.com", icon: "fa-envelope" }
+            ]
+        };
+
+        const { data, error } = await supabaseClient
+            .from('profiles')
+            .insert([defaultProfile])
+            .select()
+            .single();
+
+        if (error) {
+            console.error('Error creating default profile:', error);
+            return { data: null, error };
+        }
+
+        return { data, error: null };
+    } catch (err) {
+        console.error('Error creating default profile:', err);
+        return { data: null, error: err };
     }
 }
 

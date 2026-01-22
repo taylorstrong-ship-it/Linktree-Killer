@@ -4,6 +4,7 @@
 -- Create profiles table
 CREATE TABLE IF NOT EXISTS profiles (
     id BIGSERIAL PRIMARY KEY,
+    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
     
     -- Branding
     name TEXT DEFAULT 'Taylored Pet Portraits',
@@ -37,41 +38,33 @@ CREATE TABLE IF NOT EXISTS profiles (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Create index on id for faster lookups
-CREATE INDEX IF NOT EXISTS profiles_id_idx ON profiles(id);
+-- Create index on user_id for faster lookups
+CREATE INDEX IF NOT EXISTS profiles_user_id_idx ON profiles(user_id);
+
+-- Ensure one profile per user
+CREATE UNIQUE INDEX IF NOT EXISTS profiles_user_id_unique ON profiles(user_id);
 
 -- Enable Row Level Security (RLS)
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 
--- Create policy to allow public read access
-CREATE POLICY "Allow public read access"
+-- Row Level Security Policies
+-- Users can only read their own profile
+CREATE POLICY "Users can read own profile"
     ON profiles FOR SELECT
-    USING (true);
+    USING (auth.uid() = user_id);
 
--- Create policy to allow public insert/update (for now - you may want to restrict this later)
-CREATE POLICY "Allow public insert/update"
+-- Users can insert their own profile
+CREATE POLICY "Users can insert own profile"
     ON profiles FOR INSERT
-    WITH CHECK (true);
+    WITH CHECK (auth.uid() = user_id);
 
-CREATE POLICY "Allow public update"
+-- Users can update their own profile
+CREATE POLICY "Users can update own profile"
     ON profiles FOR UPDATE
-    USING (true);
+    USING (auth.uid() = user_id);
 
--- Insert default profile (id = 1)
-INSERT INTO profiles (id, name, bio, logo, links)
-VALUES (
-    1,
-    'Taylored Pet Portraits',
-    'Custom portraits & helping shelter pets 🐾',
-    'logo.gif',
-    '[
-        {"label": "Check out the Website", "url": "https://tayloredpetportraits.com", "icon": "fa-globe"},
-        {"label": "Follow on Instagram", "url": "https://instagram.com/tayloredpetportraits", "icon": "fa-instagram"},
-        {"label": "Order a Portrait", "url": "https://tayloredpetportraits.com/products", "icon": "fa-paintbrush"},
-        {"label": "Contact Us", "url": "mailto:hello@example.com", "icon": "fa-envelope"}
-    ]'::jsonb
-)
-ON CONFLICT (id) DO NOTHING;
+-- Note: Default profiles are now created automatically via trigger when users sign up
+-- See the create_profile_for_new_user() function below
 
 -- Create function to automatically update updated_at timestamp
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -87,3 +80,28 @@ CREATE TRIGGER update_profiles_updated_at
     BEFORE UPDATE ON profiles
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
+
+-- Function to create default profile for new user
+CREATE OR REPLACE FUNCTION create_profile_for_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+    INSERT INTO profiles (user_id, name, bio, logo, links)
+    VALUES (
+        NEW.id,
+        'My Link Page',
+        'Welcome to your link page! 🎉',
+        'logo.gif',
+        '[
+            {"label": "My Website", "url": "https://example.com", "icon": "fa-globe"},
+            {"label": "Contact Me", "url": "mailto:hello@example.com", "icon": "fa-envelope"}
+        ]'::jsonb
+    );
+    RETURN NEW;
+END;
+$$ language 'plpgsql' SECURITY DEFINER;
+
+-- Trigger to create profile when user signs up
+CREATE TRIGGER on_auth_user_created
+    AFTER INSERT ON auth.users
+    FOR EACH ROW
+    EXECUTE FUNCTION create_profile_for_new_user();

@@ -12,9 +12,43 @@
 
 <body>
 
+    <!-- Authentication Modal -->
+    <div id="authModal" class="auth-modal" style="display: none;">
+        <div class="auth-modal-content">
+            <h2><i class="fa-solid fa-lock"></i> Login Required</h2>
+            <p>Please sign in to access the builder</p>
+            
+            <div id="authError" class="auth-error" style="display: none;"></div>
+            
+            <form id="authForm" onsubmit="handleAuth(event)">
+                <div class="auth-input-group">
+                    <label>Email</label>
+                    <input type="email" id="authEmail" required placeholder="your@email.com">
+                </div>
+                
+                <div class="auth-input-group">
+                    <label>Password</label>
+                    <input type="password" id="authPassword" required placeholder="••••••••">
+                </div>
+                
+                <div class="auth-buttons">
+                    <button type="submit" class="auth-btn auth-btn-primary" id="authSubmitBtn">
+                        <i class="fa-solid fa-sign-in-alt"></i> Sign In
+                    </button>
+                    <button type="button" class="auth-btn auth-btn-secondary" onclick="toggleAuthMode()">
+                        <i class="fa-solid fa-user-plus"></i> Sign Up Instead
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <div class="editor">
         <div class="editor-header">
             <h2><i class="fa-solid fa-wand-magic-sparkles"></i> Taylored Link Builder</h2>
+            <button id="logoutBtn" class="logout-btn" onclick="handleLogout()" style="display: none;">
+                <i class="fa-solid fa-sign-out-alt"></i> Log Out
+            </button>
         </div>
 
         <div class="demo-section">
