@@ -547,43 +547,55 @@
         }
 
         @media (max-width: 768px) {
+
+            /* 1. Kill Flexbox on Body */
             body {
+                display: block !important;
                 flex-direction: column;
-                overflow: hidden;
+                overflow-x: hidden !important;
+                padding: 0 !important;
             }
 
-            /* FORCE Hide Desktop Elements */
-            .editor {
-                width: 100% !important;
-                min-width: 0 !important;
-                border-right: none;
-                height: calc(100vh - 84px) !important;
-                /* Adjust for nav + safe area */
+            /* 2. Strict Class Toggle */
+            .mobile-hidden {
                 display: none !important;
+            }
+
+            /* 3. Force Full Width Columns */
+            .editor {
+                width: 100vw !important;
+                max-width: 100vw !important;
+                min-width: 0 !important;
+                margin: 0 !important;
+                border-right: none;
+                height: auto !important;
+                min-height: 100vh;
                 padding-bottom: 80px;
                 /* Space for scroll */
-            }
-
-            .editor.active {
-                display: flex !important;
+                display: flex;
+                /* Default display if not hidden */
+                box-shadow: none !important;
             }
 
             .preview {
-                width: 100% !important;
-                height: calc(100vh - 70px) !important;
+                width: 100vw !important;
+                max-width: 100vw !important;
+                height: 100vh !important;
+                margin: 0 !important;
                 padding: 0 !important;
                 /* Full bleed */
                 background: #111;
-                /* Dark bg for contrast */
-                display: none !important;
-            }
-
-            .preview.active {
-                display: flex !important;
+                /* Dark bg */
+                display: flex;
+                /* Default display if not hidden */
+                position: fixed;
+                top: 0;
+                left: 0;
+                z-index: 50;
+                /* Ensure on top */
             }
 
             /* NATIVE APP FEEL: Remove the "Phone Mockup" styling on mobile */
-            /* Instead, make the iframe fill the screen */
             .phone-mockup {
                 width: 100% !important;
                 height: 100% !important;
@@ -594,7 +606,6 @@
                 background: white;
             }
 
-            /* Hide notch on mobile preview */
             .phone-mockup::after {
                 display: none !important;
             }
@@ -610,7 +621,8 @@
                 background: #1f2937;
                 /* Dark Gray */
                 border-top: 1px solid #374151;
-                z-index: 99999;
+                z-index: 99999 !important;
+                /* Force on top */
                 box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.2);
                 padding-bottom: env(safe-area-inset-bottom);
             }
@@ -624,7 +636,6 @@
                 border: none;
                 background: none;
                 color: #9ca3af;
-                /* Gray text */
                 font-size: 0.8rem;
                 font-weight: 600;
                 cursor: pointer;
@@ -634,9 +645,7 @@
 
             .nav-btn.active {
                 color: #ffffff;
-                /* White Active */
                 background: rgba(255, 255, 255, 0.1);
-                /* Subtle highlight */
             }
 
             .nav-btn i {
@@ -1091,25 +1100,20 @@
             const btnPreview = document.getElementById('btn-preview');
 
             if (tab === 'editor') {
-                editorEl.classList.add('active');
-                previewEl.classList.remove('active');
+                // Show Editor, Hide Preview
+                editorEl.classList.remove('mobile-hidden');
+                previewEl.classList.add('mobile-hidden');
 
                 btnEditor.classList.add('active');
                 btnPreview.classList.remove('active');
-
-                // Ensure editor is visible
-                editorEl.style.display = 'flex';
-                previewEl.style.display = 'none';
             } else {
-                editorEl.classList.remove('active');
-                previewEl.classList.add('active');
+                // Show Preview, Hide Editor
+                editorEl.classList.add('mobile-hidden');
+                previewEl.classList.remove('mobile-hidden');
 
                 btnEditor.classList.remove('active');
                 btnPreview.classList.add('active');
 
-                // Ensure preview is visible
-                editorEl.style.display = 'none';
-                previewEl.style.display = 'flex';
                 updatePreview(); // Ensure fresh render
             }
         }
@@ -1463,7 +1467,11 @@ END:VCARD\`;
 
         // Initial Mobile Check
         if (window.innerWidth <= 768) {
-            switchTab('preview');
+            // Default to Preview Mode
+            document.querySelector('.editor').classList.add('mobile-hidden');
+            document.querySelector('.preview').classList.remove('mobile-hidden');
+            document.getElementById('btn-preview').classList.add('active');
+            document.getElementById('btn-editor').classList.remove('active');
         }
     </script>
 </body>
