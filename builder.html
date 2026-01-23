@@ -7,6 +7,19 @@
     <title>Link Builder</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+        <script>
+                    // 1. PASTE YOUR KEYS HERE (Keep the quotes!)
+                    const SUPABASE_URL = 'https://qxkicdhsrlpehgcsapsh.supabase.co';
+                    const SUPABASE_KEY = 'sb_publishable_TTBR0ES-pM7LOWDsywEy7A_9BSlhWGg';
+
+                    // 2. Initialize the connection immediately
+                    if (typeof supabase !== 'undefined') {
+                                    window.supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                                    console.log("✅ Supabase connected successfully!");
+                                } else {
+                                    alert("🚨 Critical Error: Supabase library not found!");
+                                }
+                </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         body {
