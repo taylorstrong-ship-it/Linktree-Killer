@@ -427,6 +427,95 @@ async function createDefaultProfile(userId) {
     }
 }
 
+// --- AI MAGIC IMPORT ---
+async function aiMagicImport() {
+    const urlInput = document.getElementById('aiImportUrl');
+    const url = urlInput?.value?.trim();
+    
+    if (!url) {
+        showToast('Please enter a website URL', 'fa-exclamation-circle');
+        return;
+    }
+    
+    // Show loading state
+    const importBtn = event?.currentTarget;
+    const originalHTML = importBtn?.innerHTML || '';
+    if (importBtn) {
+        importBtn.disabled = true;
+        importBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Analyzing...';
+    }
+    
+    try {
+        // Call the API endpoint
+        const response = await fetch('/api/generate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ url: url })
+        });
+        
+        const result = await response.json();
+        
+        if (!response.ok || !result.success) {
+            throw new Error(result.error || 'Failed to generate profile');
+        }
+        
+        const data = result.data;
+        
+        // Populate form fields
+        if (document.getElementById('brandName')) {
+            document.getElementById('brandName').value = data.name || '';
+        }
+        if (document.getElementById('brandBio')) {
+            document.getElementById('brandBio').value = data.bio || '';
+        }
+        if (document.getElementById('colorBg1')) {
+            document.getElementById('colorBg1').value = data.bg1 || '#3b82f6';
+        }
+        if (document.getElementById('colorBg2')) {
+            document.getElementById('colorBg2').value = data.bg2 || '#2563eb';
+        }
+        if (document.getElementById('colorBtn')) {
+            document.getElementById('colorBtn').value = data.btn || '#1d4ed8';
+        }
+        
+        // Update links array
+        if (data.links && Array.isArray(data.links) && data.links.length > 0) {
+            links = data.links.map(link => ({
+                label: link.label || 'New Link',
+                url: link.url || '#',
+                icon: link.icon || 'fa-link'
+            }));
+            renderLinks();
+        }
+        
+        // Trigger input events to update preview
+        document.getElementById('brandName')?.dispatchEvent(new Event('input', { bubbles: true }));
+        document.getElementById('brandBio')?.dispatchEvent(new Event('input', { bubbles: true }));
+        document.getElementById('colorBg1')?.dispatchEvent(new Event('input', { bubbles: true }));
+        document.getElementById('colorBg2')?.dispatchEvent(new Event('input', { bubbles: true }));
+        document.getElementById('colorBtn')?.dispatchEvent(new Event('input', { bubbles: true }));
+        
+        updatePreview();
+        
+        showToast('✨ AI Magic Import Complete!', 'fa-wand-magic-sparkles');
+        
+        // Clear the input
+        if (urlInput) urlInput.value = '';
+        
+    } catch (error) {
+        console.error('AI Import Error:', error);
+        showToast('AI Import failed: ' + (error.message || 'Unknown error'), 'fa-exclamation-circle');
+    } finally {
+        // Restore button state
+        if (importBtn) {
+            importBtn.disabled = false;
+            importBtn.innerHTML = originalHTML;
+        }
+    }
+}
+
 // --- LOAD DEMO DATA ---
 function loadDemoData() {
     // Set Branding
