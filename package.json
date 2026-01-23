@@ -2,6 +2,7 @@
   "name": "linktree-killer",
   "version": "1.0.0",
   "description": "Multi-user Linktree builder with AI auto-import",
+  "type": "module",
   "main": "index.html",
   "scripts": {
     "dev": "vercel dev",
