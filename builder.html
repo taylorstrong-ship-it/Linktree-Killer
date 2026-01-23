@@ -21,6 +21,11 @@
             backdrop-filter: blur(10px);
         }
 
+        .hidden {
+            display: none !important;
+        }
+
+        /* Floating Phone Animation */
         #phone-preview {
             box-shadow: 0 50px 100px -20px rgba(0, 0, 0, 0.7);
             transition: all 0.3s;
@@ -43,51 +48,68 @@
     </style>
 </head>
 
-<body class="flex h-screen">
+<body class="h-screen relative">
 
-    <div id="editor-sidebar" class="w-96 flex flex-col p-6 border-r border-white/10 h-full overflow-y-auto z-20">
-
-        <div class="flex justify-between items-center mb-6">
-            <h1 class="font-bold text-xl">Taylored Builder</h1>
-            <button onclick="logOut()" class="text-xs bg-white/10 px-2 py-1 rounded hover:bg-white/20">Log Out</button>
-        </div>
-
-        <div
-            class="bg-gradient-to-r from-violet-600 to-indigo-600 p-5 rounded-xl shadow-lg mb-6 border border-white/10">
-            <h3 class="font-bold text-lg mb-2"><i class="fa-solid fa-wand-magic-sparkles"></i> AI Import</h3>
-            <p class="text-xs opacity-80 mb-3">Paste your Instagram or Website URL</p>
-
-            <input type="text" id="ai-url-input" placeholder="e.g. instagram.com/..."
-                class="w-full p-2 mb-3 rounded-lg text-black text-sm border-none focus:ring-2 focus:ring-white">
-
-            <button id="ai-generate-btn" onclick="runAiImport()"
-                class="w-full bg-white text-indigo-700 font-bold py-2 rounded-lg shadow hover:bg-gray-100 transition-all text-sm">
-                🚀 Auto-Build Profile
+    <div id="login-overlay" class="absolute inset-0 z-50 bg-slate-900 flex items-center justify-center hidden">
+        <div class="bg-white/10 backdrop-blur-xl p-8 rounded-2xl border border-white/20 shadow-2xl w-96 text-center">
+            <h2 class="text-2xl font-bold mb-6">🔐 Login to Builder</h2>
+            <input type="email" id="login-email" placeholder="Email"
+                class="w-full p-3 mb-4 bg-black/20 rounded-lg border border-white/10 text-white focus:outline-none focus:border-blue-500">
+            <input type="password" id="login-password" placeholder="Password"
+                class="w-full p-3 mb-6 bg-black/20 rounded-lg border border-white/10 text-white focus:outline-none focus:border-blue-500">
+            <button onclick="handleLogin()" id="login-btn"
+                class="w-full bg-blue-600 hover:bg-blue-500 py-3 rounded-xl font-bold transition-all text-white shadow-lg">
+                Enter Studio
             </button>
-        </div>
-
-        <div class="space-y-4 mb-6">
-            <label class="text-xs uppercase text-gray-500 font-bold">Business Info</label>
-            <input type="text" id="businessName" placeholder="Business Name"
-                class="w-full p-3 bg-white/5 border border-white/10 rounded-lg">
-            <textarea id="businessBio" placeholder="Short Bio"
-                class="w-full p-3 bg-white/5 border border-white/10 rounded-lg h-24"></textarea>
-        </div>
-
-        <div class="mt-auto">
-            <button onclick="saveProfile()"
-                class="w-full bg-blue-600 hover:bg-blue-500 py-3 rounded-xl font-bold shadow-lg transition-transform hover:scale-105">
-                💾 Save Changes
-            </button>
+            <p id="login-error" class="text-red-400 text-xs mt-4 hidden"></p>
         </div>
     </div>
 
-    <div class="flex-1 flex items-center justify-center bg-gray-900 relative">
-        <div class="absolute inset-0 opacity-20"
-            style="background-image: radial-gradient(#4f46e5 1px, transparent 1px); background-size: 20px 20px;"></div>
-        <div id="phone-preview"
-            class="w-[375px] h-[720px] bg-black rounded-[40px] border-[8px] border-gray-800 overflow-hidden relative">
-            <iframe id="preview-frame" src="index.html" class="w-full h-full bg-white"></iframe>
+    <div id="builder-app" class="flex h-full opacity-0 transition-opacity duration-500">
+
+        <div id="editor-sidebar" class="w-96 flex flex-col p-6 border-r border-white/10 h-full overflow-y-auto z-20">
+            <div class="flex justify-between items-center mb-6">
+                <h1 class="font-bold text-xl">Taylored Builder</h1>
+                <button onclick="logOut()" class="text-xs bg-white/10 px-2 py-1 rounded hover:bg-white/20">Log
+                    Out</button>
+            </div>
+
+            <div
+                class="bg-gradient-to-r from-violet-600 to-indigo-600 p-5 rounded-xl shadow-lg mb-6 border border-white/10">
+                <h3 class="font-bold text-lg mb-2"><i class="fa-solid fa-wand-magic-sparkles"></i> AI Import</h3>
+                <p class="text-xs opacity-80 mb-3">Paste your Instagram or Website URL</p>
+                <input type="text" id="ai-url-input" placeholder="e.g. instagram.com/..."
+                    class="w-full p-2 mb-3 rounded-lg text-black text-sm border-none focus:ring-2 focus:ring-white">
+                <button id="ai-generate-btn" onclick="runAiImport()"
+                    class="w-full bg-white text-indigo-700 font-bold py-2 rounded-lg shadow hover:bg-gray-100 transition-all text-sm">
+                    🚀 Auto-Build Profile
+                </button>
+            </div>
+
+            <div class="space-y-4 mb-6">
+                <label class="text-xs uppercase text-gray-500 font-bold">Business Info</label>
+                <input type="text" id="businessName" placeholder="Business Name"
+                    class="w-full p-3 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:border-white/30">
+                <textarea id="businessBio" placeholder="Short Bio"
+                    class="w-full p-3 bg-white/5 border border-white/10 rounded-lg h-24 focus:outline-none focus:border-white/30"></textarea>
+            </div>
+
+            <div class="mt-auto">
+                <button onclick="saveProfile()"
+                    class="w-full bg-blue-600 hover:bg-blue-500 py-3 rounded-xl font-bold shadow-lg transition-transform hover:scale-105">
+                    💾 Save Changes
+                </button>
+            </div>
+        </div>
+
+        <div class="flex-1 flex items-center justify-center bg-gray-900 relative">
+            <div class="absolute inset-0 opacity-20"
+                style="background-image: radial-gradient(#4f46e5 1px, transparent 1px); background-size: 20px 20px;">
+            </div>
+            <div id="phone-preview"
+                class="w-[375px] h-[720px] bg-black rounded-[40px] border-[8px] border-gray-800 overflow-hidden relative">
+                <iframe id="preview-frame" src="index.html" class="w-full h-full bg-white"></iframe>
+            </div>
         </div>
     </div>
 
@@ -105,20 +127,61 @@
         const SUPABASE_KEY = 'sb_secret_lfG0LhFnbv2CBALRiHj34A_WJyrReUA';
         // ==========================================
 
-        // 1. Initialize (RENAMED to 'sbClient' to fix the error)
         let sbClient;
-        try {
-            if (SUPABASE_URL.includes('PASTE')) {
-                alert("🚨 STOP! You forgot to paste your keys in the code!");
-            } else {
+
+        // 1. Initialize & Check Auth (The "Doorman")
+        async function init() {
+            try {
+                if (SUPABASE_URL.includes('PASTE')) {
+                    alert("🚨 STOP! Paste your Supabase Keys in builder.html lines 19-20!");
+                    return;
+                }
                 sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
                 console.log("✅ Supabase Connected!");
+
+                // Check if user is logged in
+                const { data: { user } } = await sbClient.auth.getUser();
+
+                if (user) {
+                    // YES: Show Builder, Hide Login
+                    document.getElementById('login-overlay').classList.add('hidden');
+                    document.getElementById('builder-app').classList.remove('opacity-0');
+                    loadProfile(user);
+                } else {
+                    // NO: Show Login, Hide Builder
+                    document.getElementById('login-overlay').classList.remove('hidden');
+                }
+
+            } catch (e) {
+                console.error("Init Error", e);
             }
-        } catch (e) {
-            console.error("Init Error", e);
         }
 
-        // 2. AI Logic
+        // 2. Login Logic
+        async function handleLogin() {
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            const btn = document.getElementById('login-btn');
+            const err = document.getElementById('login-error');
+
+            btn.innerText = "Checking...";
+            btn.disabled = true;
+            err.classList.add('hidden');
+
+            const { data, error } = await sbClient.auth.signInWithPassword({ email, password });
+
+            if (error) {
+                err.innerText = error.message;
+                err.classList.remove('hidden');
+                btn.innerText = "Enter Studio";
+                btn.disabled = false;
+            } else {
+                // Success! Just reload the page to let 'init()' handle the rest
+                location.reload();
+            }
+        }
+
+        // 3. AI Logic
         async function runAiImport() {
             const input = document.getElementById('ai-url-input');
             const btn = document.getElementById('ai-generate-btn');
@@ -138,8 +201,6 @@
                 });
 
                 const data = await res.json();
-                console.log("AI Data:", data);
-
                 if (data.error) throw new Error(data.error);
 
                 if (data.title) document.getElementById('businessName').value = data.title;
@@ -150,23 +211,19 @@
                 await saveProfile();
 
             } catch (e) {
-                console.error(e);
                 showToast("AI Error: " + e.message, "error");
             } finally {
-                setTimeout(() => {
-                    btn.innerHTML = originalText;
-                    btn.disabled = false;
-                }, 2000);
+                setTimeout(() => { btn.innerHTML = originalText; btn.disabled = false; }, 2000);
             }
         }
 
-        // 3. Save Logic
+        // 4. Save Logic
         async function saveProfile() {
             const btn = document.querySelector('button[onclick="saveProfile()"]');
             if (btn) btn.innerHTML = 'Saving...';
 
             try {
-                const { data: { user } } = await sbClient.auth.getUser(); // Using new name
+                const { data: { user } } = await sbClient.auth.getUser();
                 if (!user) throw new Error("No user logged in!");
 
                 const updates = {
@@ -185,31 +242,24 @@
                 if (frame) frame.contentWindow.location.reload();
 
             } catch (error) {
-                console.error(error);
                 showToast('Save Failed: ' + error.message, 'error');
             } finally {
                 if (btn) btn.innerHTML = '💾 Save Changes';
             }
         }
 
-        // 4. Load Logic
-        async function loadProfile() {
+        // 5. Load Logic
+        async function loadProfile(user) {
             try {
-                const { data: { user } } = await sbClient.auth.getUser();
-                if (!user) return window.location.href = 'index.html';
-
                 const { data } = await sbClient.from('profiles').select('*').eq('id', user.id).single();
-
                 if (data) {
                     if (data.title) document.getElementById('businessName').value = data.title;
                     if (data.description) document.getElementById('businessBio').value = data.description;
                 }
-            } catch (error) {
-                console.error(error);
-            }
+            } catch (error) { console.error(error); }
         }
 
-        // 5. Toast UI
+        // 6. UI Helpers
         function showToast(message, type = 'success') {
             const toast = document.getElementById('toast');
             const msg = document.getElementById('toast-message');
@@ -221,18 +271,17 @@
             } else {
                 icon.innerHTML = '<i class="fa-solid fa-circle-check text-green-500"></i>';
             }
-
             toast.classList.remove('translate-y-32');
             setTimeout(() => toast.classList.add('translate-y-32'), 3000);
         }
 
-        // 6. Logout
         async function logOut() {
             await sbClient.auth.signOut();
-            window.location.href = 'index.html';
+            location.reload();
         }
 
-        window.onload = loadProfile;
+        // Start the engine
+        window.onload = init;
     </script>
 </body>
 
