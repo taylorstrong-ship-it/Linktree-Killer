@@ -437,9 +437,11 @@ async function aiMagicImport() {
         return;
     }
     
-    // Show loading state
-    const importBtn = event?.currentTarget;
-    const originalHTML = importBtn?.innerHTML || '';
+    // Show loading state - find the AI Import button
+    const importBtn = Array.from(document.querySelectorAll('button')).find(
+        btn => btn.textContent.includes('AI Import') || btn.innerHTML.includes('wand-magic-sparkles')
+    );
+    const originalHTML = importBtn?.innerHTML || '<i class="fa-solid fa-wand-magic-sparkles"></i> AI Import';
     if (importBtn) {
         importBtn.disabled = true;
         importBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Analyzing...';
