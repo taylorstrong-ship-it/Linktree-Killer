@@ -444,12 +444,19 @@ async function aiMagicImport() {
         return;
     }
     
-    // Show loading state - find the AI Magic Import button
+    // Show loading state - toggle button text/loading states
     const importBtn = document.getElementById('aiMagicBtn');
-    const originalHTML = importBtn?.innerHTML || '<i class="fa-solid fa-rocket"></i> Auto-Build Profile';
-    if (importBtn) {
+    const btnText = importBtn?.querySelector('.btn-text');
+    const btnLoading = importBtn?.querySelector('.btn-loading');
+    
+    if (importBtn && btnText && btnLoading) {
         importBtn.disabled = true;
-        importBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Analyzing your brand...';
+        btnText.style.display = 'none';
+        btnLoading.style.display = 'flex';
+    } else if (importBtn) {
+        // Fallback for old button structure
+        importBtn.disabled = true;
+        importBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Generating...';
     }
     
     try {
