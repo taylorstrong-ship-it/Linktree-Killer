@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Link Builder</title>
+    <title>Taylored Builder Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -13,187 +13,252 @@
             background: #0f172a;
             color: white;
             overflow: hidden;
+            font-family: sans-serif;
         }
 
-        #editor-sidebar {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(10px);
+        #sidebar {
+            background: #1e293b;
+            border-right: 1px solid #334155;
         }
 
-        .hidden {
-            display: none !important;
+        input,
+        textarea {
+            background: #0f172a;
+            border: 1px solid #334155;
+            color: white;
+            transition: all 0.2s;
+        }
+
+        input:focus,
+        textarea:focus {
+            border-color: #6366f1;
+            outline: none;
+            ring: 2px solid #6366f1;
+        }
+
+        /* Phone Animation */
+        #phone-mockup {
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            transition: transform 0.3s;
+        }
+
+        .link-card {
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
     </style>
 </head>
 
-<body class="h-screen relative">
+<body class="flex h-screen relative">
 
-    <div id="login-overlay" class="absolute inset-0 z-50 bg-slate-900 flex items-center justify-center hidden">
-        <div class="bg-white/10 backdrop-blur-xl p-8 rounded-2xl border border-white/20 shadow-2xl w-96 text-center">
-            <h2 class="text-2xl font-bold mb-6">🔐 Login to Studio</h2>
-            <input type="email" id="login-email" placeholder="Email"
-                class="w-full p-3 mb-4 bg-black/20 rounded-lg border border-white/10 text-white focus:outline-none focus:border-blue-500">
-            <input type="password" id="login-password" placeholder="Password"
-                class="w-full p-3 mb-6 bg-black/20 rounded-lg border border-white/10 text-white focus:outline-none focus:border-blue-500">
+    <div id="login-overlay"
+        class="absolute inset-0 z-50 bg-slate-900/95 backdrop-blur-sm flex items-center justify-center hidden">
+        <div class="bg-slate-800 p-8 rounded-2xl border border-slate-700 shadow-2xl w-96 text-center">
+            <div class="w-16 h-16 bg-blue-600 rounded-full mx-auto flex items-center justify-center mb-4 text-2xl">🔐
+            </div>
+            <h2 class="text-2xl font-bold mb-2">Welcome Back</h2>
+            <p class="text-slate-400 mb-6 text-sm">Login to manage your page</p>
+            <input type="email" id="login-email" placeholder="Email" class="w-full p-3 mb-3 rounded-lg">
+            <input type="password" id="login-password" placeholder="Password" class="w-full p-3 mb-6 rounded-lg">
             <button onclick="handleLogin()"
-                class="w-full bg-blue-600 hover:bg-blue-500 py-3 rounded-xl font-bold text-white transition-all">Enter
-                Studio</button>
+                class="w-full bg-blue-600 hover:bg-blue-500 py-3 rounded-xl font-bold transition-all">Log In</button>
             <p id="login-error" class="text-red-400 text-xs mt-4 hidden"></p>
         </div>
     </div>
 
-    <div id="builder-app" class="flex h-full opacity-0 transition-opacity duration-500">
+    <div id="sidebar" class="w-[400px] flex flex-col h-full z-20 flex-shrink-0 shadow-xl">
+        <div class="p-6 border-b border-slate-700 flex justify-between items-center bg-slate-800/50">
+            <h1 class="font-bold text-lg text-white flex items-center gap-2"><i
+                    class="fa-solid fa-layer-group text-blue-500"></i> Taylored Builder</h1>
+            <button onclick="logOut()" class="text-xs text-slate-400 hover:text-white transition-colors"><i
+                    class="fa-solid fa-right-from-bracket"></i></button>
+        </div>
 
-        <div id="editor-sidebar" class="w-96 flex flex-col p-6 border-r border-white/10 h-full overflow-y-auto z-20">
-            <div class="flex justify-between items-center mb-6">
-                <h1 class="font-bold text-xl">Taylored Builder</h1>
-                <button onclick="logOut()" class="text-xs bg-white/10 px-2 py-1 rounded hover:bg-white/20">Log
-                    Out</button>
+        <div class="flex-1 overflow-y-auto p-6 space-y-8">
+            <div class="space-y-4">
+                <h3 class="text-xs uppercase font-bold text-slate-500 tracking-wider">Profile</h3>
+                <div>
+                    <label class="text-xs text-slate-400 mb-1 block">Display Name</label>
+                    <input type="text" id="businessName" placeholder="e.g. Taylor's Art" class="w-full p-3 rounded-lg">
+                </div>
+                <div>
+                    <label class="text-xs text-slate-400 mb-1 block">Bio / Description</label>
+                    <textarea id="businessBio" placeholder="Tell your story..."
+                        class="w-full p-3 rounded-lg h-24 resize-none"></textarea>
+                </div>
             </div>
 
-            <div class="space-y-4 mb-6">
-                <label class="text-xs uppercase text-gray-500 font-bold">Profile Info</label>
-                <input type="text" id="businessName" placeholder="Business Name"
-                    class="w-full p-3 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:border-blue-500">
-                <textarea id="businessBio" placeholder="Short Bio"
-                    class="w-full p-3 bg-white/5 border border-white/10 rounded-lg h-24 focus:outline-none focus:border-blue-500"></textarea>
-            </div>
-
-            <div class="mb-6">
-                <div class="flex justify-between items-center mb-4">
-                    <label class="text-xs uppercase text-gray-500 font-bold">Links</label>
-                    <button onclick="addLinkInput()" class="text-xs bg-blue-600 px-2 py-1 rounded hover:bg-blue-500">+
-                        Add Link</button>
+            <div class="space-y-4">
+                <div class="flex justify-between items-end">
+                    <h3 class="text-xs uppercase font-bold text-slate-500 tracking-wider">Links</h3>
+                    <button onclick="addLinkInput()"
+                        class="text-xs bg-slate-700 hover:bg-slate-600 text-white px-3 py-1.5 rounded-lg transition-colors border border-slate-600">
+                        <i class="fa-solid fa-plus mr-1"></i> Add Link
+                    </button>
                 </div>
                 <div id="links-container" class="space-y-3">
                 </div>
-            </div>
-
-            <div class="mt-auto pt-6">
-                <button onclick="saveProfile()"
-                    class="w-full bg-green-600 hover:bg-green-500 py-3 rounded-xl font-bold shadow-lg transition-transform hover:scale-105">
-                    💾 Save Changes
-                </button>
+                <div id="empty-links"
+                    class="hidden text-center p-6 border-2 border-dashed border-slate-700 rounded-xl text-slate-500 text-sm">
+                    No links yet. Click "Add Link" to start!
+                </div>
             </div>
         </div>
 
-        <div class="flex-1 flex items-center justify-center bg-gray-900 relative">
-            <div id="phone-preview"
-                class="w-[375px] h-[720px] bg-black rounded-[40px] border-[8px] border-gray-800 overflow-hidden relative">
-                <iframe id="preview-frame" src="index.html" class="w-full h-full bg-white"></iframe>
-            </div>
+        <div class="p-6 border-t border-slate-700 bg-slate-800/50">
+            <button onclick="saveProfile()" id="save-btn"
+                class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 py-3.5 rounded-xl font-bold shadow-lg transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2">
+                <i class="fa-solid fa-floppy-disk"></i> <span>Save Changes</span>
+            </button>
+        </div>
+    </div>
+
+    <div class="flex-1 bg-[#0f172a] flex items-center justify-center relative overflow-hidden">
+        <div class="absolute inset-0 opacity-10"
+            style="background-image: radial-gradient(#6366f1 1px, transparent 1px); background-size: 24px 24px;"></div>
+
+        <div id="phone-mockup"
+            class="w-[375px] h-[750px] bg-black rounded-[50px] border-[12px] border-gray-900 overflow-hidden relative shadow-2xl z-10">
+            <div class="absolute top-0 left-1/2 -translate-x-1/2 w-40 h-7 bg-black rounded-b-2xl z-20"></div>
+            <iframe id="preview-frame" src="index.html" class="w-full h-full bg-white"></iframe>
         </div>
     </div>
 
     <div id="toast"
-        class="fixed bottom-5 right-5 bg-white text-black px-6 py-4 rounded-xl shadow-2xl transform translate-y-32 transition-all duration-300 z-50 flex items-center gap-3 border border-gray-100">
-        <div id="toast-icon"></div>
-        <div class="text-sm font-bold" id="toast-message"></div>
+        class="fixed bottom-6 right-6 bg-slate-800 text-white px-6 py-4 rounded-xl shadow-2xl transform translate-y-40 transition-all duration-300 z-50 flex items-center gap-4 border border-slate-700">
+        <div id="toast-icon" class="text-2xl"></div>
+        <div>
+            <div class="font-bold text-sm" id="toast-title">Notification</div>
+            <div class="text-xs text-slate-400" id="toast-msg">Details here</div>
+        </div>
     </div>
 
     <script>
-        // 👇 PASTE YOUR KEYS HERE 👇
+        // ==========================================
+        // 👇 PASTE KEYS HERE (DO NOT SKIP) 👇
         const SUPABASE_URL = 'https://qxkicdhsrlpehgcsapsh.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_TTBR0ES-pM7LOWDsywEy7A_9BSlhWGg';
-        // 👆 PASTE YOUR KEYS HERE 👆
+        // ==========================================
 
         let sbClient;
 
-        // 1. Initialize
+        // 1. INIT & AUTH
         async function init() {
-            if (SUPABASE_URL.includes('PASTE')) return alert("🚨 STOP! Paste your Supabase Keys in builder.html lines 18-19!");
+            if (SUPABASE_URL.includes('PASTE')) return alert("🚨 Please paste your Supabase Keys in builder.html!");
 
             sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-            console.log("✅ Supabase Connected!");
 
-            // Check Login
+            // Check Session
             const { data: { user } } = await sbClient.auth.getUser();
             if (user) {
                 document.getElementById('login-overlay').classList.add('hidden');
-                document.getElementById('builder-app').classList.remove('opacity-0');
                 loadProfile(user);
             } else {
                 document.getElementById('login-overlay').classList.remove('hidden');
             }
         }
 
-        // 2. Add Link Logic
+        // 2. ADD LINK UI
         function addLinkInput(title = '', url = '') {
             const container = document.getElementById('links-container');
+            const id = Date.now(); // Unique ID for animations
             const div = document.createElement('div');
-            div.className = 'link-item bg-white/5 p-3 rounded-lg border border-white/10 flex gap-2 items-start';
+
+            div.className = 'link-card bg-slate-800 p-4 rounded-xl border border-slate-700 flex gap-3 items-start group';
             div.innerHTML = `
+                <div class="pt-2 text-slate-500 cursor-move"><i class="fa-solid fa-grip-lines"></i></div>
                 <div class="flex-1 space-y-2">
-                    <input type="text" placeholder="Title (e.g. Website)" value="${title}" class="link-title w-full bg-black/20 p-2 rounded text-sm text-white border border-transparent focus:border-blue-500 focus:outline-none">
-                    <input type="text" placeholder="URL (https://...)" value="${url}" class="link-url w-full bg-black/20 p-2 rounded text-sm text-white border border-transparent focus:border-blue-500 focus:outline-none">
+                    <input type="text" placeholder="Link Title (e.g. Website)" value="${title}" class="link-title w-full bg-slate-900 p-2 rounded text-sm text-white border border-slate-700 focus:border-blue-500">
+                    <input type="text" placeholder="URL (https://...)" value="${url}" class="link-url w-full bg-slate-900 p-2 rounded text-sm text-white border border-slate-700 focus:border-blue-500">
                 </div>
-                <button onclick="this.parentElement.remove()" class="text-red-400 hover:text-red-300 p-2"><i class="fa-solid fa-trash"></i></button>
+                <button onclick="this.closest('.link-card').remove()" class="text-slate-500 hover:text-red-400 p-1 transition-colors opacity-50 group-hover:opacity-100"><i class="fa-solid fa-trash"></i></button>
             `;
             container.appendChild(div);
+            document.getElementById('empty-links').classList.add('hidden');
         }
 
-        // 3. Save Logic
+        // 3. SAVE LOGIC
         async function saveProfile() {
-            const btn = document.querySelector('button[onclick="saveProfile()"]');
-            btn.innerHTML = 'Saving...';
+            const btn = document.getElementById('save-btn');
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> <span>Saving...</span>';
 
             try {
                 const { data: { user } } = await sbClient.auth.getUser();
-                if (!user) throw new Error("Not logged in");
+                if (!user) throw new Error("Session expired. Please log in again.");
 
-                // Gather all links
-                const linkElements = document.querySelectorAll('.link-item');
+                // Gather Links
+                const linkElements = document.querySelectorAll('.link-card');
                 const linksData = Array.from(linkElements).map(el => ({
                     title: el.querySelector('.link-title').value,
                     url: el.querySelector('.link-url').value
-                })).filter(l => l.title && l.url); // Filter out empty ones
+                })).filter(l => l.title && l.url); // Filter empties
 
                 const updates = {
                     id: user.id,
                     user_id: user.id,
                     title: document.getElementById('businessName').value,
                     description: document.getElementById('businessBio').value,
-                    links: linksData, // Save the array of links
+                    links: linksData,
                     updated_at: new Date()
                 };
 
                 const { error } = await sbClient.from('profiles').upsert(updates);
                 if (error) throw error;
 
-                showToast('Saved Successfully!', 'success');
+                showToast('Success', 'Profile updated successfully!', 'success');
+                // Refresh preview without full reload
                 document.getElementById('preview-frame').contentWindow.location.reload();
 
             } catch (error) {
-                showToast(error.message, 'error');
+                console.error(error);
+                showToast('Error', error.message, 'error');
             } finally {
-                btn.innerHTML = '💾 Save Changes';
+                btn.innerHTML = originalHTML;
             }
         }
 
-        // 4. Load Logic
+        // 4. LOAD LOGIC
         async function loadProfile(user) {
-            const { data } = await sbClient.from('profiles').select('*').eq('id', user.id).single();
-            if (data) {
-                if (data.title) document.getElementById('businessName').value = data.title;
-                if (data.description) document.getElementById('businessBio').value = data.description;
+            try {
+                const { data } = await sbClient.from('profiles').select('*').eq('id', user.id).single();
+                if (data) {
+                    if (data.title) document.getElementById('businessName').value = data.title;
+                    if (data.description) document.getElementById('businessBio').value = data.description;
 
-                // Load existing links
-                document.getElementById('links-container').innerHTML = '';
-                if (data.links && Array.isArray(data.links)) {
-                    data.links.forEach(l => addLinkInput(l.title, l.url));
-                } else {
-                    addLinkInput(); // Start with one empty box
+                    const container = document.getElementById('links-container');
+                    container.innerHTML = '';
+
+                    if (data.links && Array.isArray(data.links) && data.links.length > 0) {
+                        data.links.forEach(l => addLinkInput(l.title, l.url));
+                    } else {
+                        document.getElementById('empty-links').classList.remove('hidden');
+                    }
                 }
-            }
+            } catch (e) { console.error("Load error", e); }
         }
 
-        // Helpers
-        function showToast(msg, type) {
+        // HELPERS
+        function showToast(title, msg, type) {
             const toast = document.getElementById('toast');
-            document.getElementById('toast-message').innerText = msg;
-            document.getElementById('toast-icon').innerHTML = type === 'error' ? '❌' : '✅';
-            toast.classList.remove('translate-y-32');
-            setTimeout(() => toast.classList.add('translate-y-32'), 3000);
+            document.getElementById('toast-title').innerText = title;
+            document.getElementById('toast-msg').innerText = msg;
+            document.getElementById('toast-icon').innerHTML = type === 'error'
+                ? '<i class="fa-solid fa-circle-xmark text-red-500"></i>'
+                : '<i class="fa-solid fa-circle-check text-green-500"></i>';
+            toast.classList.remove('translate-y-40');
+            setTimeout(() => toast.classList.add('translate-y-40'), 3000);
         }
 
         async function handleLogin() {
@@ -201,18 +266,15 @@
             const password = document.getElementById('login-password').value;
             const { error } = await sbClient.auth.signInWithPassword({ email, password });
             if (error) {
-                document.getElementById('login-error').innerText = error.message;
-                document.getElementById('login-error').classList.remove('hidden');
+                const errEl = document.getElementById('login-error');
+                errEl.innerText = error.message;
+                errEl.classList.remove('hidden');
             } else {
                 location.reload();
             }
         }
 
-        async function logOut() {
-            await sbClient.auth.signOut();
-            location.reload();
-        }
-
+        async function logOut() { await sbClient.auth.signOut(); location.reload(); }
         window.onload = init;
     </script>
 </body>
