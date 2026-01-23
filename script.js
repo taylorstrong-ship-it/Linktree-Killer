@@ -516,9 +516,14 @@ async function aiMagicImport() {
         showToast('AI Import failed: ' + (error.message || 'Unknown error'), 'fa-exclamation-circle');
     } finally {
         // Restore button state
-        if (importBtn) {
+        const importBtn = document.getElementById('aiMagicBtn');
+        const btnText = importBtn?.querySelector('.btn-text');
+        const btnLoading = importBtn?.querySelector('.btn-loading');
+        
+        if (importBtn && btnText && btnLoading) {
             importBtn.disabled = false;
-            importBtn.innerHTML = originalHTML;
+            btnText.style.display = 'flex';
+            btnLoading.style.display = 'none';
         }
     }
 }

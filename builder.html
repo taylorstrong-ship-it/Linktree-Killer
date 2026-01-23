@@ -51,35 +51,27 @@
             </button>
         </div>
 
-        <!-- Premium AI Magic Import Card -->
-        <div class="ai-magic-card">
-            <div class="ai-magic-header">
+        <!-- ✨ AI Auto-Build Section - Main Action at Top -->
+        <div class="ai-auto-build-section">
+            <div class="ai-auto-build-header">
                 <i class="fa-solid fa-wand-magic-sparkles"></i>
-                <h3>✨ AI Magic Import</h3>
+                <h3>✨ AI Auto-Build</h3>
             </div>
-            <p class="ai-magic-subtitle">Paste your Instagram or Website URL and watch AI build your profile instantly</p>
-            <div class="ai-magic-input-group">
+            <p class="ai-auto-build-subtitle">Paste your Instagram or Website URL and AI will create your profile instantly</p>
+            <div class="ai-auto-build-input-group">
                 <input 
                     type="url" 
                     id="aiImportUrl" 
                     placeholder="Paste your Instagram or Website URL..." 
-                    class="ai-magic-input"
+                    class="ai-auto-build-input"
                 >
                 <button 
                     id="aiMagicBtn" 
-                    class="ai-magic-btn" 
+                    class="ai-auto-build-btn" 
                     onclick="aiMagicImport()"
                 >
-                    <i class="fa-solid fa-rocket"></i> Auto-Build Profile
-                </button>
-            </div>
-        </div>
-
-        <div class="demo-section">
-            <div style="display: flex; flex-direction: column; gap: 12px;">
-                <!-- Demo Data Button -->
-                <button class="demo-btn" onclick="loadDemoData()">
-                    <i class="fa-solid fa-rocket"></i> Load Demo Data
+                    <span class="btn-text"><i class="fa-solid fa-rocket"></i> Create My Profile</span>
+                    <span class="btn-loading" style="display: none;"><i class="fa-solid fa-spinner fa-spin"></i> Generating...</span>
                 </button>
             </div>
         </div>
