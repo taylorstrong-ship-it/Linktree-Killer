@@ -12,42 +12,68 @@
     <style>
         body {
             font-family: 'Inter', sans-serif;
+            transition: background 0.5s;
+            background-size: cover;
+            background-position: center;
         }
 
         .aspect-video {
             aspect-ratio: 16 / 9;
         }
+
+        .btn-shadow {
+            box-shadow: 0 4px 14px 0 rgba(0, 0, 0, 0.1);
+        }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+        }
     </style>
 </head>
 
-<body class="bg-indigo-50 min-h-screen py-10 px-4">
+<body id="page-body" class="bg-indigo-50 min-h-screen py-10 px-4">
 
-    <div class="max-w-md mx-auto space-y-8 text-center">
+    <div class="max-w-md mx-auto space-y-6 text-center">
 
-        <div>
-            <div
-                class="w-28 h-28 bg-white rounded-full mx-auto shadow-xl border-4 border-white overflow-hidden mb-4 flex items-center justify-center">
-                <i class="fa-solid fa-dog text-5xl text-indigo-500"></i>
+        <div class="glass-panel p-6 rounded-3xl shadow-lg border border-white/50">
+            <div class="relative mx-auto w-28 h-28 mb-4">
+                <img id="profile-avatar" src=""
+                    class="w-full h-full object-cover rounded-full shadow-xl border-4 border-white hidden">
+                <div id="default-avatar"
+                    class="w-full h-full bg-slate-200 rounded-full shadow-xl flex items-center justify-center border-4 border-white text-slate-400">
+                    <i class="fa-solid fa-user text-4xl"></i>
+                </div>
             </div>
+
             <h1 id="title" class="text-3xl font-bold text-slate-900">...</h1>
-            <p id="bio" class="text-slate-600 mt-2">...</p>
+            <p id="bio" class="text-slate-600 mt-2 text-sm leading-relaxed">...</p>
+
+            <div id="socials-container" class="flex justify-center gap-4 mt-4 text-2xl text-slate-700"></div>
+
+            <div id="contact-section" class="mt-6 hidden">
+                <a id="contact-btn" href="#"
+                    class="inline-block bg-slate-900 text-white px-8 py-3 rounded-full font-bold shadow-lg hover:scale-105 transition-transform w-full">
+                    <i class="fa-regular fa-envelope mr-2"></i> Contact Me
+                </a>
+            </div>
         </div>
 
-        <div id="video-section" class="hidden rounded-2xl overflow-hidden shadow-lg border border-white">
-            <iframe id="video-frame" class="w-full aspect-video" src="" frameborder="0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowfullscreen></iframe>
+        <div id="video-section" class="hidden rounded-2xl overflow-hidden shadow-lg border-2 border-white bg-black">
+            <iframe id="video-frame" class="w-full aspect-video" src="" frameborder="0" allowfullscreen></iframe>
         </div>
 
         <div id="links-list" class="space-y-3"></div>
 
-        <div id="gallery-section" class="hidden">
-            <h3 class="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4">Gallery</h3>
+        <div id="gallery-section" class="hidden glass-panel p-4 rounded-3xl">
+            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Gallery</h3>
             <div id="gallery-grid" class="grid grid-cols-2 gap-2"></div>
         </div>
 
         <div class="pt-8">
-            <a href="builder.html" class="opacity-20 hover:opacity-100 text-xs">Manage Page</a>
+            <a href="builder.html"
+                class="bg-black/20 hover:bg-black/40 text-white px-3 py-1 rounded-full text-xs backdrop-blur-md transition">Manage
+                Page</a>
         </div>
     </div>
 
@@ -63,11 +89,43 @@
             const { data } = await sbClient.from('profiles').select('*').order('updated_at', { ascending: false }).limit(1).single();
 
             if (data) {
-                // 1. Text
+                // Background & Theme
+                const body = document.getElementById('page-body');
+                if(data.background_url) {
+                    body.style.backgroundImage = `url('${data.background_url}')`;
+                } else if(data.theme_color) {
+                    body.style.backgroundColor = data.theme_color;
+                }
+
+                // Header
                 document.getElementById('title').innerText = data.title || "Welcome";
                 document.getElementById('bio').innerText = data.description || "";
+                
+                // Avatar
+                if(data.avatar_url) {
+                    const img = document.getElementById('profile-avatar');
+                    img.src = data.avatar_url;
+                    img.classList.remove('hidden');
+                    document.getElementById('default-avatar').classList.add('hidden');
+                }
 
-                // 2. Video (Parse YouTube URL to Embed)
+                // Contact Me
+                if(data.contact_email) {
+                    const btn = document.getElementById('contact-btn');
+                    btn.href = `mailto:${data.contact_email}`;
+                    btn.style.backgroundColor = data.theme_color || '#0f172a';
+                    document.getElementById('contact-section').classList.remove('hidden');
+                }
+
+                // Socials
+                const socials = document.getElementById('socials-container');
+                socials.innerHTML = '';
+                if(data.social_links) {
+                    if(data.social_links.instagram) socials.innerHTML += `<a href="${data.social_links.instagram}" target="_blank"><i class="fa-brands fa-instagram hover:text-pink-600 transition"></i></a>`;
+                    if(data.social_links.tiktok) socials.innerHTML += `<a href="${data.social_links.tiktok}" target="_blank"><i class="fa-brands fa-tiktok hover:text-black transition"></i></a>`;
+                }
+
+                // Video
                 if (data.video_url && data.video_url.includes('youtube.com')) {
                     const videoId = data.video_url.split('v=')[1]?.split('&')[0];
                     if (videoId) {
@@ -76,7 +134,7 @@
                     }
                 }
 
-                // 3. Links
+                // Links
                 const linkList = document.getElementById('links-list');
                 linkList.innerHTML = '';
                 if (data.links) {
@@ -84,13 +142,13 @@
                         const a = document.createElement('a');
                         a.href = l.url;
                         a.target = "_blank";
-                        a.className = "block bg-white hover:bg-indigo-600 hover:text-white border border-slate-200 text-slate-800 font-bold py-4 px-6 rounded-xl shadow-sm transition-all flex justify-between items-center";
-                        a.innerHTML = `<span>${l.title}</span> <i class="fa-solid fa-arrow-right"></i>`;
+                        a.className = "btn-shadow block bg-white hover:brightness-95 border border-white text-slate-900 font-bold py-4 px-6 rounded-xl transition-all flex justify-between items-center transform hover:-translate-y-1";
+                        a.innerHTML = `<span>${l.title}</span> <i class="fa-solid fa-arrow-right opacity-30"></i>`;
                         linkList.appendChild(a);
                     });
                 }
 
-                // 4. Gallery
+                // Gallery
                 const galleryGrid = document.getElementById('gallery-grid');
                 galleryGrid.innerHTML = '';
                 if (data.gallery_images && data.gallery_images.length > 0) {
@@ -98,7 +156,7 @@
                     data.gallery_images.forEach(url => {
                         const img = document.createElement('img');
                         img.src = url;
-                        img.className = "w-full h-32 object-cover rounded-lg shadow-sm border border-white hover:scale-105 transition-transform";
+                        img.className = "w-full h-32 object-cover rounded-lg shadow-sm hover:scale-105 transition-transform cursor-pointer";
                         galleryGrid.appendChild(img);
                     });
                 }

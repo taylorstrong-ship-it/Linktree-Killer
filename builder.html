@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Taylored Builder Pro</title>
+    <title>Taylored Builder Ultimate</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -17,18 +17,28 @@
         }
 
         input,
-        textarea {
+        textarea,
+        select {
             background: #1e293b;
             border: 1px solid #334155;
             color: white;
-            transition: all 0.2s;
+            transition: 0.2s;
         }
 
         input:focus,
         textarea:focus {
             border-color: #6366f1;
             outline: none;
-            ring: 2px solid #6366f1;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+            background: #0f172a;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            rounded: 10px;
         }
     </style>
 </head>
@@ -36,8 +46,8 @@
 <body class="flex h-screen">
 
     <div id="login-overlay" class="absolute inset-0 z-50 bg-slate-900/95 flex items-center justify-center hidden">
-        <div class="bg-slate-800 p-8 rounded-2xl w-96 text-center shadow-2xl border border-slate-700">
-            <h2 class="text-2xl font-bold mb-4">🔐 Login</h2>
+        <div class="bg-slate-800 p-8 rounded-2xl w-96 text-center border border-slate-700 shadow-2xl">
+            <h2 class="text-xl font-bold mb-4">🔐 Login</h2>
             <input type="email" id="login-email" placeholder="Email" class="w-full p-3 mb-3 rounded-lg">
             <input type="password" id="login-password" placeholder="Password" class="w-full p-3 mb-6 rounded-lg">
             <button onclick="handleLogin()" class="w-full bg-blue-600 hover:bg-blue-500 py-3 rounded-lg font-bold">Enter
@@ -46,49 +56,81 @@
         </div>
     </div>
 
-    <div class="w-[420px] bg-slate-900 border-r border-slate-800 flex flex-col h-full z-20 shadow-2xl">
-        <div class="p-6 border-b border-slate-800 flex justify-between items-center">
-            <h1 class="font-bold text-lg">Taylored Builder</h1>
+    <div class="w-[450px] bg-slate-900 border-r border-slate-800 flex flex-col h-full z-20 shadow-2xl">
+        <div class="p-5 border-b border-slate-800 flex justify-between items-center bg-slate-900">
+            <h1 class="font-bold text-lg text-white"><i class="fa-solid fa-sliders"></i> Ultimate Builder</h1>
             <button onclick="logOut()" class="text-xs text-slate-400 hover:text-white">Log Out</button>
         </div>
 
-        <div class="flex-1 overflow-y-auto p-6 space-y-8">
+        <div class="flex-1 overflow-y-auto p-5 space-y-8">
 
-            <div class="space-y-3">
-                <h3 class="text-xs uppercase font-bold text-blue-400 tracking-wider"><i class="fa-solid fa-user"></i>
-                    Profile</h3>
-                <input type="text" id="businessName" placeholder="Display Name" class="w-full p-3 rounded-lg">
-                <textarea id="businessBio" placeholder="Bio" class="w-full p-3 rounded-lg h-20 resize-none"></textarea>
-            </div>
-
-            <div class="space-y-3">
-                <h3 class="text-xs uppercase font-bold text-red-400 tracking-wider"><i class="fa-brands fa-youtube"></i>
-                    Featured Video</h3>
-                <input type="text" id="videoUrl" placeholder="Paste YouTube URL here..." class="w-full p-3 rounded-lg">
-            </div>
-
-            <div class="space-y-3">
-                <div class="flex justify-between items-center">
-                    <h3 class="text-xs uppercase font-bold text-purple-400 tracking-wider"><i
-                            class="fa-solid fa-images"></i> Gallery</h3>
-                    <button onclick="addImageInput()"
-                        class="text-xs bg-slate-800 hover:bg-slate-700 px-2 py-1 rounded">+ Add Image</button>
+            <div class="bg-gradient-to-r from-violet-600 to-indigo-600 p-4 rounded-xl shadow-lg border border-white/10">
+                <h3 class="font-bold text-sm mb-2"><i class="fa-solid fa-wand-magic-sparkles"></i> AI Import</h3>
+                <div class="flex gap-2">
+                    <input type="text" id="ai-url-input" placeholder="instagram.com/..."
+                        class="w-full p-2 rounded text-xs text-black border-none">
+                    <button id="ai-generate-btn" onclick="runAiImport()"
+                        class="bg-white text-indigo-700 font-bold px-3 py-2 rounded text-xs whitespace-nowrap">Auto-Build</button>
                 </div>
-                <div id="gallery-container" class="space-y-2"></div>
+            </div>
+
+            <div class="space-y-3 p-4 bg-slate-800/50 rounded-xl border border-slate-700">
+                <h3 class="text-xs uppercase font-bold text-slate-400 tracking-wider">Appearance</h3>
+                <input type="text" id="avatarUrl" placeholder="Avatar Image URL..."
+                    class="w-full p-2 rounded text-sm mb-2">
+                <input type="text" id="backgroundUrl" placeholder="Background Image URL..."
+                    class="w-full p-2 rounded text-sm mb-2">
+                <div class="flex items-center gap-2">
+                    <span class="text-xs text-slate-400">Theme Color:</span>
+                    <input type="color" id="themeColor" value="#4f46e5"
+                        class="w-full h-8 p-0 border-none rounded cursor-pointer">
+                </div>
+            </div>
+
+            <div class="space-y-3 p-4 bg-slate-800/50 rounded-xl border border-slate-700">
+                <h3 class="text-xs uppercase font-bold text-blue-400 tracking-wider">Profile Info</h3>
+                <input type="text" id="businessName" placeholder="Display Name"
+                    class="w-full p-2 rounded text-sm font-bold">
+                <textarea id="businessBio" placeholder="Bio..."
+                    class="w-full p-2 rounded text-sm h-16 resize-none"></textarea>
+            </div>
+
+            <div class="space-y-3 p-4 bg-slate-800/50 rounded-xl border border-slate-700">
+                <h3 class="text-xs uppercase font-bold text-pink-400 tracking-wider">Contact & Socials</h3>
+                <input type="email" id="contactEmail" placeholder="Contact Email (Adds Button)"
+                    class="w-full p-2 rounded text-sm">
+                <div class="grid grid-cols-2 gap-2">
+                    <input type="text" id="socialInsta" placeholder="Instagram URL" class="p-2 rounded text-xs">
+                    <input type="text" id="socialTiktok" placeholder="TikTok URL" class="p-2 rounded text-xs">
+                </div>
+            </div>
+
+            <div class="space-y-3 p-4 bg-slate-800/50 rounded-xl border border-slate-700">
+                <h3 class="text-xs uppercase font-bold text-red-400 tracking-wider">Featured Video</h3>
+                <input type="text" id="videoUrl" placeholder="Paste YouTube URL..." class="w-full p-2 rounded text-sm">
             </div>
 
             <div class="space-y-3">
                 <div class="flex justify-between items-center">
-                    <h3 class="text-xs uppercase font-bold text-green-400 tracking-wider"><i
-                            class="fa-solid fa-link"></i> Links</h3>
-                    <button onclick="addLinkInput()" class="text-xs bg-slate-800 hover:bg-slate-700 px-2 py-1 rounded">+
-                        Add Link</button>
+                    <h3 class="text-xs uppercase font-bold text-green-400 tracking-wider">Links</h3>
+                    <button onclick="addLinkInput()"
+                        class="text-xs bg-slate-700 hover:bg-slate-600 px-2 py-1 rounded text-white">+ Add Link</button>
                 </div>
                 <div id="links-container" class="space-y-2"></div>
             </div>
+
+            <div class="space-y-3">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-xs uppercase font-bold text-purple-400 tracking-wider">Image Gallery</h3>
+                    <button onclick="addImageInput()"
+                        class="text-xs bg-slate-700 hover:bg-slate-600 px-2 py-1 rounded text-white">+ Add
+                        Image</button>
+                </div>
+                <div id="gallery-container" class="space-y-2"></div>
+            </div>
         </div>
 
-        <div class="p-6 border-t border-slate-800 bg-slate-900">
+        <div class="p-5 border-t border-slate-800 bg-slate-900">
             <button onclick="saveProfile()" id="save-btn"
                 class="w-full bg-blue-600 hover:bg-blue-500 py-3 rounded-xl font-bold shadow-lg transition-transform hover:scale-[1.02]">
                 💾 Save Everything
@@ -99,7 +141,7 @@
     <div class="flex-1 bg-black flex items-center justify-center">
         <div
             class="w-[375px] h-[750px] bg-white rounded-[40px] overflow-hidden border-[8px] border-slate-800 relative shadow-2xl">
-            <iframe id="preview-frame" src="index.html" class="w-full h-full"></iframe>
+            <iframe id="preview-frame" src="index.html" class="w-full h-full bg-white"></iframe>
         </div>
     </div>
 
@@ -131,11 +173,11 @@
 
         function addLinkInput(title = '', url = '') {
             const div = document.createElement('div');
-            div.className = 'link-item bg-slate-800 p-3 rounded-lg flex gap-2 items-center';
+            div.className = 'link-item bg-slate-800 p-3 rounded-lg flex gap-2 items-center border border-slate-700';
             div.innerHTML = `
                 <div class="grid gap-2 flex-1">
-                    <input type="text" value="${title}" class="link-title w-full p-2 text-sm rounded bg-slate-900 border-none" placeholder="Title">
-                    <input type="text" value="${url}" class="link-url w-full p-2 text-sm rounded bg-slate-900 border-none" placeholder="URL">
+                    <input type="text" value="${title}" class="link-title w-full p-2 text-xs rounded bg-slate-900 border-none" placeholder="Title">
+                    <input type="text" value="${url}" class="link-url w-full p-2 text-xs rounded bg-slate-900 border-none" placeholder="URL">
                 </div>
                 <button onclick="this.closest('.link-item').remove()" class="text-slate-500 hover:text-red-400"><i class="fa-solid fa-trash"></i></button>
             `;
@@ -144,36 +186,57 @@
 
         function addImageInput(url = '') {
             const div = document.createElement('div');
-            div.className = 'gallery-item bg-slate-800 p-3 rounded-lg flex gap-2 items-center';
+            div.className = 'gallery-item bg-slate-800 p-2 rounded-lg flex gap-2 items-center border border-slate-700';
             div.innerHTML = `
-                <input type="text" value="${url}" class="gallery-url w-full p-2 text-sm rounded bg-slate-900 border-none" placeholder="Image URL (https://...)">
+                <input type="text" value="${url}" class="gallery-url w-full p-2 text-xs rounded bg-slate-900 border-none" placeholder="Image URL">
                 <button onclick="this.closest('.gallery-item').remove()" class="text-slate-500 hover:text-red-400"><i class="fa-solid fa-trash"></i></button>
             `;
             document.getElementById('gallery-container').appendChild(div);
         }
 
+        // AI Logic (Restored visually, needs key to work)
+        async function runAiImport() {
+            const url = document.getElementById('ai-url-input').value;
+            if (!url) return showToast("Enter a URL first", "error");
+            const btn = document.getElementById('ai-generate-btn');
+            btn.innerText = "...";
+            try {
+                const res = await fetch('/api/generate', { method: 'POST', body: JSON.stringify({ url }) });
+                const data = await res.json();
+                if (data.title) document.getElementById('businessName').value = data.title;
+                if (data.description) document.getElementById('businessBio').value = data.description;
+                showToast("AI Generated!");
+            } catch (e) { showToast("AI Error (Check Vercel Keys)", "error"); }
+            finally { btn.innerText = "Auto-Build"; }
+        }
+
         async function saveProfile() {
             const btn = document.getElementById('save-btn');
             btn.innerText = 'Saving...';
-
             try {
                 const { data: { user } } = await sbClient.auth.getUser();
 
-                // Collect Links
                 const links = Array.from(document.querySelectorAll('.link-item')).map(el => ({
                     title: el.querySelector('.link-title').value,
                     url: el.querySelector('.link-url').value
                 })).filter(l => l.title && l.url);
 
-                // Collect Gallery
                 const gallery = Array.from(document.querySelectorAll('.gallery-item')).map(el =>
                     el.querySelector('.gallery-url').value
-                ).filter(url => url);
+                ).filter(u => u);
 
                 const updates = {
                     id: user.id, user_id: user.id,
                     title: document.getElementById('businessName').value,
                     description: document.getElementById('businessBio').value,
+                    avatar_url: document.getElementById('avatarUrl').value,
+                    background_url: document.getElementById('backgroundUrl').value,
+                    theme_color: document.getElementById('themeColor').value,
+                    contact_email: document.getElementById('contactEmail').value,
+                    social_links: {
+                        instagram: document.getElementById('socialInsta').value,
+                        tiktok: document.getElementById('socialTiktok').value
+                    },
                     video_url: document.getElementById('videoUrl').value,
                     links: links,
                     gallery_images: gallery,
@@ -182,7 +245,6 @@
 
                 const { error } = await sbClient.from('profiles').upsert(updates);
                 if (error) throw error;
-
                 showToast('Saved Successfully!', 'success');
                 document.getElementById('preview-frame').contentWindow.location.reload();
             } catch (e) { showToast(e.message, 'error'); }
@@ -194,14 +256,23 @@
             if (data) {
                 document.getElementById('businessName').value = data.title || '';
                 document.getElementById('businessBio').value = data.description || '';
+                document.getElementById('avatarUrl').value = data.avatar_url || '';
+                document.getElementById('backgroundUrl').value = data.background_url || '';
+                document.getElementById('themeColor').value = data.theme_color || '#4f46e5';
+                document.getElementById('contactEmail').value = data.contact_email || '';
                 document.getElementById('videoUrl').value = data.video_url || '';
+
+                if (data.social_links) {
+                    document.getElementById('socialInsta').value = data.social_links.instagram || '';
+                    document.getElementById('socialTiktok').value = data.social_links.tiktok || '';
+                }
 
                 document.getElementById('links-container').innerHTML = '';
                 if (data.links) data.links.forEach(l => addLinkInput(l.title, l.url));
                 else addLinkInput();
 
                 document.getElementById('gallery-container').innerHTML = '';
-                if (data.gallery_images) data.gallery_images.forEach(url => addImageInput(url));
+                if (data.gallery_images) data.gallery_images.forEach(u => addImageInput(u));
             }
         }
 
