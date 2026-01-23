@@ -4,333 +4,114 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Taylored Link Builder - Editor</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <title>Link Builder</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            background: #0f172a;
+            color: white;
+            overflow: hidden;
+        }
+
+        #editor-sidebar {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+        }
+
+        #phone-preview {
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            transition: all 0.3s;
+        }
+    </style>
 </head>
 
-<body class="builder-page">
+<body class="flex h-screen">
 
-    <!-- Authentication Modal -->
-    <div id="authModal" class="auth-modal" style="display: none;">
-        <div class="auth-modal-content">
-            <h2><i class="fa-solid fa-lock"></i> Login Required</h2>
-            <p>Please sign in to access the builder</p>
+    <div id="editor-sidebar" class="w-96 flex flex-col p-6 border-r border-white/10 h-full overflow-y-auto">
 
-            <div id="authError" class="auth-error" style="display: none;"></div>
-
-            <form id="authForm" onsubmit="handleAuth(event)">
-                <div class="auth-input-group">
-                    <label>Email</label>
-                    <input type="email" id="authEmail" required placeholder="your@email.com">
-                </div>
-
-                <div class="auth-input-group">
-                    <label>Password</label>
-                    <input type="password" id="authPassword" required placeholder="••••••••">
-                </div>
-
-                <div class="auth-buttons">
-                    <button type="submit" class="auth-btn auth-btn-primary" id="authSubmitBtn">
-                        <i class="fa-solid fa-sign-in-alt"></i> Sign In
-                    </button>
-                    <button type="button" class="auth-btn auth-btn-secondary" onclick="toggleAuthMode()">
-                        <i class="fa-solid fa-user-plus"></i> Sign Up Instead
-                    </button>
-                </div>
-            </form>
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="font-bold text-xl">Taylored Builder</h1>
+            <button onclick="logOut()" class="text-xs bg-white/10 px-2 py-1 rounded">Log Out</button>
         </div>
-    </div>
 
-    <div class="editor">
-        <div class="editor-header">
-            <h2><i class="fa-solid fa-wand-magic-sparkles"></i> Taylored Link Builder</h2>
-            <button id="logoutBtn" class="logout-btn" onclick="handleLogout()" style="display: none;">
-                <i class="fa-solid fa-sign-out-alt"></i> Log Out
+        <div class="bg-gradient-to-r from-violet-600 to-indigo-600 p-5 rounded-xl shadow-lg mb-6">
+            <h3 class="font-bold text-lg mb-2"><i class="fa-solid fa-wand-magic-sparkles"></i> AI Import</h3>
+            <p class="text-xs opacity-80 mb-3">Paste your Instagram or Website URL</p>
+
+            <input type="text" id="ai-url-input" placeholder="e.g. instagram.com/..."
+                class="w-full p-2 mb-3 rounded text-black text-sm">
+
+            <button id="ai-generate-btn" onclick="runAiImport()"
+                class="w-full bg-white text-indigo-700 font-bold py-2 rounded shadow hover:bg-gray-100 transition-all text-sm">
+                🚀 Auto-Build Profile
             </button>
         </div>
 
-        <!-- Top: AI Magic Import -->
-        <div class="ai-auto-build-section">
-            <div class="ai-auto-build-header">
-                <i class="fa-solid fa-wand-magic-sparkles"></i>
-                <h3>✨ AI Magic Import</h3>
-            </div>
-            <p class="ai-auto-build-subtitle">Paste your Instagram or Website URL and AI will create your profile
-                instantly</p>
-            <div class="ai-auto-build-input-group">
-                <input type="url" id="aiImportUrl" placeholder="Paste your Instagram or Website URL..."
-                    class="ai-auto-build-input">
-                <button id="aiMagicBtn" class="ai-auto-build-btn" onclick="runAiImport()">
-                    <span class="btn-text"><i class="fa-solid fa-rocket"></i> Auto-Build Profile</span>
-                    <span class="btn-loading" style="display: none;"><i class="fa-solid fa-spinner fa-spin"></i> 👨‍🍳
-                        Let it cook...</span>
-                    <span class="btn-success" style="display: none;"><i class="fa-solid fa-check"></i> Done!</span>
-                </button>
-            </div>
+        <div class="space-y-4 mb-6">
+            <label class="text-xs uppercase text-gray-500 font-bold">Business Info</label>
+            <input type="text" id="businessName" placeholder="Business Name"
+                class="w-full p-3 bg-white/5 border border-white/10 rounded-lg">
+            <textarea id="businessBio" placeholder="Short Bio"
+                class="w-full p-3 bg-white/5 border border-white/10 rounded-lg h-24"></textarea>
         </div>
 
-        <!-- Middle: Branding & Controls -->
-        <div class="controls">
-
-            <div class="control-group">
-                <div class="accordion-header open">
-                    <h3>Branding</h3>
-                    <i class="fa-solid fa-chevron-down accordion-icon"></i>
-                </div>
-                <div class="accordion-content open">
-                    <div class="input-row">
-                        <label>Business Name</label>
-                        <input type="text" id="brandName" value="Taylored Pet Portraits" oninput="updatePreview()"
-                            placeholder="e.g. Acme Corp">
-                    </div>
-                    <div class="input-row">
-                        <label>Bio</label>
-                        <textarea id="brandBio" rows="2" oninput="updatePreview()"
-                            placeholder="Short description...">Custom portraits & helping shelter pets 🐾</textarea>
-                    </div>
-                    <div class="input-row">
-                        <label>Logo URL</label>
-                        <input type="text" id="logoUrl" value="logo.gif" oninput="updatePreview()"
-                            placeholder="https://...">
-                    </div>
-                </div>
-            </div>
-
-            <div class="control-group">
-                <div class="accordion-header">
-                    <h3>Theme Colors</h3>
-                    <i class="fa-solid fa-chevron-down accordion-icon"></i>
-                </div>
-                <div class="accordion-content">
-                    <div class="input-row">
-                        <label>Background Gradient Top</label>
-                        <input type="color" id="colorBg1" value="#E4F3FF" oninput="updatePreview()">
-                    </div>
-                    <div class="input-row">
-                        <label>Background Gradient Bottom</label>
-                        <input type="color" id="colorBg2" value="#E0D6FF" oninput="updatePreview()">
-                    </div>
-                    <div class="input-row">
-                        <label>Button Color</label>
-                        <input type="color" id="colorBtn" value="#7DC6FF" oninput="updatePreview()">
-                    </div>
-                    <div class="input-row">
-                        <label>Button Text Color</label>
-                        <input type="color" id="colorBtnText" value="#ffffff" oninput="updatePreview()">
-                    </div>
-                </div>
-            </div>
-
-            <div class="control-group">
-                <div class="accordion-header">
-                    <h3>Featured Media</h3>
-                    <i class="fa-solid fa-chevron-down accordion-icon"></i>
-                </div>
-                <div class="accordion-content">
-                    <div class="input-row">
-                        <label>Featured Video/Audio URL</label>
-                        <input type="url" id="mediaUrl" oninput="updatePreview()"
-                            placeholder="YouTube, Vimeo, or Spotify Link">
-                        <small style="display:block; margin-top:4px; color:#666; font-size:0.75rem;">
-                            Auto-embeds player on your page.
-                        </small>
-                    </div>
-
-                    <div style="margin-top: 16px; padding-top: 16px; border-top: 1px dashed var(--border-subtle);">
-                        <button class="add-btn" onclick="downloadQRCode()"
-                            style="background: white; border-style: solid;">
-                            <i class="fa-solid fa-qrcode"></i> Download My QR Code
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="control-group">
-                <div class="accordion-header">
-                    <div style="display: flex; gap: 12px; align-items: center; flex: 1;">
-                        <h3 style="margin-bottom: 0;">Advanced Design</h3>
-                        <a href="#" onclick="resetDesign(); event.stopPropagation();"
-                            style="font-size: 0.75rem; color: var(--primary); text-decoration: none;">Reset Defaults</a>
-                    </div>
-                    <i class="fa-solid fa-chevron-down accordion-icon"></i>
-                </div>
-                <div class="accordion-content">
-                    <div class="input-row">
-                        <label>Button Height</label>
-                        <input type="range" id="btnHeight" min="8" max="32" value="18" oninput="updatePreview()"
-                            style="width: 100%;">
-                    </div>
-                    <div class="input-row">
-                        <label>Corner Radius</label>
-                        <input type="range" id="btnRadius" min="0" max="50" value="50" oninput="updatePreview()"
-                            style="width: 100%;">
-                    </div>
-                </div>
-            </div>
-
-            <div class="control-group">
-                <div class="accordion-header">
-                    <h3>Lead Gen & Contacts</h3>
-                    <i class="fa-solid fa-chevron-down accordion-icon"></i>
-                </div>
-                <div class="accordion-content">
-                    <div class="input-row">
-                        <label>Your Name</label>
-                        <input type="text" id="contactName" value="Taylor Strong" oninput="updatePreview()"
-                            placeholder="e.g. John Doe">
-                    </div>
-                    <div class="input-row">
-                        <label>Your Phone</label>
-                        <input type="text" id="contactPhone" value="555-0123" oninput="updatePreview()"
-                            placeholder="e.g. +1 555-0123">
-                    </div>
-                    <div class="input-row">
-                        <label>Your Email (for vCard)</label>
-                        <input type="text" id="contactEmail" value="hello@taylored.com" oninput="updatePreview()"
-                            placeholder="e.g. john@example.com">
-                    </div>
-                    <div class="input-row">
-                        <label>Job Title</label>
-                        <input type="text" id="contactTitle" value="Founder" oninput="updatePreview()"
-                            placeholder="e.g. CEO">
-                    </div>
-                    <div class="input-row">
-                        <label>Website</label>
-                        <input type="text" id="contactWebsite" value="https://tayloredpetportraits.com"
-                            oninput="updatePreview()" placeholder="e.g. https://mybrand.com">
-                    </div>
-                    <div style="margin-top: 16px; padding-top: 16px; border-top: 1px dashed var(--border-subtle);">
-                        <label style="color: var(--primary);">Notification Email (Leads go here)</label>
-                        <input type="text" id="notificationEmail" value="leads@mybrand.com" oninput="updatePreview()"
-                            placeholder="where.leads.go@example.com">
-                    </div>
-                </div>
-            </div>
-
-            <div class="control-group">
-                <div class="accordion-header open">
-                    <h3>Links</h3>
-                    <i class="fa-solid fa-chevron-down accordion-icon"></i>
-                </div>
-                <div class="accordion-content open">
-                    <div id="linksList">
-                        <!-- Links injected here -->
-                    </div>
-                    <button class="add-btn" onclick="addLink()">
-                        <i class="fa-solid fa-plus"></i> Add New Link
-                    </button>
-                </div>
-            </div>
-
-        </div>
-
-        <!-- Bottom: Save Changes -->
-        <div class="editor-footer">
-            <button class="download-btn" onclick="saveProfile()">
-                <i class="fa-solid fa-save"></i> Save Changes
+        <div class="mt-auto">
+            <button onclick="saveProfile()"
+                class="w-full bg-blue-600 hover:bg-blue-500 py-3 rounded-xl font-bold shadow-lg">
+                💾 Save Changes
             </button>
         </div>
+    </div>
 
-        <div id="toast" class="toast">
-            <i class="fa-solid fa-check-circle"></i>
-            <span>Success! Site Downloaded.</span>
+    <div class="flex-1 flex items-center justify-center bg-gray-900 relative">
+        <div class="absolute inset-0 opacity-20"
+            style="background-image: radial-gradient(#4f46e5 1px, transparent 1px); background-size: 20px 20px;"></div>
+
+        <div id="phone-preview"
+            class="w-[375px] h-[700px] bg-black rounded-[40px] border-[8px] border-gray-800 overflow-hidden relative">
+            <iframe id="preview-frame" src="index.html" class="w-full h-full bg-white"></iframe>
         </div>
     </div>
 
-    <div class="preview">
-        <div class="preview-wrapper">
-            <div class="phone-mockup">
-                <iframe id="previewFrame"></iframe>
-            </div>
-        </div>
-    </div>
-
-    <!-- Mobile Navigation - View Switcher Architecture -->
-    <div class="mobile-nav">
-        <button class="nav-btn active" id="btn-editor" onclick="switchTab('editor')">
-            <i class="fa-solid fa-pen"></i>
-            Editor
-        </button>
-        <button class="nav-btn" id="btn-preview" onclick="switchTab('preview')">
-            <i class="fa-solid fa-mobile"></i>
-            Preview
-        </button>
-    </div>
-
-    <!-- Supabase JS Client -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="supabaseClient.js"></script>
     <script src="script.js"></script>
-
-    <!-- Brute Force Mobile Tab Switching -->
     <script>
-        (function() {
-            // Only run on mobile screens
-            if (window.innerWidth > 768) return;
-            
-            // Wait for DOM to be ready
-            function initMobileTabs() {
-                const editorEl = document.querySelector('.editor');
-                const previewEl = document.querySelector('.preview');
-                const btnEditor = document.getElementById('btn-editor');
-                const btnPreview = document.getElementById('btn-preview');
-                
-                if (!editorEl || !previewEl || !btnEditor || !btnPreview) {
-                    // Retry if elements not ready
-                    setTimeout(initMobileTabs, 100);
-                    return;
-                }
-                
-                // Force initial state: Show Editor, Hide Preview (add body class)
-                document.body.classList.add('mobile-editing-active');
-                
-                // Editor button click - Show Editor, Hide Preview
-                btnEditor.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    
-                    // Add body class to trigger CSS rules
-                    document.body.classList.add('mobile-editing-active');
-                    
-                    // Update button states
-                    btnEditor.classList.add('active');
-                    btnPreview.classList.remove('active');
-                    
-                    // Scroll to top
-                    window.scrollTo(0, 0);
+        // AI LOGIC INJECTED DIRECTLY
+        async function runAiImport() {
+            const input = document.getElementById('ai-url-input');
+            const btn = document.getElementById('ai-generate-btn');
+            const url = input.value;
+
+            if (!url) return alert("Please paste a URL first!");
+
+            const originalText = btn.innerHTML;
+            btn.innerHTML = "👨🍳 Let it cook...";
+            btn.disabled = true;
+
+            try {
+                const res = await fetch('/api/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url })
                 });
-                
-                // Preview button click - Hide Editor, Show Preview
-                btnPreview.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    
-                    // Remove body class to trigger CSS rules
-                    document.body.classList.remove('mobile-editing-active');
-                    
-                    // Update button states
-                    btnEditor.classList.remove('active');
-                    btnPreview.classList.add('active');
-                    
-                    // Scroll to top
-                    window.scrollTo(0, 0);
-                    
-                    // Update preview if needed
-                    if (typeof updatePreview === 'function') {
-                        updatePreview();
-                    }
-                });
+                const data = await res.json();
+
+                if (data.title) document.getElementById('businessName').value = data.title;
+                if (data.description) document.getElementById('businessBio').value = data.description;
+
+                btn.innerHTML = "✅ Done!";
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                    saveProfile();
+                }, 1500);
+            } catch (e) {
+                alert("AI Error: " + e.message);
+                btn.innerHTML = originalText;
+                btn.disabled = false;
             }
-            
-            // Run immediately and on DOM ready
-            if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', initMobileTabs);
-            } else {
-                initMobileTabs();
-            }
-        })();
+        }
     </script>
 </body>
 
