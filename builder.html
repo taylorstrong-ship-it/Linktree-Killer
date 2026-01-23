@@ -7,19 +7,6 @@
     <title>Link Builder</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-        <script>
-                    // 1. PASTE YOUR KEYS HERE (Keep the quotes!)
-                    const SUPABASE_URL = 'https://qxkicdhsrlpehgcsapsh.supabase.co';
-                    const SUPABASE_KEY = 'sb_publishable_TTBR0ES-pM7LOWDsywEy7A_9BSlhWGg';
-
-                    // 2. Initialize the connection immediately
-                    if (typeof supabase !== 'undefined') {
-                                    window.supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-                                    console.log("✅ Supabase connected successfully!");
-                                } else {
-                                    alert("🚨 Critical Error: Supabase library not found!");
-                                }
-                </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <script>
@@ -125,67 +112,6 @@
     </div>
 
     <script src="script.js"></script>
-    <script>
-        // AI LOGIC
-        async function runAiImport() {
-            const input = document.getElementById('ai-url-input');
-            const btn = document.getElementById('ai-generate-btn');
-            const url = input.value;
-
-            if (!url) {
-                showToast("Please paste a URL first!", "error");
-                return;
-            }
-
-            const originalText = btn.innerHTML;
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 👨🍳 Let it cook...';
-            btn.disabled = true;
-
-            try {
-                const res = await fetch('/api/generate', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ url })
-                });
-                const data = await res.json();
-
-                if (data.title) document.getElementById('businessName').value = data.title;
-                if (data.description) document.getElementById('businessBio').value = data.description;
-
-                btn.innerHTML = "✅ Done!";
-                showToast("Profile generated successfully!");
-
-                setTimeout(() => {
-                    btn.innerHTML = originalText;
-                    btn.disabled = false;
-                    saveProfile();
-                }, 1500);
-            } catch (e) {
-                showToast("AI Error: " + e.message, "error");
-                btn.innerHTML = originalText;
-                btn.disabled = false;
-            }
-        }
-
-        // TOAST LOGIC (Fixes the crash)
-        function showToast(message, type = 'success') {
-            const toast = document.getElementById('toast');
-            const msg = document.getElementById('toast-message');
-            const icon = document.getElementById('toast-icon');
-
-            if (!toast) return; // Safety check
-
-            msg.innerText = message;
-            if (type === 'error') {
-                icon.innerHTML = '<i class="fa-solid fa-circle-exclamation text-red-500"></i>';
-            } else {
-                icon.innerHTML = '<i class="fa-solid fa-circle-check text-green-500"></i>';
-            }
-
-            toast.classList.remove('translate-y-32');
-            setTimeout(() => toast.classList.add('translate-y-32'), 3000);
-        }
-    </script>
 </body>
 
 </html>
