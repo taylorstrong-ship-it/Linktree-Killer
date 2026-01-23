@@ -21,7 +21,6 @@
             backdrop-filter: blur(10px);
         }
 
-        /* Floating Phone Animation */
         #phone-preview {
             box-shadow: 0 50px 100px -20px rgba(0, 0, 0, 0.7);
             transition: all 0.3s;
@@ -99,39 +98,44 @@
     </div>
 
     <script>
-        // 👇👇👇 PASTE KEYS HERE - DO NOT SKIP 👇👇👇
-        const SUPABASE_URL = 'https://qxkicdhsrlpehgcsapsh.supabase.co';
-        // Switching to SECRET KEY as requested to ensure database permissions
-        const SUPABASE_KEY = 'sb_secret_lfG0LhFnbv2CBALRiHj34A_WJyrReUA';
-        // Anon Key (Backup): sb_publishable_TTBR0ES-pM7LOWDsywEy7A_9BSlhWGg
-        // 👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆
+        // ==========================================
+        // 🔑 KEYS GO HERE (CRITICAL STEP)
+        // ==========================================
+        // Go to Supabase -> Settings -> API.
+        // Copy "Project URL" -> Paste below.
+        // Copy "anon public" Key -> Paste below.
 
-        // 1. Initialize Supabase
+        const SUPABASE_URL = 'https://qxkicdhsrlpehgcsapsh.supabase.co';
+        const SUPABASE_KEY = 'sb_secret_lfG0LhFnbv2CBALRiHj34A_WJyrReUA';
+
+        // ==========================================
+
+        // 1. Initialize
         let supabase;
         try {
-            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-            console.log("✅ Supabase Connected!");
+            if (SUPABASE_URL.includes('PASTE')) {
+                alert("🚨 STOP! You forgot to paste your keys in the code!");
+            } else {
+                supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                console.log("✅ Supabase Connected!");
+            }
         } catch (e) {
-            alert("🚨 Critical Error: Could not connect to Supabase. Check your keys!");
+            console.error("Init Error", e);
         }
 
-        // 2. 🤖 AI Logic
+        // 2. AI Logic
         async function runAiImport() {
             const input = document.getElementById('ai-url-input');
             const btn = document.getElementById('ai-generate-btn');
             const url = input.value;
 
-            console.log("🖱️ Button Clicked! URL:", url); // Debug Check
-
             if (!url) return showToast("Please paste a URL first!", "error");
 
-            // UI Feedback
             const originalText = btn.innerHTML;
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 👨🍳 Let it cook...';
             btn.disabled = true;
 
             try {
-                // Call API
                 const res = await fetch('/api/generate', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -139,22 +143,19 @@
                 });
 
                 const data = await res.json();
-                console.log("🤖 AI Result:", data);
+                console.log("AI Data:", data);
 
                 if (data.error) throw new Error(data.error);
 
-                // Update Inputs
                 if (data.title) document.getElementById('businessName').value = data.title;
                 if (data.description) document.getElementById('businessBio').value = data.description;
 
                 showToast("Profile generated! Saving...");
                 btn.innerHTML = "✅ Done!";
-
-                // Save immediately
                 await saveProfile();
 
             } catch (e) {
-                console.error("AI Error:", e);
+                console.error(e);
                 showToast("AI Error: " + e.message, "error");
             } finally {
                 setTimeout(() => {
@@ -164,7 +165,7 @@
             }
         }
 
-        // 3. 💾 Save Logic
+        // 3. Save Logic
         async function saveProfile() {
             const btn = document.querySelector('button[onclick="saveProfile()"]');
             if (btn) btn.innerHTML = 'Saving...';
@@ -185,17 +186,18 @@
                 if (error) throw error;
 
                 showToast('Changes Saved Successfully!');
-                document.getElementById('preview-frame').contentWindow.location.reload();
+                const frame = document.getElementById('preview-frame');
+                if (frame) frame.contentWindow.location.reload();
 
             } catch (error) {
-                console.error('Save Error:', error);
+                console.error(error);
                 showToast('Save Failed: ' + error.message, 'error');
             } finally {
                 if (btn) btn.innerHTML = '💾 Save Changes';
             }
         }
 
-        // 4. 🏗️ Load Logic
+        // 4. Load Logic
         async function loadProfile() {
             try {
                 const { data: { user } } = await supabase.auth.getUser();
@@ -208,11 +210,11 @@
                     if (data.description) document.getElementById('businessBio').value = data.description;
                 }
             } catch (error) {
-                console.error('Load Error:', error);
+                console.error(error);
             }
         }
 
-        // 5. 🍞 Toast UI
+        // 5. Toast UI
         function showToast(message, type = 'success') {
             const toast = document.getElementById('toast');
             const msg = document.getElementById('toast-message');
@@ -229,13 +231,12 @@
             setTimeout(() => toast.classList.add('translate-y-32'), 3000);
         }
 
-        // 6. 🚪 Logout
+        // 6. Logout
         async function logOut() {
             await supabase.auth.signOut();
             window.location.href = 'index.html';
         }
 
-        // Start!
         window.onload = loadProfile;
     </script>
 </body>
