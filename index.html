@@ -9,7 +9,6 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -20,7 +19,6 @@
 <body class="bg-indigo-50 text-slate-900 min-h-screen flex flex-col items-center py-12 px-4">
 
     <div class="w-full max-w-md text-center">
-
         <div class="relative mx-auto w-24 h-24 mb-4">
             <div
                 class="w-24 h-24 bg-white rounded-full shadow-xl flex items-center justify-center overflow-hidden border-4 border-white">
@@ -28,28 +26,15 @@
             </div>
         </div>
 
-        <h1 id="profile-title" class="text-2xl font-extrabold mb-2 text-slate-900">
-            Loading...
-        </h1>
-        <p id="profile-bio" class="text-slate-600 mb-8 leading-relaxed">
-            Fetching your profile...
-        </p>
+        <h1 id="profile-title" class="text-2xl font-extrabold mb-2 text-slate-900">Loading...</h1>
+        <p id="profile-bio" class="text-slate-600 mb-8 leading-relaxed">Fetching profile...</p>
 
-        <div class="space-y-4">
-            <a href="#"
-                class="block bg-white hover:bg-indigo-50 border border-slate-200 text-slate-800 font-semibold py-4 px-6 rounded-xl shadow-sm transition-all hover:scale-[1.02]">
-                🐶 Book a Portrait
-            </a>
-            <a href="#"
-                class="block bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-4 px-6 rounded-xl shadow-lg transition-all hover:scale-[1.02]">
-                ❤️ Support Shelter Pets
-            </a>
+        <div id="links-list" class="space-y-4">
         </div>
 
         <a href="builder.html"
-            class="fixed bottom-5 right-5 opacity-20 hover:opacity-100 text-xs bg-black text-white px-2 py-1 rounded">
-            ⚙️ Admin
-        </a>
+            class="fixed bottom-5 right-5 opacity-20 hover:opacity-100 text-xs bg-black text-white px-2 py-1 rounded">⚙️
+            Admin</a>
     </div>
 
     <script>
@@ -61,27 +46,29 @@
         const sbClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         async function loadContent() {
-            // 1. Check who is the latest user or get a specific ID (For now, we get the first match)
-            // Ideally, you'd pull by username, but let's just pull *your* saved row.
-            
-            const { data, error } = await sbClient
-                .from('profiles')
-                .select('*')
-                .order('updated_at', { ascending: false }) // Get the most recently saved one
-                .limit(1)
-                .single();
+            // Get the latest profile
+            const { data } = await sbClient.from('profiles').select('*').order('updated_at', { ascending: false }).limit(1).single();
 
             if (data) {
-                // 2. UPDATE THE PAGE
-                document.getElementById('profile-title').innerText = data.title || "No Title Yet";
-                document.getElementById('profile-bio').innerText = data.description || "No Bio Yet";
-            } else {
-                console.error("No profile found", error);
-                document.getElementById('profile-title').innerText = "Welcome!";
-                document.getElementById('profile-bio').innerText = "Create your profile in the builder.";
+                document.getElementById('profile-title').innerText = data.title || "Welcome";
+                document.getElementById('profile-bio').innerText = data.description || "";
+                
+                // Render Links
+                const list = document.getElementById('links-list');
+                list.innerHTML = ''; 
+                
+                if (data.links && Array.isArray(data.links)) {
+                    data.links.forEach(link => {
+                        const a = document.createElement('a');
+                        a.href = link.url;
+                        a.target = "_blank"; 
+                        a.className = "block bg-white hover:bg-indigo-50 border border-slate-200 text-slate-800 font-semibold py-4 px-6 rounded-xl shadow-sm transition-all hover:scale-[1.02] flex justify-center items-center gap-2";
+                        a.innerHTML = `<span>${link.title}</span> <i class="fa-solid fa-arrow-up-right-from-square text-xs opacity-50"></i>`;
+                        list.appendChild(a);
+                    });
+                }
             }
         }
-
         loadContent();
     </script>
 </body>
