@@ -4,6 +4,8 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase/client'
 import ImageUpload from '@/components/upload/ImageUpload'
+import { MagicImporter } from '@/components/magic-importer'
+import type { ScrapedProfile } from '@/app/actions/magic-scrape'
 import PhonePreview from '@/components/PhonePreview'
 import { Waves, Zap, Tornado, Flame, Check } from 'lucide-react'
 
@@ -230,6 +232,57 @@ export default function BuilderPage() {
         }
     }
 
+    async function handleMagicImport(data: ScrapedProfile) {
+        try {
+            console.log('✨ Magic Import started:', data)
+
+            // Map social links to our link format
+            const socialLinks = data.social_links.map(link => ({
+                title: link.label,
+                url: link.url
+            }))
+
+            // Merge with existing profile (prioritize imported data, but keep existing id/user_id)
+            const updatedProfile: ProfileData = {
+                ...profile,
+                title: data.title || profile.title,
+                description: data.bio || profile.description,
+                theme_color: data.theme_color || profile.theme_color,
+                // Only overwrite avatar if we found one
+                avatar_url: data.avatar_url || profile.avatar_url,
+                // Append new links to existing ones
+                links: [...profile.links, ...socialLinks]
+            }
+
+            console.log('📝 Updating state with magic data...')
+            setProfile(updatedProfile)
+
+            // Auto-save
+            console.log('💾 Auto-saving magic profile...')
+            const updates = {
+                id: userId,
+                user_id: userId,
+                ...updatedProfile,
+                updated_at: new Date().toISOString()
+            }
+
+            const { error } = await supabase
+                .from('profiles')
+                .upsert(updates)
+
+            if (error) throw error
+
+            showToast('Magic Import Successful! ✨', 'success')
+
+            // Refresh preview
+            setTimeout(() => refreshPreview(), 800)
+
+        } catch (error) {
+            console.error('Magic Import failed:', error)
+            showToast('Import failed to save: ' + (error as Error).message, 'error')
+        }
+    }
+
     function addLink() {
         setProfile(prev => ({
             ...prev,
@@ -332,6 +385,9 @@ export default function BuilderPage() {
 
                     {/* Scrollable Content */}
                     <div className="flex-1 overflow-y-auto px-6 py-4">
+
+                        {/* Magic Import Section */}
+                        <MagicImporter onImport={handleMagicImport} />
                         {/* Branding Section */}
                         <details open className="border-b border-white/10 pb-4 mb-4">
                             <summary className="cursor-pointer font-bold text-xs text-gray-500 uppercase tracking-wider py-3 flex justify-between items-center hover:text-gray-300 transition">
