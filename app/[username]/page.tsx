@@ -8,17 +8,18 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-// 2. Define the Page Props
+// 2. Define the Page Props (Next.js 15: params is now a Promise)
 interface Props {
-    params: { username: string };
+    params: Promise<{ username: string }>;
 }
 
 // 3. Dynamic Metadata (Sets the browser tab title)
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
+    const { username } = await params; // Next.js 15: await params
     const { data } = await supabase
         .from('profiles')
         .select('title, description')
-        .eq('username', params.username)
+        .eq('username', username)
         .single();
 
     return {
@@ -29,11 +30,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 // 4. The Main Page Component
 export default async function PublicProfile({ params }: Props) {
+    const { username } = await params; // Next.js 15: await params
+
     // Fetch the user's profile
     const { data: profile } = await supabase
         .from('profiles')
         .select('*')
-        .eq('username', params.username)
+        .eq('username', username)
         .single();
 
     // If no user found, show 404
@@ -46,7 +49,7 @@ export default async function PublicProfile({ params }: Props) {
                     href="/builder"
                     className="px-6 py-3 bg-blue-600 rounded-full font-medium hover:bg-blue-500 transition"
                 >
-                    Claim "{params.username}"
+                    Claim "{username}"
                 </Link>
             </div>
         );
