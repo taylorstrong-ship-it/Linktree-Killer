@@ -4,165 +4,474 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Profile</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <title>Taylored Pet Portraits</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
     <style>
+        :root {
+            /* Restoring the Blue Theme from screenshot 08.06.11 */
+            --primary-color: #3b82f6;
+            /* Tailwind Blue 500 */
+            --primary-hover: #2563eb;
+            --bg-color: #f3f4f6;
+            /* Light gray background */
+            --card-bg: #ffffff;
+            --text-main: #1f2937;
+            --text-sub: #4b5563;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
             font-family: 'Inter', sans-serif;
-            transition: background 0.5s;
+            background-color: var(--bg-color);
+            background-image: radial-gradient(#e5e7eb 1px, transparent 1px);
+            background-size: 20px 20px;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .phone-container {
+            width: 100%;
+            max-width: 400px;
+            /* Mobile width */
+            background: var(--card-bg);
+            border-radius: 30px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-bottom: 30px;
+            position: relative;
+        }
+
+        /* LAYER 1: Add this class to phone-container for premium moving background */
+        .phone-container.with-gradient {
+            background: linear-gradient(45deg,
+                    #ff9a9e 0%,
+                    #fad0c4 33%,
+                    #ffeaa7 66%,
+                    #fdcb6e 100%);
+            background-size: 400% 400%;
+            animation: gradient-xy 15s ease infinite;
+        }
+
+        @keyframes gradient-xy {
+
+            0%,
+            100% {
+                background-size: 400% 400%;
+                background-position: left center;
+            }
+
+            50% {
+                background-size: 200% 200%;
+                background-position: right center;
+            }
+        }
+
+        /* --- 1. The Featured Media Header --- */
+        .featured-media {
+            width: 100%;
+            height: 180px;
+            background-color: #eee;
             background-size: cover;
             background-position: center;
+            margin-bottom: -40px;
+            display: none;
+            /* Hidden by default, shown if background_image exists */
         }
 
-        .aspect-video {
-            aspect-ratio: 16 / 9;
+        .featured-media.visible {
+            display: block;
         }
 
-        .btn-shadow {
-            box-shadow: 0 4px 14px 0 rgba(0, 0, 0, 0.1);
+        /* --- 2. Profile Section --- */
+        .profile-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            z-index: 2;
+            padding: 0 24px;
         }
 
-        .glass-panel {
-            background: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(12px);
+        .profile-img {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            border: 4px solid white;
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-position: center;
+            background-color: #f3f4f6;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            margin-bottom: 12px;
+        }
+
+        .profile-img.empty {
+            background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%239ca3af"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>');
+            background-size: 60%;
+        }
+
+        h1 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 4px;
+            text-align: center;
+        }
+
+        .bio {
+            font-size: 0.9rem;
+            color: var(--text-sub);
+            text-align: center;
+            margin-bottom: 24px;
+            line-height: 1.4;
+        }
+
+        /* --- 3. The "Connect" Feature (Restored) --- */
+        .connect-btn {
+            background-color: white;
+            color: var(--primary-color);
+            border: 2px solid #e5e7eb;
+            padding: 10px 24px;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 32px;
+            display: none;
+            /* Hidden by default */
+            align-items: center;
+            gap: 8px;
+        }
+
+        .connect-btn.visible {
+            display: flex;
+        }
+
+        .connect-btn:hover {
+            border-color: var(--primary-color);
+            background-color: #eff6ff;
+        }
+
+        /* The Email Form (Hidden by default, shown on click) */
+        .lead-gen-form {
+            display: none;
+            /* Hidden state */
+            width: 100%;
+            margin-bottom: 20px;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        .lead-gen-form.active {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            outline: none;
+        }
+
+        .input-field:focus {
+            border-color: var(--primary-color);
+        }
+
+        .submit-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* --- 4. The Links (Blue Theme) --- */
+        .links-container {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            padding: 0 24px;
+        }
+
+        .link-card {
+            background-color: var(--primary-color);
+            /* Restored Blue */
+            color: white;
+            text-decoration: none;
+            padding: 16px 20px;
+            border-radius: 50px;
+            /* Full rounded pill */
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            /* Center vertically */
+            transition: transform 0.2s;
+            box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.4);
+        }
+
+        .link-card:hover {
+            transform: scale(1.02);
+            background-color: var(--primary-hover);
+        }
+
+        .link-icon {
+            font-size: 1.1rem;
+            margin-right: 12px;
+            width: 24px;
+            text-align: center;
+        }
+
+        .link-text {
+            flex-grow: 1;
+            text-align: center;
+            margin-right: 24px;
+            /* Balance the icon spacing */
+        }
+
+        /* Footer */
+        .footer {
+            margin-top: 30px;
+            font-size: 0.75rem;
+            color: #9ca3af;
         }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 </head>
 
-<body id="page-body" class="bg-indigo-50 min-h-screen py-10 px-4">
+<body>
 
-    <div class="max-w-md mx-auto space-y-6 text-center">
+    <div class="phone-container">
 
-        <div class="glass-panel p-6 rounded-3xl shadow-lg border border-white/50">
-            <div class="relative mx-auto w-28 h-28 mb-4">
-                <img id="profile-avatar" src=""
-                    class="w-full h-full object-cover rounded-full shadow-xl border-4 border-white hidden">
-                <div id="default-avatar"
-                    class="w-full h-full bg-slate-200 rounded-full shadow-xl flex items-center justify-center border-4 border-white text-slate-400">
-                    <i class="fa-solid fa-user text-4xl"></i>
-                </div>
-            </div>
+        <div class="featured-media" id="featuredMedia"></div>
 
-            <h1 id="title" class="text-3xl font-bold text-slate-900">...</h1>
-            <p id="bio" class="text-slate-600 mt-2 text-sm leading-relaxed">...</p>
+        <div class="profile-section">
+            <div class="profile-img empty" id="profileImg"></div>
+            <h1 id="profileTitle">My Link Page</h1>
+            <p class="bio" id="profileBio">Welcome to my page!</p>
 
-            <div id="socials-container" class="flex justify-center gap-4 mt-4 text-2xl text-slate-700"></div>
+            <button class="connect-btn" id="connectBtn" onclick="toggleForm()">
+                <i class="fas fa-user-plus"></i> Connect
+            </button>
 
-            <div id="contact-section" class="mt-6 hidden">
-                <a id="contact-btn" href="#"
-                    class="inline-block bg-slate-900 text-white px-8 py-3 rounded-full font-bold shadow-lg hover:scale-105 transition-transform w-full">
-                    <i class="fa-regular fa-envelope mr-2"></i> Contact Me
-                </a>
+            <div class="lead-gen-form" id="leadForm">
+                <input type="email" placeholder="Enter your email" class="input-field" id="emailInput">
+                <button class="submit-btn" onclick="handleSubmit()">Subscribe</button>
             </div>
         </div>
 
-        <div id="video-section" class="hidden rounded-2xl overflow-hidden shadow-lg border-2 border-white bg-black">
-            <iframe id="video-frame" class="w-full aspect-video" src="" frameborder="0" allowfullscreen></iframe>
+        <div class="links-container" id="linksContainer">
+            <!-- Links will be populated dynamically -->
         </div>
 
-        <div id="links-list" class="space-y-3"></div>
-
-        <div id="gallery-section" class="hidden glass-panel p-4 rounded-3xl">
-            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Gallery</h3>
-            <div id="gallery-grid" class="grid grid-cols-2 gap-2"></div>
+        <div class="footer">
+            Built by Taylored Builder
         </div>
 
-        <div class="pt-8">
-            <a href="builder.html"
-                class="bg-black/20 hover:bg-black/40 text-white px-3 py-1 rounded-full text-xs backdrop-blur-md transition">Manage
-                Page</a>
-        </div>
     </div>
 
     <script>
-        // 👇 PASTE KEYS HERE 👇
+        // Supabase Configuration
         const SUPABASE_URL = 'https://qxkicdhsrlpehgcsapsh.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_TTBR0ES-pM7LOWDsywEy7A_9BSlhWGg';
-        // 👆 PASTE KEYS HERE 👆
 
-        const sbClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        async function loadContent() {
-            const { data } = await sbClient.from('profiles').select('*').order('updated_at', { ascending: false }).limit(1).single();
+        // Load profile data on page load
+        async function loadProfile() {
+            try {
+                // Get current user
+                const { data: { user } } = await sbClient.auth.getUser();
 
-            if (data) {
-                // Background & Theme
-                const body = document.getElementById('page-body');
-                if(data.background_url) {
-                    body.style.backgroundImage = `url('${data.background_url}')`;
-                } else if(data.theme_color) {
-                    body.style.backgroundColor = data.theme_color;
+                if (!user) {
+                    console.log('No user logged in, showing demo data');
+                    return;
                 }
 
-                // Header
-                document.getElementById('title').innerText = data.title || "Welcome";
-                document.getElementById('bio').innerText = data.description || "";
-                
-                // Avatar
-                if(data.avatar_url) {
-                    const img = document.getElementById('profile-avatar');
-                    img.src = data.avatar_url;
-                    img.classList.remove('hidden');
-                    document.getElementById('default-avatar').classList.add('hidden');
+                // Fetch profile from Supabase
+                const { data: profile, error } = await sbClient
+                    .from('profiles')
+                    .select('*')
+                    .eq('id', user.id)
+                    .single();
+
+                if (error) {
+                    console.error('Error loading profile:', error);
+                    return;
                 }
 
-                // Contact Me
-                if(data.contact_email) {
-                    const btn = document.getElementById('contact-btn');
-                    btn.href = `mailto:${data.contact_email}`;
-                    btn.style.backgroundColor = data.theme_color || '#0f172a';
-                    document.getElementById('contact-section').classList.remove('hidden');
-                }
+                if (profile) {
+                    // Update title and bio
+                    document.getElementById('profileTitle').textContent = profile.title || 'My Link Page';
+                    document.getElementById('profileBio').textContent = profile.description || 'Welcome to my page!';
 
-                // Socials
-                const socials = document.getElementById('socials-container');
-                socials.innerHTML = '';
-                if(data.social_links) {
-                    if(data.social_links.instagram) socials.innerHTML += `<a href="${data.social_links.instagram}" target="_blank"><i class="fa-brands fa-instagram hover:text-pink-600 transition"></i></a>`;
-                    if(data.social_links.tiktok) socials.innerHTML += `<a href="${data.social_links.tiktok}" target="_blank"><i class="fa-brands fa-tiktok hover:text-black transition"></i></a>`;
-                }
-
-                // Video
-                if (data.video_url && data.video_url.includes('youtube.com')) {
-                    const videoId = data.video_url.split('v=')[1]?.split('&')[0];
-                    if (videoId) {
-                        document.getElementById('video-frame').src = `https://www.youtube.com/embed/${videoId}`;
-                        document.getElementById('video-section').classList.remove('hidden');
+                    // Update avatar
+                    const avatarImg = document.getElementById('profileImg');
+                    if (profile.avatar_url) {
+                        avatarImg.style.backgroundImage = `url('${profile.avatar_url}')`;
+                        avatarImg.classList.remove('empty');
                     }
+
+                    // Update background image
+                    const featuredMedia = document.getElementById('featuredMedia');
+                    if (profile.background_image) {
+                        featuredMedia.style.backgroundImage = `url('${profile.background_image}')`;
+                        featuredMedia.classList.add('visible');
+                    }
+
+                    // Update theme color
+                    if (profile.theme_color) {
+                        document.documentElement.style.setProperty('--primary-color', profile.theme_color);
+                    }
+
+                    // Show/hide connect button
+                    const connectBtn = document.getElementById('connectBtn');
+                    if (profile.lead_gen_enabled) {
+                        connectBtn.classList.add('visible');
+                    }
+
+                    // Render links
+                    const linksContainer = document.getElementById('linksContainer');
+                    linksContainer.innerHTML = '';
+
+                    if (profile.links && profile.links.length > 0) {
+                        profile.links.forEach(link => {
+                            if (link.title && link.url) {
+                                const linkCard = document.createElement('a');
+                                linkCard.href = link.url;
+                                linkCard.className = 'link-card';
+                                linkCard.target = '_blank';
+                                linkCard.innerHTML = `
+                                    <div class="link-icon"><i class="fas fa-link"></i></div>
+                                    <span class="link-text">${escapeHtml(link.title)}</span>
+                                `;
+                                linksContainer.appendChild(linkCard);
+                            }
+                        });
+                    }
+
+                    // Add premium click effects
+                    addPremiumEffects();
                 }
 
-                // Links
-                const linkList = document.getElementById('links-list');
-                linkList.innerHTML = '';
-                if (data.links) {
-                    data.links.forEach(l => {
-                        const a = document.createElement('a');
-                        a.href = l.url;
-                        a.target = "_blank";
-                        a.className = "btn-shadow block bg-white hover:brightness-95 border border-white text-slate-900 font-bold py-4 px-6 rounded-xl transition-all flex justify-between items-center transform hover:-translate-y-1";
-                        a.innerHTML = `<span>${l.title}</span> <i class="fa-solid fa-arrow-right opacity-30"></i>`;
-                        linkList.appendChild(a);
-                    });
-                }
-
-                // Gallery
-                const galleryGrid = document.getElementById('gallery-grid');
-                galleryGrid.innerHTML = '';
-                if (data.gallery_images && data.gallery_images.length > 0) {
-                    document.getElementById('gallery-section').classList.remove('hidden');
-                    data.gallery_images.forEach(url => {
-                        const img = document.createElement('img');
-                        img.src = url;
-                        img.className = "w-full h-32 object-cover rounded-lg shadow-sm hover:scale-105 transition-transform cursor-pointer";
-                        galleryGrid.appendChild(img);
-                    });
-                }
+            } catch (error) {
+                console.error('Failed to load profile:', error);
             }
         }
-        loadContent();
+
+        // Escape HTML to prevent XSS
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Simple functionality for the Connect button
+        function toggleForm() {
+            const form = document.getElementById('leadForm');
+            const btn = document.getElementById('connectBtn');
+
+            if (form.classList.contains('active')) {
+                form.classList.remove('active');
+                btn.innerHTML = '<i class="fas fa-user-plus"></i> Connect';
+            } else {
+                form.classList.add('active');
+                btn.innerHTML = '<i class="fas fa-times"></i> Close';
+            }
+        }
+
+        function handleSubmit() {
+            const email = document.getElementById('emailInput').value;
+            if (email) {
+                alert('Thank you for subscribing! ' + email);
+                toggleForm();
+                document.getElementById('emailInput').value = '';
+            }
+        }
+
+        // =========================================
+        // LAYER 2: HAPTIC FEEDBACK (Safe on Mobile)
+        // =========================================
+        function triggerHaptic(pattern = 'light') {
+            if (typeof navigator !== 'undefined' && navigator.vibrate) {
+                switch (pattern) {
+                    case 'light':
+                        navigator.vibrate(10);
+                        break;
+                    case 'medium':
+                        navigator.vibrate(40);
+                        break;
+                    case 'heavy':
+                        navigator.vibrate([50, 100, 50]);
+                        break;
+                }
+            }
+            // Fails silently on desktop (safe!)
+        }
+
+        // =========================================
+        // LAYER 3: SOUND EFFECTS (Safe with Fallback)
+        // =========================================
+        function playSound(soundFile = 'pop.mp3', volume = 0.2) {
+            const audio = new Audio(`/sounds/${soundFile}`);
+            audio.volume = volume;
+            audio.play().catch(e => {
+                // Browser blocked or file missing - fail silently (safe!)
+                console.log("Audio not available (safe)", e);
+            });
+        }
+
+        // =========================================
+        // PREMIUM CLICK: Combine Haptic + Sound
+        // =========================================
+        function premiumClick() {
+            triggerHaptic('light');
+            playSound('pop.mp3', 0.2);
+        }
+
+        // Add premium interactions to all link buttons
+        function addPremiumEffects() {
+            const linkCards = document.querySelectorAll('.link-card');
+            linkCards.forEach(card => {
+                card.addEventListener('click', function (e) {
+                    premiumClick(); // Trigger haptic + sound
+                });
+            });
+        }
+
+        // Load profile when page loads
+        window.addEventListener('DOMContentLoaded', loadProfile);
     </script>
 </body>
 

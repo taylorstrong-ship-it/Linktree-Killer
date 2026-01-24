@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Taylored Builder</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+
+<body class="bg-slate-900 flex items-center justify-center h-screen text-white">
+
+    <div class="w-full max-w-md p-8 bg-white/10 backdrop-blur-lg rounded-2xl border border-white/20 shadow-2xl">
+        <h1 class="text-2xl font-bold mb-6 text-center">🔐 Admin Login</h1>
+
+        <input type="email" id="email" placeholder="Email"
+            class="w-full p-3 mb-4 bg-black/20 rounded-lg border border-white/10 focus:outline-none focus:border-blue-500">
+        <input type="password" id="password" placeholder="Password"
+            class="w-full p-3 mb-6 bg-black/20 rounded-lg border border-white/10 focus:outline-none focus:border-blue-500">
+
+        <button onclick="handleLogin()" id="loginBtn"
+            class="w-full bg-blue-600 hover:bg-blue-500 py-3 rounded-xl font-bold transition-all">
+            Log In
+        </button>
+
+        <p id="errorMsg" class="text-red-400 text-sm text-center mt-4 hidden"></p>
+    </div>
+
+    <script>
+        // 👇 PASTE KEYS HERE 👇
+        const SUPABASE_URL = 'https://qxkicdhsrlpehgcsapsh.supabase.co';
+        const SUPABASE_KEY = 'sb_secret_lfG0LhFnbv2CBALRiHj34A_WJyrReUA';
+        // 👆 PASTE KEYS HERE 👆
+
+        const sbClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        async function handleLogin() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const btn = document.getElementById('loginBtn');
+            const err = document.getElementById('errorMsg');
+
+            btn.innerText = "Logging in...";
+            btn.disabled = true;
+            err.classList.add('hidden');
+
+            const { data, error } = await sbClient.auth.signInWithPassword({
+                email: email,
+                password: password
+            });
+
+            if (error) {
+                err.innerText = error.message;
+                err.classList.remove('hidden');
+                btn.innerText = "Log In";
+                btn.disabled = false;
+            } else {
+                // Success! Go to builder
+                window.location.href = 'builder.html';
+            }
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Taylored Pet Portraits</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            /* Restoring the Blue Theme from screenshot 08.06.11 */
+            --primary-color: #3b82f6;
+            /* Tailwind Blue 500 */
+            --primary-hover: #2563eb;
+            --bg-color: #f3f4f6;
+            /* Light gray background */
+            --card-bg: #ffffff;
+            --text-main: #1f2937;
+            --text-sub: #4b5563;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            background-image: radial-gradient(#e5e7eb 1px, transparent 1px);
+            background-size: 20px 20px;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .phone-container {
+            width: 100%;
+            max-width: 400px;
+            /* Mobile width */
+            background: var(--card-bg);
+            border-radius: 30px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-bottom: 30px;
+            position: relative;
+        }
+
+        /* LAYER 1: Add this class to phone-container for premium moving background */
+        .phone-container.with-gradient {
+            background: linear-gradient(45deg,
+                    #ff9a9e 0%,
+                    #fad0c4 33%,
+                    #ffeaa7 66%,
+                    #fdcb6e 100%);
+            background-size: 400% 400%;
+            animation: gradient-xy 15s ease infinite;
+        }
+
+        @keyframes gradient-xy {
+
+            0%,
+            100% {
+                background-size: 400% 400%;
+                background-position: left center;
+            }
+
+            50% {
+                background-size: 200% 200%;
+                background-position: right center;
+            }
+        }
+
+        /* --- 1. The GIF Header (Restored) --- */
+        .featured-media {
+            width: 100%;
+            height: 180px;
+            /* Adjust height for your GIF */
+            background-color: #eee;
+            /* Placeholder GIF - Replace src with your actual GIF URL */
+            background-image: url('https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExM3R4eXJ6eXJ6eXJ6eXJ6eXJ6eXJ6eXJ6eXJ6eXJ6eXJ6eSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3o7527pa7qs9kCG78A/giphy.gif');
+            background-size: cover;
+            background-position: center;
+            margin-bottom: -40px;
+            /* Overlap effect */
+        }
+
+        /* --- 2. Profile Section --- */
+        .profile-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            z-index: 2;
+            padding: 0 24px;
+        }
+
+        .profile-img {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            border: 4px solid white;
+            background-image: url('https://img.icons8.com/ios/100/pug.png');
+            /* Replace with your Logo */
+            background-size: 60%;
+            background-repeat: no-repeat;
+            background-position: center;
+            background-color: white;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            margin-bottom: 12px;
+        }
+
+        h1 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 4px;
+            text-align: center;
+        }
+
+        .bio {
+            font-size: 0.9rem;
+            color: var(--text-sub);
+            text-align: center;
+            margin-bottom: 24px;
+            line-height: 1.4;
+        }
+
+        /* --- 3. The "Connect" Feature (Restored) --- */
+        .connect-btn {
+            background-color: white;
+            color: var(--primary-color);
+            border: 2px solid #e5e7eb;
+            padding: 10px 24px;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 32px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .connect-btn:hover {
+            border-color: var(--primary-color);
+            background-color: #eff6ff;
+        }
+
+        /* The Email Form (Hidden by default, shown on click) */
+        .lead-gen-form {
+            display: none;
+            /* Hidden state */
+            width: 100%;
+            margin-bottom: 20px;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        .lead-gen-form.active {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            outline: none;
+        }
+
+        .input-field:focus {
+            border-color: var(--primary-color);
+        }
+
+        .submit-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* --- 4. The Links (Blue Theme) --- */
+        .links-container {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            padding: 0 24px;
+        }
+
+        .link-card {
+            background-color: var(--primary-color);
+            /* Restored Blue */
+            color: white;
+            text-decoration: none;
+            padding: 16px 20px;
+            border-radius: 50px;
+            /* Full rounded pill */
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            /* Center vertically */
+            transition: transform 0.2s;
+            box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.4);
+        }
+
+        .link-card:hover {
+            transform: scale(1.02);
+            background-color: var(--primary-hover);
+        }
+
+        .link-icon {
+            font-size: 1.1rem;
+            margin-right: 12px;
+            width: 24px;
+            text-align: center;
+        }
+
+        .link-text {
+            flex-grow: 1;
+            text-align: center;
+            margin-right: 24px;
+            /* Balance the icon spacing */
+        }
+
+        /* Footer */
+        .footer {
+            margin-top: 30px;
+            font-size: 0.75rem;
+            color: #9ca3af;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="phone-container">
+
+        <div class="featured-media"></div>
+
+        <div class="profile-section">
+            <div class="profile-img"></div>
+            <h1>Taylored Pet Portraits</h1>
+            <p class="bio">Custom portraits & helping shelter pets <i class="fas fa-paw"></i></p>
+
+            <button class="connect-btn" onclick="toggleForm()">
+                <i class="fas fa-user-plus"></i> Connect
+            </button>
+
+            <div class="lead-gen-form" id="leadForm">
+                <input type="email" placeholder="Enter your email" class="input-field">
+                <button class="submit-btn">Subscribe</button>
+            </div>
+        </div>
+
+        <div class="links-container">
+            <a href="#" class="link-card">
+                <div class="link-icon"><i class="fas fa-globe"></i></div>
+                <span class="link-text">Check out the Website</span>
+            </a>
+
+            <a href="#" class="link-card">
+                <div class="link-icon"><i class="fab fa-instagram"></i></div>
+                <span class="link-text">Follow on Instagram</span>
+            </a>
+
+            <a href="#" class="link-card">
+                <div class="link-icon"><i class="fas fa-pen-fancy"></i></div>
+                <span class="link-text">Order a Portrait</span>
+            </a>
+
+            <a href="#" class="link-card">
+                <div class="link-icon"><i class="fas fa-envelope"></i></div>
+                <span class="link-text">Contact Us</span>
+            </a>
+        </div>
+
+        <div class="footer">
+            Built by Taylored Builder
+        </div>
+
+    </div>
+
+    <script>
+        // Simple functionality for the Connect button
+        function toggleForm() {
+            const form = document.getElementById('leadForm');
+            const btn = document.querySelector('.connect-btn');
+
+            if (form.classList.contains('active')) {
+                form.classList.remove('active');
+                btn.innerHTML = '<i class="fas fa-user-plus"></i> Connect';
+            } else {
+                form.classList.add('active');
+                btn.innerHTML = '<i class="fas fa-times"></i> Close';
+            }
+        }
+
+        // =========================================
+        // LAYER 2: HAPTIC FEEDBACK (Safe on Mobile)
+        // =========================================
+        function triggerHaptic(pattern = 'light') {
+            if (typeof navigator !== 'undefined' && navigator.vibrate) {
+                switch (pattern) {
+                    case 'light':
+                        navigator.vibrate(10);
+                        break;
+                    case 'medium':
+                        navigator.vibrate(40);
+                        break;
+                    case 'heavy':
+                        navigator.vibrate([50, 100, 50]);
+                        break;
+                }
+            }
+            // Fails silently on desktop (safe!)
+        }
+
+        // =========================================
+        // LAYER 3: SOUND EFFECTS (Safe with Fallback)
+        // =========================================
+        function playSound(soundFile = 'pop.mp3', volume = 0.2) {
+            const audio = new Audio(`/sounds/${soundFile}`);
+            audio.volume = volume;
+            audio.play().catch(e => {
+                // Browser blocked or file missing - fail silently (safe!)
+                console.log("Audio not available (safe)", e);
+            });
+        }
+
+        // =========================================
+        // PREMIUM CLICK: Combine Haptic + Sound
+        // =========================================
+        function premiumClick() {
+            triggerHaptic('light');
+            playSound('pop.mp3', 0.2);
+        }
+
+        // Add premium interactions to all link buttons
+        document.addEventListener('DOMContentLoaded', function () {
+            const linkCards = document.querySelectorAll('.link-card');
+            linkCards.forEach(card => {
+                card.addEventListener('click', function (e) {
+                    premiumClick(); // Trigger haptic + sound
+                });
+            });
+        });
+    </script>
+</body>
+
+</html>

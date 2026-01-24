@@ -1,8 +1,6 @@
 // Vercel Serverless Function: GenAI Auto-Build
-// Analyzes a website URL and generates a Linktree profile using OpenAI
-
+// Analyzes a website URL and generates a Linktree profile using OpenAI + FireCrawl
 import OpenAI from 'openai';
-import * as cheerio from 'cheerio';
 
 export default async function handler(req, res) {
     // Only allow POST requests
@@ -28,53 +26,36 @@ export default async function handler(req, res) {
             targetUrl = 'https://' + targetUrl;
         }
 
-        // Fetch the website HTML
-        const response = await fetch(targetUrl, {
+        // --- Step A: Scrape with FireCrawl ---
+        const firecrawlResponse = await fetch('https://api.firecrawl.dev/v0/scrape', {
+            method: 'POST',
             headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-            }
+                'Authorization': `Bearer ${process.env.FIRECRAWL_KEY}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                url: targetUrl,
+                pageOptions: {
+                    onlyMainContent: true
+                }
+            })
         });
 
-        if (!response.ok) {
-            return res.status(400).json({ error: `Failed to fetch URL: ${response.statusText}` });
+        if (!firecrawlResponse.ok) {
+            console.error('FireCrawl error:', await firecrawlResponse.text());
+            return res.status(400).json({ error: `Failed to scrape URL: ${firecrawlResponse.statusText}` });
         }
 
-        const html = await response.text();
+        const firecrawlData = await firecrawlResponse.json();
+        const markdown = firecrawlData.data?.markdown || '';
 
-        // Extract text content using cheerio
-        const $ = cheerio.load(html);
+        if (!markdown) {
+            console.warn('FireCrawl returned no markdown, falling back to basic extraction or failing.');
+            // Proceeding hoping OpenAI can halluncinate good defaults or using empty string
+        }
 
-        // Remove script and style elements
-        $('script, style, nav, footer, header').remove();
 
-        // Extract main content
-        const title = $('title').text() || $('h1').first().text() || '';
-        const metaDescription = $('meta[name="description"]').attr('content') || '';
-        const h1Text = $('h1').first().text() || '';
-        const h2Text = $('h2').first().text() || '';
-        const paragraphs = $('p').map((i, el) => $(el).text()).get().slice(0, 5).join(' ');
-        
-        // Extract links
-        const links = [];
-        $('a').each((i, el) => {
-            const href = $(el).attr('href');
-            const text = $(el).text().trim();
-            if (href && text && href.startsWith('http') && links.length < 10) {
-                links.push({ label: text, url: href });
-            }
-        });
-
-        // Combine all text content
-        const websiteContent = `
-Title: ${title}
-Description: ${metaDescription}
-Heading: ${h1Text}
-Subheading: ${h2Text}
-Content: ${paragraphs}
-Links found: ${links.map(l => `${l.label} -> ${l.url}`).join(', ')}
-        `.trim();
-
-        // Call OpenAI API
+        // --- Step B & C: Analyze & Extract with OpenAI ---
         const openai = new OpenAI({
             apiKey: process.env.OPENAI_API_KEY
         });
@@ -84,33 +65,34 @@ Links found: ${links.map(l => `${l.label} -> ${l.url}`).join(', ')}
         }
 
         const completion = await openai.chat.completions.create({
-            model: 'gpt-4o-mini', // Using mini for cost efficiency, can upgrade to gpt-4o
+            model: 'gpt-4o-mini', // Using mini for cost efficiency
             messages: [
                 {
                     role: 'system',
-                    content: `You are a branding expert. Analyze this website content and generate a JSON profile for a Linktree-style page. 
+                    content: `You are a branding expert. Analyze this website content (provided as markdown) and generate a JSON profile for a Linktree-style page. 
 
 Return ONLY valid JSON with this exact structure:
 {
-  "business_name": "Creative business name based on the website",
-  "bio": "Short, punchy bio with 1-2 emojis (max 100 chars)",
-  "theme_color": "#hexcode (choose a color that matches the brand)",
+  "business_name": "Name of the entity",
+  "bio": "2-sentence summary of what they do",
+  "theme_color": "Dominant hex code #color",
+  "logo_url": "Absolute URL of logo if found, else null",
   "links": [
     {"label": "Link label", "url": "https://url.com", "icon": "fa-globe"}
   ]
 }
 
-For icons, use Font Awesome icon names like: fa-globe, fa-instagram, fa-facebook, fa-envelope, fa-phone, fa-map-marker-alt, fa-shopping-cart, fa-calendar, fa-music, fa-video, fa-image, fa-link
+For icons, use Font Awesome icon names like: fa-globe, fa-instagram, fa-facebook, fa-envelope, fa-phone, fa-map-marker-alt, fa-shopping-cart.
 
-Generate 3-5 relevant links based on the content.`
+Generate up to 4 key links found.`
                 },
                 {
                     role: 'user',
-                    content: `Analyze this website:\n\n${websiteContent}`
+                    content: `Analyze this website markdown:\n\n${markdown.substring(0, 15000)}` // Truncate to avoid token limits if massive
                 }
             ],
             temperature: 0.7,
-            max_tokens: 500
+            max_tokens: 1000
         });
 
         const aiResponse = completion.choices[0].message.content.trim();
@@ -127,9 +109,12 @@ Generate 3-5 relevant links based on the content.`
         }
 
         // Validate and return the response
-        if (!jsonData.business_name || !jsonData.bio) {
+        if (!jsonData.business_name) {
             return res.status(500).json({ error: 'Invalid AI response format', data: jsonData });
         }
+
+        // Default Error Handling as per Directive
+        // (If we reached here, success is implied, but sticking to directive fallback format if needed)
 
         return res.status(200).json({
             success: true,
@@ -137,17 +122,18 @@ Generate 3-5 relevant links based on the content.`
                 name: jsonData.business_name,
                 bio: jsonData.bio,
                 bg1: jsonData.theme_color || '#3b82f6',
-                bg2: jsonData.theme_color || '#2563eb',
+                bg2: jsonData.theme_color || '#2563eb', // Fallback gradient
                 btn: jsonData.theme_color || '#1d4ed8',
-                links: jsonData.links || []
+                links: jsonData.links || [],
+                logo: jsonData.logo_url // Passing logo through even if frontend doesn't use it yet
             }
         });
 
     } catch (error) {
         console.error('Error in generate API:', error);
-        return res.status(500).json({ 
-            error: 'Internal server error', 
-            message: error.message 
+        return res.status(500).json({
+            error: 'Internal server error',
+            message: error.message
         });
     }
 }

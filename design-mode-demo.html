@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Design Mode Demo - All 3 Layers</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            padding: 0;
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .demo-container {
+            width: 100%;
+            max-width: 400px;
+            background: white;
+            border-radius: 30px;
+            padding: 40px 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            text-align: center;
+            color: #1f2937;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #6b7280;
+            margin-bottom: 30px;
+            font-size: 0.9rem;
+        }
+
+        .layer-section {
+            background: #f9fafb;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .layer-section h2 {
+            font-size: 1rem;
+            color: #3b82f6;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .demo-btn {
+            width: 100%;
+            padding: 14px;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+            margin-top: 10px;
+        }
+
+        .demo-btn:hover {
+            transform: scale(1.02);
+            background: #2563eb;
+        }
+
+        .demo-btn:active {
+            transform: scale(0.98);
+        }
+
+        code {
+            background: #e5e7eb;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+
+<body class="animate-mesh-gradient">
+
+    <div class="demo-container">
+        <h1>🎨 Design Mode Demo</h1>
+        <p class="subtitle">All 3 Layers - Zero Risk to Logic</p>
+
+        <!-- LAYER 1: CSS Background -->
+        <div class="layer-section">
+            <h2><i class="fa-solid fa-palette"></i> Layer 1: Moving Background</h2>
+            <p style="font-size: 0.9rem; color: #4b5563;">
+                Look at the body background! It's a smooth, animated mesh gradient.
+                It's pure CSS, running on your GPU.
+            </p>
+            <p style="font-size: 0.85rem; color: #6b7280; margin-top: 10px;">
+                Class used: <code>animate-mesh-gradient</code>
+            </p>
+        </div>
+
+        <!-- LAYER 2: Haptic Feedback -->
+        <div class="layer-section">
+            <h2><i class="fa-solid fa-hand-pointer"></i> Layer 2: Haptic Feedback</h2>
+            <p style="font-size: 0.9rem; color: #4b5563; margin-bottom: 15px;">
+                On mobile, buttons can vibrate when tapped. Try these:
+            </p>
+            <button class="demo-btn" onclick="triggerHaptic('light')">
+                Light Tap (10ms)
+            </button>
+            <button class="demo-btn" onclick="triggerHaptic('medium')">
+                Medium Bump (40ms)
+            </button>
+            <button class="demo-btn" onclick="triggerHaptic('heavy')">
+                Heavy Buzz (Pattern)
+            </button>
+            <p style="font-size: 0.85rem; color: #6b7280; margin-top: 10px;">
+                On desktop: No vibration motor, so it does nothing (safe!)
+            </p>
+        </div>
+
+        <!-- LAYER 3: Sound Effects -->
+        <div class="layer-section">
+            <h2><i class="fa-solid fa-volume-high"></i> Layer 3: Sound Effects</h2>
+            <p style="font-size: 0.9rem; color: #4b5563; margin-bottom: 15px;">
+                Subtle UI sounds. You'll need to add sound files to <code>/public/sounds/</code> first.
+            </p>
+            <button class="demo-btn" onclick="playDemoSound()">
+                🎵 Play Sound (if available)
+            </button>
+            <p style="font-size: 0.85rem; color: #6b7280; margin-top: 10px;">
+                If blocked by browser or missing files, it fails silently (safe!)
+            </p>
+        </div>
+
+        <!-- Combined Example -->
+        <div class="layer-section" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white;">
+            <h2 style="color: white;"><i class="fa-solid fa-rocket"></i> All Layers Combined</h2>
+            <button class="demo-btn" style="background: #ffd700; color: #1f2937;" onclick="premiumClick()">
+                <i class="fa-solid fa-star"></i> Premium Button Experience
+            </button>
+            <p style="font-size: 0.85rem; margin-top: 10px; opacity: 0.9;">
+                This button triggers haptic + sound together!
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // LAYER 2: Haptic Function (from utils/haptics.js)
+        function triggerHaptic(pattern = 'light') {
+            // Only works on mobile browsers that support it
+            if (typeof navigator !== 'undefined' && navigator.vibrate) {
+                switch (pattern) {
+                    case 'light':
+                        navigator.vibrate(10);
+                        break;
+                    case 'medium':
+                        navigator.vibrate(40);
+                        break;
+                    case 'heavy':
+                        navigator.vibrate([50, 100, 50]);
+                        break;
+                }
+            }
+            console.log(`Haptic triggered: ${pattern}`);
+        }
+
+        // LAYER 3: Sound Function (from utils/sounds.js)
+        function playSound(soundFile = 'pop.mp3', volume = 0.2) {
+            const audio = new Audio(`/sounds/${soundFile}`);
+            audio.volume = volume;
+            audio.play().catch(e => {
+                console.log("Audio blocked or file missing (safe)", e);
+            });
+        }
+
+        function playDemoSound() {
+            playSound('pop.mp3', 0.3);
+        }
+
+        // Combined Premium Click
+        function premiumClick() {
+            triggerHaptic('medium');
+            playSound('pop.mp3', 0.3);
+
+            // Visual feedback
+            const btn = event.target.closest('button');
+            btn.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                btn.style.transform = 'scale(1)';
+            }, 100);
+
+            console.log('Premium click executed!');
+        }
+    </script>
+</body>
+
+</html>
