@@ -113,6 +113,13 @@ export default function BuilderPage() {
 
                     if (data && !error) {
                         console.log("📦 Loading profile from database...");
+                        console.log("📊 DB Data:", {
+                            title: data.title,
+                            avatar: data.avatar_url,
+                            links_count: data.links?.length || 0,
+                            socials: data.socials
+                        });
+
                         const rawData = data as any;
 
                         // Step 3: Split Links (Database → UI State)
@@ -152,6 +159,10 @@ export default function BuilderPage() {
                         if (rawData.username) {
                             setUsername(rawData.username);
                         }
+
+                        // CRITICAL: Clear stale localStorage data after successful DB load
+                        console.log("🗑️ Clearing stale localStorage data...");
+                        localStorage.removeItem('taylored_brand_data');
 
                         setLoading(false);
                         return; // Successfully loaded from DB
