@@ -301,34 +301,21 @@ export default function PhonePreview({
                     {/* Links */}
                     <div className="w-full space-y-3">
                         {links && links.length > 0 ? (
-                            links.filter(link => !getSocialIcon(link.url)).map((link, index) => (
-                                link.title && link.url ? (
-                                    <a
-                                        key={index}
-                                        href={link.url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="group block w-full py-4 px-6 rounded-2xl text-center font-semibold text-white transition-all duration-300 shadow-xl hover:scale-105 bg-white/10 backdrop-blur-md border border-white/20 hover:border-opacity-60"
-                                        style={{
-                                            '--glow-color': theme_color || '#3b82f6'
-                                        } as React.CSSProperties}
-                                        onMouseEnter={(e) => {
-                                            e.currentTarget.style.borderColor = theme_color || '#3b82f6'
-                                            e.currentTarget.style.boxShadow = `0 0 20px ${hexToRgba(theme_color || '#3b82f6', 0.6)}`
-                                        }}
-                                        onMouseLeave={(e) => {
-                                            e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)'
-                                            e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'
-                                        }}
-                                    >
-                                        {link.title}
-                                    </a>
-                                ) : null
+                            <a
+                                key={index}
+                                href={link.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="group block w-full py-3 px-6 rounded-xl text-center font-bold text-white transition-all duration-300 shadow-md hover:scale-105 bg-blue-500 hover:bg-blue-600 active:scale-95"
+                            >
+                                {link.title}
+                            </a>
+                        ) : null
                             ))
                         ) : (
-                            <div className="text-center py-8 text-white/60 text-sm">
-                                Add links to see them here
-                            </div>
+                        <div className="text-center py-8 text-white/60 text-sm">
+                            Add links to see them here
+                        </div>
                         )}
                     </div>
                 </div>
