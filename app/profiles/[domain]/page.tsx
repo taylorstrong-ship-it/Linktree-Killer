@@ -63,8 +63,20 @@ export default async function ProfilePage({ params }: { params: Promise<{ domain
         return notFound();
     }
 
-    // 4. Transform Links if needed (ensure it's an array)
+    // 4. Transform Socials + Links
     const links = Array.isArray(profile.links) ? profile.links : [];
+
+    // Convert socials object to link format and merge with regular links
+    const socialLinks: { title: string, url: string }[] = [];
+    if (profile.socials) {
+        if (profile.socials.instagram) socialLinks.push({ title: 'Instagram', url: profile.socials.instagram });
+        if (profile.socials.tiktok) socialLinks.push({ title: 'TikTok', url: profile.socials.tiktok });
+        if (profile.socials.facebook) socialLinks.push({ title: 'Facebook', url: profile.socials.facebook });
+        if (profile.socials.email) socialLinks.push({ title: 'Email', url: `mailto:${profile.socials.email}` });
+    }
+
+    // Merge socials at the beginning
+    const allLinks = [...socialLinks, ...links];
 
     return (
         // Page Container: Light Gray Patterned Background
@@ -98,7 +110,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ domain
 
                 {/* Social Icons Row */}
                 <div className="flex flex-wrap justify-center gap-4 px-6 mb-6">
-                    {links.filter((link: any) => getSocialIcon(link.url)).map((link: any, index: number) => {
+                    {allLinks.filter((link: any) => getSocialIcon(link.url)).map((link: any, index: number) => {
                         const social = getSocialIcon(link.url);
                         if (!social) return null;
                         return (
@@ -119,7 +131,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ domain
 
                 {/* Main Action Buttons */}
                 <div className="flex-1 px-6 pb-12 space-y-4">
-                    {links.filter((link: any) => !getSocialIcon(link.url)).map((link: any, index: number) => (
+                    {allLinks.filter((link: any) => !getSocialIcon(link.url)).map((link: any, index: number) => (
                         <a
                             key={index}
                             href={link.url}
@@ -142,7 +154,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ domain
                         </a>
                     ))}
 
-                    {links.length === 0 && (
+                    {allLinks.length === 0 && (
                         <div className="text-center text-gray-400 text-sm mt-8">
                             No links found.
                         </div>

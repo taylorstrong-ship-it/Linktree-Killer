@@ -41,6 +41,12 @@ interface ProfileData {
     page_views?: number  // NEW: Total page views counter
     fb_pixel_id?: string  // NEW: Facebook Pixel ID
     google_analytics_id?: string  // NEW: Google Analytics GA4 ID
+    socials: {
+        instagram?: string
+        tiktok?: string
+        facebook?: string
+        email?: string
+    }
     links: Link[]
     gallery_images: string[]
 }
@@ -76,6 +82,12 @@ export default function BuilderPage() {
         page_views: 0,
         fb_pixel_id: '',
         google_analytics_id: '',
+        socials: {
+            instagram: '',
+            tiktok: '',
+            facebook: '',
+            email: ''
+        },
         links: [],
         gallery_images: []
     })
@@ -369,6 +381,20 @@ export default function BuilderPage() {
             ...prev,
             links: prev.links.filter((_, i) => i !== index)
         }))
+    }
+
+    function moveLink(index: number, direction: 'up' | 'down') {
+        setProfile(prev => {
+            const newLinks = [...prev.links]
+            const targetIndex = direction === 'up' ? index - 1 : index + 1
+
+            // Swap the links
+            if (targetIndex >= 0 && targetIndex < newLinks.length) {
+                [newLinks[index], newLinks[targetIndex]] = [newLinks[targetIndex], newLinks[index]]
+            }
+
+            return { ...prev, links: newLinks }
+        })
     }
 
     function showToast(message: string, type: 'success' | 'error') {
@@ -1152,16 +1178,84 @@ export default function BuilderPage() {
                             </div>
                         </details>
 
-                        {/* Links Section */}
+                        {/* Social Profiles Section */}
+                        <details open className="border-b border-white/10 pb-4 mb-4">
+                            <summary className="cursor-pointer font-bold text-xs text-gray-500 uppercase tracking-wider py-3 flex justify-between items-center hover:text-gray-300 transition">
+                                <span className="flex items-center gap-2">
+                                    <i className="fa-solid fa-users text-pink-400"></i>
+                                    Social Profiles
+                                </span>
+                                <i className="fa-solid fa-chevron-down text-xs"></i>
+                            </summary>
+                            <div className="space-y-3 pl-1 mt-3">
+                                <div>
+                                    <label className="text-xs font-bold text-gray-300 block mb-1">
+                                        <i className="fa-brands fa-instagram text-pink-500 mr-1"></i>
+                                        Instagram
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={profile.socials.instagram || ''}
+                                        onChange={(e) => setProfile({ ...profile, socials: { ...profile.socials, instagram: e.target.value } })}
+                                        placeholder="https://instagram.com/username"
+                                        className="w-full p-2.5 bg-gray-800 border border-gray-700 rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 transition"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-xs font-bold text-gray-300 block mb-1">
+                                        <i className="fa-brands fa-tiktok mr-1"></i>
+                                        TikTok
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={profile.socials.tiktok || ''}
+                                        onChange={(e) => setProfile({ ...profile, socials: { ...profile.socials, tiktok: e.target.value } })}
+                                        placeholder="https://tiktok.com/@username"
+                                        className="w-full p-2.5 bg-gray-800 border border-gray-700 rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 transition"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-xs font-bold text-gray-300 block mb-1">
+                                        <i className="fa-brands fa-facebook text-blue-500 mr-1"></i>
+                                        Facebook
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={profile.socials.facebook || ''}
+                                        onChange={(e) => setProfile({ ...profile, socials: { ...profile.socials, facebook: e.target.value } })}
+                                        placeholder="https://facebook.com/username"
+                                        className="w-full p-2.5 bg-gray-800 border border-gray-700 rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 transition"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-xs font-bold text-gray-300 block mb-1">
+                                        <i className="fa-solid fa-envelope text-red-400 mr-1"></i>
+                                        Email
+                                    </label>
+                                    <input
+                                        type="email"
+                                        value={profile.socials.email || ''}
+                                        onChange={(e) => setProfile({ ...profile, socials: { ...profile.socials, email: e.target.value } })}
+                                        placeholder="hello@example.com"
+                                        className="w-full p-2.5 bg-gray-800 border border-gray-700 rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 transition"
+                                    />
+                                </div>
+                            </div>
+                        </details>
+
+                        {/* Custom Links Section */}
                         <details open className="pb-4">
                             <summary className="cursor-pointer font-bold text-xs text-gray-500 uppercase tracking-wider py-3 flex justify-between items-center hover:text-gray-300 transition">
-                                Links
+                                <span className="flex items-center gap-2">
+                                    <i className="fa-solid fa-link text-blue-400"></i>
+                                    Custom Links
+                                </span>
                                 <i className="fa-solid fa-chevron-down text-xs"></i>
                             </summary>
                             <div className="space-y-3 pl-1 mt-3">
                                 {profile.links.map((link, index) => (
-                                    <div key={index} className="bg-gray-800/50 p-3 rounded-lg border border-gray-700/50 flex gap-2 items-center">
-                                        <div className="grid gap-2 flex-1">
+                                    <div key={index} className="bg-gray-800/50 p-3 rounded-lg border border-gray-700/50">
+                                        <div className="grid gap-2">
                                             <input
                                                 type="text"
                                                 value={link.title}
@@ -1177,12 +1271,33 @@ export default function BuilderPage() {
                                                 className="w-full p-2 text-xs bg-gray-800 border border-gray-700 rounded-md text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50"
                                             />
                                         </div>
-                                        <button
-                                            onClick={() => removeLink(index)}
-                                            className="text-gray-500 hover:text-red-400 px-2 transition"
-                                        >
-                                            <i className="fa-solid fa-trash"></i>
-                                        </button>
+                                        <div className="flex gap-2 mt-2">
+                                            <button
+                                                onClick={() => moveLink(index, 'up')}
+                                                disabled={index === 0}
+                                                className="flex-1 text-xs py-1.5 px-2 bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:text-gray-600 text-white rounded transition flex items-center justify-center gap-1"
+                                                title="Move Up"
+                                            >
+                                                <i className="fa-solid fa-arrow-up"></i>
+                                                Up
+                                            </button>
+                                            <button
+                                                onClick={() => moveLink(index, 'down')}
+                                                disabled={index === profile.links.length - 1}
+                                                className="flex-1 text-xs py-1.5 px-2 bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:text-gray-600 text-white rounded transition flex items-center justify-center gap-1"
+                                                title="Move Down"
+                                            >
+                                                <i className="fa-solid fa-arrow-down"></i>
+                                                Down
+                                            </button>
+                                            <button
+                                                onClick={() => removeLink(index)}
+                                                className="text-xs py-1.5 px-3 bg-red-900/20 hover:bg-red-900/40 text-red-400 rounded transition"
+                                                title="Delete"
+                                            >
+                                                <i className="fa-solid fa-trash"></i>
+                                            </button>
+                                        </div>
                                     </div>
                                 ))}
                                 <button
@@ -1190,7 +1305,7 @@ export default function BuilderPage() {
                                     className="w-full py-3 border-2 border-dashed border-gray-700 rounded-lg text-xs font-bold text-gray-500 hover:bg-gray-800/50 hover:border-blue-500 hover:text-blue-400 transition flex items-center justify-center gap-2"
                                 >
                                     <i className="fa-solid fa-plus"></i>
-                                    Add Link
+                                    Add Custom Link
                                 </button>
                             </div>
                         </details>
