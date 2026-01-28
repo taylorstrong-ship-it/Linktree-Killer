@@ -8,6 +8,26 @@ const supabase = createClient(
     'sb_publishable_TTBR0ES-pM7LOWDsywEy7A_9BSlhWGg'
 );
 
+// Helper: Identify Social Links
+const getSocialIcon = (url: string) => {
+    if (!url) return null;
+    const lowerUrl = url.toLowerCase();
+    if (lowerUrl.includes('instagram.com')) return { icon: 'fa-instagram', color: '#E1306C', label: 'Instagram' };
+    if (lowerUrl.includes('tiktok.com')) return { icon: 'fa-tiktok', color: '#000000', label: 'TikTok' };
+    if (lowerUrl.includes('twitter.com') || lowerUrl.includes('x.com')) return { icon: 'fa-x-twitter', color: '#000000', label: 'X' };
+    if (lowerUrl.includes('facebook.com')) return { icon: 'fa-facebook', color: '#1877F2', label: 'Facebook' };
+    if (lowerUrl.includes('youtube.com')) return { icon: 'fa-youtube', color: '#FF0000', label: 'YouTube' };
+    if (lowerUrl.includes('linkedin.com')) return { icon: 'fa-linkedin', color: '#0077B5', label: 'LinkedIn' };
+    if (lowerUrl.includes('twitch.tv')) return { icon: 'fa-twitch', color: '#9146FF', label: 'Twitch' };
+    if (lowerUrl.includes('github.com')) return { icon: 'fa-github', color: '#181717', label: 'GitHub' };
+    if (lowerUrl.includes('snapchat.com')) return { icon: 'fa-snapchat', color: '#FFFC00', label: 'Snapchat' };
+    if (lowerUrl.includes('whatsapp.com')) return { icon: 'fa-whatsapp', color: '#25D366', label: 'WhatsApp' };
+    if (lowerUrl.includes('t.me') || lowerUrl.includes('telegram.org')) return { icon: 'fa-telegram', color: '#0088cc', label: 'Telegram' };
+    if (lowerUrl.includes('spotify.com')) return { icon: 'fa-spotify', color: '#1DB954', label: 'Spotify' };
+    if (lowerUrl.includes('soundcloud.com')) return { icon: 'fa-soundcloud', color: '#ff5500', label: 'SoundCloud' };
+    return null;
+};
+
 export const revalidate = 0; // Disable static caching to allow fresh updates
 
 export default async function ProfilePage({ params }: { params: Promise<{ domain: string }> }) {
@@ -76,9 +96,30 @@ export default async function ProfilePage({ params }: { params: Promise<{ domain
                     </p>
                 </div>
 
-                {/* Links Section */}
+                {/* Social Icons Row */}
+                <div className="flex flex-wrap justify-center gap-4 px-6 mb-6">
+                    {links.filter((link: any) => getSocialIcon(link.url)).map((link: any, index: number) => {
+                        const social = getSocialIcon(link.url);
+                        if (!social) return null;
+                        return (
+                            <a
+                                key={`social-${index}`}
+                                href={link.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="w-12 h-12 rounded-full flex items-center justify-center bg-white shadow-md transition-transform hover:scale-110 hover:shadow-lg text-2xl"
+                                style={{ color: social.color }}
+                                title={link.title || social.label}
+                            >
+                                <i className={`fa-brands ${social.icon}`}></i>
+                            </a>
+                        );
+                    })}
+                </div>
+
+                {/* Main Action Buttons */}
                 <div className="flex-1 px-6 pb-12 space-y-4">
-                    {links.map((link: any, index: number) => (
+                    {links.filter((link: any) => !getSocialIcon(link.url)).map((link: any, index: number) => (
                         <a
                             key={index}
                             href={link.url}
@@ -88,15 +129,9 @@ export default async function ProfilePage({ params }: { params: Promise<{ domain
                         >
                             <div className="w-full py-4 px-6 rounded-full bg-[#7DD3FC] hover:bg-[#38bdf8] transition-all transform hover:scale-[1.02] shadow-md flex items-center relative group">
 
-                                {/* Icon (Left) */}
+                                {/* Icon (Left) - Generic for custom links */}
                                 <div className="absolute left-6 text-white text-xl">
-                                    {/* Simple mapping based on URL or generic icon */}
-                                    {link.url.includes('instagram') ? <i className="fa-brands fa-instagram"></i> :
-                                        link.url.includes('facebook') ? <i className="fa-brands fa-facebook"></i> :
-                                            link.url.includes('tiktok') ? <i className="fa-brands fa-tiktok"></i> :
-                                                link.url.includes('linkedin') ? <i className="fa-brands fa-linkedin"></i> :
-                                                    link.url.includes('twitter') || link.url.includes('x.com') ? <i className="fa-brands fa-x-twitter"></i> :
-                                                        <i className="fa-solid fa-link"></i>}
+                                    <i className="fa-solid fa-link"></i>
                                 </div>
 
                                 {/* Text (Centered) */}
