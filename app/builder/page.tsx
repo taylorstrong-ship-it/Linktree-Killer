@@ -303,8 +303,39 @@ export default function BuilderPage() {
     }
 
     async function handleLogout() {
-        await supabase.auth.signOut()
-        window.location.reload()
+        try {
+            console.log('🚪 Logging out...');
+            // Clear all cached data
+            localStorage.clear();
+            sessionStorage.clear();
+
+            // Sign out from Supabase
+            await supabase.auth.signOut();
+
+            // Force redirect to login (with full reload)
+            window.location.href = '/login';
+        } catch (error) {
+            console.error('Logout error:', error);
+            // Force reload anyway
+            window.location.href = '/login';
+        }
+    }
+
+    // Emergency: Force reload from database
+    async function forceReloadFromDatabase() {
+        try {
+            console.log('🔄 FORCING DATABASE RELOAD...');
+
+            // Clear ALL cache
+            localStorage.clear();
+            sessionStorage.clear();
+
+            // Reload the page with cache bypass
+            window.location.reload(true);
+        } catch (error) {
+            console.error('Force reload error:', error);
+            window.location.reload();
+        }
     }
 
     function refreshPreview() {
