@@ -84,6 +84,7 @@ JSON SCHEMA:
       "secondary": "Hex Code"
   },
   "description": "Short SEO-friendly summary (max 150 chars)",
+  "avatar_url": "Use the pre-extracted 'logoUrl' from context if provided, otherwise empty string",
   "services": ["List top 3-5 distinct services"],
   "links": {
       "booking_url": "The explicit URL to book/order (e.g. square.site, vagaro.com).",
@@ -169,6 +170,61 @@ function extractFooterLinks(html: string): { socials: Record<string, string>; re
     });
 
     return { socials, reviews };
+}
+
+// Helper: Resolve relative image URLs to absolute URLs
+function resolveImageUrl(url: string, baseUrl: string): string {
+    if (!url) return '';
+
+    // Already absolute
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+        return url;
+    }
+
+    // Handle protocol-relative URLs (//cdn.example.com/image.png)
+    if (url.startsWith('//')) {
+        return 'https:' + url;
+    }
+
+    // Resolve relative URL
+    try {
+        const base = new URL(baseUrl);
+        const resolved = new URL(url, base.origin);
+        return resolved.href;
+    } catch {
+        return '';
+    }
+}
+
+// Helper: Extract logo/avatar using waterfall approach
+function extractLogo(html: string, baseUrl: string): string {
+    const $ = cheerio.load(html);
+
+    // 1. Check og:image (most reliable for brand logo)
+    const ogImage = $('meta[property="og:image"]').attr('content');
+    if (ogImage) {
+        console.log('📸 Logo found: og:image');
+        return resolveImageUrl(ogImage, baseUrl);
+    }
+
+    // 2. Check apple-touch-icon (iOS bookmark icon - usually company logo)
+    const appleTouchIcon = $('link[rel="apple-touch-icon"]').attr('href') ||
+        $('link[rel="apple-touch-icon-precomposed"]').attr('href');
+    if (appleTouchIcon) {
+        console.log('📸 Logo found: apple-touch-icon');
+        return resolveImageUrl(appleTouchIcon, baseUrl);
+    }
+
+    // 3. Check favicon (last resort)
+    const favicon = $('link[rel="icon"]').attr('href') ||
+        $('link[rel="shortcut icon"]').attr('href');
+    if (favicon) {
+        console.log('📸 Logo found: favicon');
+        return resolveImageUrl(favicon, baseUrl);
+    }
+
+    console.log('⚠️ No logo found');
+    return '';
 }
 
 // Helper: Extract CTA buttons from HTML based on industry
@@ -368,29 +424,31 @@ export async function POST(req: NextRequest) {
             dataSources.push('json-ld');
         }
 
-        // Step 3: Extract Open Graph tags
+        // Step 3: Extract Open Graph metadata
         const ogTags = extractOpenGraphTags(rawHtml);
         if (Object.keys(ogTags).length > 0) {
-            dataSources.push('og-tags');
+            dataSources.push('opengraph');
         }
 
-        // Step 4: Extract footer links (socials & reviews)
+        // Step 4: Extract Footer Social Links + Review Links
         const { socials, reviews } = extractFooterLinks(rawHtml);
         if (Object.keys(socials).length > 0) {
-            dataSources.push('socials');
+            dataSources.push('footer-links');
         }
 
-        // Step 4.5: Extract CTA buttons (NEW - preliminary detection)
-        // We'll do a preliminary extraction here and let AI refine it
-        const preliminaryCTAs = extractCTAButtons(rawHtml, 'General'); // Start with General, AI will refine
+        // Step 5: Extract logo/avatar
+        const logoUrl = extractLogo(rawHtml, url);
+        console.log('🖼️ Logo extracted:', logoUrl || 'None found');
+        if (logoUrl) {
+            dataSources.push('logo-extraction');
+        }
+
+        // Step 6: Extract preliminary CTA buttons from HTML
+        const preliminaryCTAs = extractCTAButtons(rawHtml, 'General');
         if (preliminaryCTAs.length > 0) {
             dataSources.push('cta-buttons');
             console.log(`🎯 Found ${preliminaryCTAs.length} preliminary CTA buttons`);
         }
-
-        // Step 5: Extract colors from logo using Vision API
-        let visionColors: { primary: string; secondary: string } | null = null;
-        const logoUrl = ogTags.image || ogTags.logo;
 
         if (logoUrl) {
             visionColors = await extractColorsFromImage(logoUrl, openaiKey);
@@ -409,6 +467,7 @@ export async function POST(req: NextRequest) {
             visionColors,
             extractedSocials: socials, // Instagram/Facebook for links object
             preliminaryCTAs, // Initial CTA button detection for AI refinement
+            logoUrl, // Pre-extracted logo for avatar_url
         };
 
         let extractedData: BrandDNA;
