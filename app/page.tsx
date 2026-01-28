@@ -61,21 +61,22 @@ export default function Home() {
                 throw new Error(result.message || 'Brand DNA extraction failed');
             }
 
-            // Transform Brand DNA response to match UI expectations
+            // Transform Brand DNA response to match Builder expectations
             const transformedData = {
                 username: result.dna.businessName.toLowerCase().replace(/\s+/g, ''),
                 title: result.dna.businessName,
                 bio: result.dna.description,
+                description: result.dna.description, // Builder checks both bio and description
                 theme_color: result.dna.colors.primary,
                 brand_colors: [result.dna.colors.primary, result.dna.colors.secondary],
                 fonts: ['Inter'], // Default for now
-                avatar_url: '', // Will be added later
-                social_links: result.dna.cta_buttons.map((btn: any) => ({
-                    platform: 'generic' as const,
-                    url: btn.url,
-                    label: btn.title
+                avatar_url: '', // Will be added in next update
+                // CRITICAL: Builder expects 'links', not 'social_links'
+                links: result.dna.cta_buttons.map((btn: any) => ({
+                    title: btn.title,
+                    url: btn.url
                 })),
-                // NEW: Pass full DNA data for Builder integration
+                // Keep full DNA for future use (social extraction, etc.)
                 dna: result.dna
             };
 
