@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Sparkles, ChevronDown, Smartphone, Palette, Type, Fingerprint } from 'lucide-react';
-import { scrapeProfileFromUrl } from '@/app/actions/magic-scrape';
 import MatrixOverlay from '@/components/hub/MatrixOverlay';
 import BioLinkBuilder from '@/components/hub/BioLinkBuilder';
 import AdCampaignGenerator from '@/components/hub/AdCampaignGenerator';
