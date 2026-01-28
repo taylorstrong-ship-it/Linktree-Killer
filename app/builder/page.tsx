@@ -122,29 +122,10 @@ export default function BuilderPage() {
 
                         const rawData = data as any;
 
-                        // Step 3: Split Links (Database → UI State)
+                        // Step 3: Load ALL links as custom links (no splitting by domain)
+                        // The live site renders profile.links directly, so we do the same
+                        const customLinks: Link[] = rawData.links || [];
                         const socialsObj = rawData.socials || { instagram: '', tiktok: '', facebook: '', email: '' };
-                        const customLinks: Link[] = [];
-
-                        // If there's a legacy links array, split it
-                        if (rawData.links && Array.isArray(rawData.links)) {
-                            rawData.links.forEach((link: any) => {
-                                const url = (link.url || '').toLowerCase();
-                                // Check if it's a social link
-                                if (url.includes('instagram.com')) {
-                                    socialsObj.instagram = link.url;
-                                } else if (url.includes('tiktok.com')) {
-                                    socialsObj.tiktok = link.url;
-                                } else if (url.includes('facebook.com')) {
-                                    socialsObj.facebook = link.url;
-                                } else if (url.includes('mailto:') || link.title?.toLowerCase().includes('email')) {
-                                    socialsObj.email = link.url.replace('mailto:', '');
-                                } else {
-                                    // Custom link (not social)
-                                    customLinks.push({ title: link.title || '', url: link.url || '' });
-                                }
-                            });
-                        }
 
                         setProfile({
                             ...rawData,
