@@ -92,109 +92,135 @@ export default function BuilderPage() {
         gallery_images: []
     })
 
-    // 🔌 THE CONNECTION WIRE & AUTH BYPASS
+    // 🔌 DATABASE-FIRST LOADING WITH LINK SPLITTING
     useEffect(() => {
-        const savedData = localStorage.getItem('taylored_brand_data');
-        if (savedData) {
+        async function initializeProfile() {
             try {
-                const parsed = JSON.parse(savedData);
-                console.log("Found Brand DNA:", parsed);
+                // Step 1: Check authentication
+                const { data: { user } } = await supabase.auth.getUser()
 
-                // BYPASS AUTH & HYDRATE: Use local data if available
-                setProfile(prev => ({
-                    ...prev,
-                    ...parsed,
-                    // 🗺️ Map mismatched fields (Scraper -> Builder)
-                    description: parsed.bio || parsed.description || prev.description,
-                    // If we have brand_colors, use the first one as theme
-                    theme_color: parsed.brand_colors?.[0] || prev.theme_color,
-                    // Map social links if present
-                    links: (parsed.links && Array.isArray(parsed.links) && parsed.links.length > 0)
-                        ? parsed.links
-                        : (parsed.social_links ? parsed.social_links.map((l: any) => ({
-                            title: l.label || l.platform,
-                            url: l.url
-                        })) : prev.links)
-                }));
+                if (user) {
+                    console.log("✅ User authenticated:", user.id);
+                    setIsAuthenticated(true)
+                    setUserId(user.id)
 
-                // 🚀 AUTO-GENERATE USERNAME if missing
-                if (parsed.title) {
-                    const generated = parsed.title.toLowerCase().replace(/\s+/g, '');
-                    setUsername(generated);
-                }
+                    // Step 2: Load from database
+                    const { data, error } = await supabase
+                        .from('profiles')
+                        .select('*')
+                        .eq('id', user.id)
+                        .single()
 
-                // Continue to check real auth status
-            } catch (e) {
-                console.error("Data corruption", e);
-            }
-        }
+                    if (data && !error) {
+                        console.log("📦 Loading profile from database...");
+                        const rawData = data as any;
 
-        // Check real auth status (allow/suppress redirect if we have local data)
-        checkAuth(!!savedData);
-    }, []);
+                        // Step 3: Split Links (Database → UI State)
+                        const socialsObj = rawData.socials || { instagram: '', tiktok: '', facebook: '', email: '' };
+                        const customLinks: Link[] = [];
 
-    async function checkAuth(allowGuest = false) {
-        try {
-            const { data: { user } } = await supabase.auth.getUser()
-            if (user) {
-                console.log("✅ User authenticated:", user.id);
-                setIsAuthenticated(true)
-                setUserId(user.id)
-                // If we didn't hydrate from local, load from DB
-                // If we DID hydrate from local, we keep that data (it's fresher/imported)
-                if (!allowGuest) {
-                    await loadProfile(user.id)
-                }
-            } else {
-                if (allowGuest) {
-                    console.log("⚠️ Guest Mode active (No session)");
-                    setIsAuthenticated(true) // Guest Mode
+                        // If there's a legacy links array, split it
+                        if (rawData.links && Array.isArray(rawData.links)) {
+                            rawData.links.forEach((link: any) => {
+                                const url = (link.url || '').toLowerCase();
+                                // Check if it's a social link
+                                if (url.includes('instagram.com')) {
+                                    socialsObj.instagram = link.url;
+                                } else if (url.includes('tiktok.com')) {
+                                    socialsObj.tiktok = link.url;
+                                } else if (url.includes('facebook.com')) {
+                                    socialsObj.facebook = link.url;
+                                } else if (url.includes('mailto:') || link.title?.toLowerCase().includes('email')) {
+                                    socialsObj.email = link.url.replace('mailto:', '');
+                                } else {
+                                    // Custom link (not social)
+                                    customLinks.push({ title: link.title || '', url: link.url || '' });
+                                }
+                            });
+                        }
+
+                        setProfile({
+                            ...rawData,
+                            showcase: rawData.showcase || { before: '', after: '' },
+                            socials: socialsObj,
+                            links: customLinks,
+                            newsletter_active: rawData.newsletter_active || false,
+                            texture_overlay: rawData.texture_overlay || 'none',
+                        });
+
+                        // Set username from DB
+                        if (rawData.username) {
+                            setUsername(rawData.username);
+                        }
+
+                        setLoading(false);
+                        return; // Successfully loaded from DB
+                    }
+
+                    // No DB profile found, check localStorage as fallback
+                    console.log("⚠️ No database profile found. Checking localStorage...");
+                    const savedData = localStorage.getItem('taylored_brand_data');
+                    if (savedData) {
+                        try {
+                            const parsed = JSON.parse(savedData);
+                            console.log("📥 Loading from localStorage as fallback...");
+                            setProfile(prev => ({
+                                ...prev,
+                                ...parsed,
+                                description: parsed.bio || parsed.description || prev.description,
+                                theme_color: parsed.brand_colors?.[0] || prev.theme_color,
+                                links: (parsed.links && Array.isArray(parsed.links) && parsed.links.length > 0)
+                                    ? parsed.links
+                                    : prev.links
+                            }));
+
+                            if (parsed.title) {
+                                const generated = parsed.title.toLowerCase().replace(/\s+/g, '');
+                                setUsername(generated);
+                            }
+                        } catch (e) {
+                            console.error("Data corruption in localStorage", e);
+                        }
+                    }
+
                 } else {
-                    window.location.href = '/login'
+                    // No authentication - Guest Mode
+                    console.log("⚠️ No authentication. Checking localStorage for guest data...");
+                    const savedData = localStorage.getItem('taylored_brand_data');
+                    if (savedData) {
+                        try {
+                            const parsed = JSON.parse(savedData);
+                            setProfile(prev => ({
+                                ...prev,
+                                ...parsed,
+                                description: parsed.bio || parsed.description || prev.description,
+                                theme_color: parsed.brand_colors?.[0] || prev.theme_color,
+                                links: (parsed.links && Array.isArray(parsed.links) && parsed.links.length > 0)
+                                    ? parsed.links
+                                    : prev.links
+                            }));
+
+                            if (parsed.title) {
+                                const generated = parsed.title.toLowerCase().replace(/\s+/g, '');
+                                setUsername(generated);
+                            }
+
+                            setIsAuthenticated(true) // Guest Mode
+                        } catch (e) {
+                            console.error("Data corruption", e);
+                        }
+                    }
                 }
+
+            } catch (error) {
+                console.error('Profile initialization failed:', error)
+            } finally {
+                setLoading(false)
             }
-        } catch (error) {
-            console.error('Auth check failed:', error)
-            if (!allowGuest) alert('Authentication error: ' + (error as Error).message)
-        } finally {
-            setLoading(false)
         }
-    }
 
-    async function loadProfile(userId: string) {
-        try {
-            const { data, error } = await supabase
-                .from('profiles')
-                .select('*')
-                .eq('id', userId)
-                .single()
-
-            if (error && error.code !== 'PGRST116') throw error
-
-            if (data) {
-                // NUCLEAR FIX: We cast 'data' to 'any' to stop Vercel from checking every single field.
-                const rawData = data as any;
-
-                setProfile({
-                    ...rawData,
-                    // We manually ensure the complex fields are safe
-                    showcase: rawData.showcase || { before: '', after: '' },
-                    styles: rawData.styles || [],
-                    gallery: rawData.gallery || [],
-                    links: rawData.links || [],
-                    // We set defaults for the new features so it can't crash
-                    newsletter_active: rawData.newsletter_active || false,
-                    newsletter_size: rawData.newsletter_size || 'medium',
-                    fb_pixel_id: rawData.fb_pixel_id || '',
-                    google_analytics_id: rawData.google_analytics_id || '',
-                    texture_overlay: rawData.texture_overlay || 'none',
-                } as ProfileData);
-            }
-        } catch (error) {
-            console.error('Load profile error:', error)
-            alert('Failed to load profile: ' + (error as Error).message)
-        }
-    }
+        initializeProfile();
+    }, []);
 
     async function saveProfile() {
         setSaving(true)
@@ -215,11 +241,33 @@ export default function BuilderPage() {
         }
 
         try {
+            console.log('💾 Saving profile for user:', userId);
+
+            // CRITICAL: Merge socials back into links array for database storage
+            const socialLinks: Link[] = [];
+            if (profile.socials.instagram) {
+                socialLinks.push({ title: 'Instagram', url: profile.socials.instagram });
+            }
+            if (profile.socials.tiktok) {
+                socialLinks.push({ title: 'TikTok', url: profile.socials.tiktok });
+            }
+            if (profile.socials.facebook) {
+                socialLinks.push({ title: 'Facebook', url: profile.socials.facebook });
+            }
+            if (profile.socials.email) {
+                socialLinks.push({ title: 'Email', url: `mailto:${profile.socials.email}` });
+            }
+
+            // Merge: Socials first, then custom links
+            const mergedLinks = [...socialLinks, ...profile.links];
+
             const updates = {
                 id: userId,
                 user_id: userId,
                 username: username, // Save the handle
                 ...profile,
+                links: mergedLinks, // Save merged links for backwards compatibility
+                socials: profile.socials, // Also save to new socials column
                 updated_at: new Date().toISOString()
             }
 
