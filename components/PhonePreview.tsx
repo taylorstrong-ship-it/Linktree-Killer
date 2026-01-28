@@ -277,8 +277,8 @@ export default function PhonePreview({
                         />
                     )}
 
-                    {/* Social Icons */}
-                    <div className="flex flex-wrap justify-center gap-4 mb-6">
+                    {/* Social Icons (Top Row - Fixed) */}
+                    <div className="flex flex-wrap justify-center gap-4 mb-4 shrink-0">
                         {links && links.filter(link => getSocialIcon(link.url)).map((link, index) => {
                             const social = getSocialIcon(link.url);
                             if (!social) return null;
@@ -298,30 +298,39 @@ export default function PhonePreview({
                         })}
                     </div>
 
-                    {/* Links */}
-                    <div className="w-full space-y-3">
+                    {/* Action Buttons (Scrollable Stack) */}
+                    <div className="w-full space-y-3 overflow-y-auto max-h-[400px] pb-12 px-1 scrollbar-hide">
                         {links && links.length > 0 ? (
-                            <a
-                                key={index}
-                                href={link.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="group block w-full py-3 px-6 rounded-xl text-center font-bold text-white transition-all duration-300 shadow-md hover:scale-105 bg-blue-500 hover:bg-blue-600 active:scale-95"
-                            >
-                                {link.title}
-                            </a>
-                        ) : null
+                            links.filter(link => !getSocialIcon(link.url)).map((link, index) => (
+                                link.title && link.url && (
+                                    <a
+                                        key={`action-${index}`}
+                                        href={link.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="group block w-full py-3.5 px-6 rounded-xl text-center font-bold text-white transition-all duration-300 shadow-md hover:scale-105 bg-blue-500 hover:bg-blue-600 active:scale-95"
+                                    >
+                                        {link.title}
+                                    </a>
+                                )
                             ))
                         ) : (
-                        <div className="text-center py-8 text-white/60 text-sm">
-                            Add links to see them here
-                        </div>
+                            <div className="text-center py-8 text-white/60 text-sm">
+                                Add links to see them here
+                            </div>
                         )}
                     </div>
                 </div>
             </div>
 
             <style jsx>{`
+                .scrollbar-hide::-webkit-scrollbar {
+                    display: none;
+                }
+                .scrollbar-hide {
+                    -ms-overflow-style: none;
+                    scrollbar-width: none;
+                }
                 @keyframes blob {
                     0%, 100% {
                         transform: translate(0px, 0px) scale(1);
