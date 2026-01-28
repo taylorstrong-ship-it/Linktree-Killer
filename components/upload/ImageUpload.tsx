@@ -33,31 +33,47 @@ export default function ImageUpload({ onUploadComplete, currentImage }: ImageUpl
                 throw new Error('File size must be less than 5MB')
             }
 
-            // Get current user
+            // Check if user is authenticated
             const { data: { user } } = await supabase.auth.getUser()
-            if (!user) throw new Error('Not authenticated')
 
-            // Create clean filename
-            const fileExt = file.name.split('.').pop()
-            const fileName = `${user.id}/avatar-${Date.now()}.${fileExt}`
+            if (!user) {
+                // GUEST MODE: Convert to base64 and store in localStorage
+                console.log('📸 Guest upload detected - using base64 encoding...');
 
-            // Upload to Supabase Storage
-            const { error: uploadError } = await supabase.storage
-                .from('images')
-                .upload(fileName, file, {
-                    cacheControl: '3600',
-                    upsert: true
-                })
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    const base64String = reader.result as string;
+                    console.log('✅ Image converted to base64, size:', Math.round(base64String.length / 1024), 'KB');
+                    onUploadComplete(base64String);
+                };
+                reader.readAsDataURL(file);
 
-            if (uploadError) throw uploadError
+            } else {
+                // AUTHENTICATED MODE: Upload to Supabase Storage
+                console.log('☁️ Authenticated upload - using Supabase storage...');
 
-            // Get public URL
-            const { data } = supabase.storage
-                .from('images')
-                .getPublicUrl(fileName)
+                // Create clean filename
+                const fileExt = file.name.split('.').pop()
+                const fileName = `${user.id}/avatar-${Date.now()}.${fileExt}`
 
-            // Send URL back to parent component
-            onUploadComplete(data.publicUrl)
+                // Upload to Supabase Storage
+                const { error: uploadError } = await supabase.storage
+                    .from('images')
+                    .upload(fileName, file, {
+                        cacheControl: '3600',
+                        upsert: true
+                    })
+
+                if (uploadError) throw uploadError
+
+                // Get public URL
+                const { data } = supabase.storage
+                    .from('images')
+                    .getPublicUrl(fileName)
+
+                // Send URL back to parent component
+                onUploadComplete(data.publicUrl)
+            }
 
         } catch (error: any) {
             console.error('Upload error:', error)

@@ -7,6 +7,7 @@ import ImageUpload from '@/components/upload/ImageUpload'
 import { MagicImporter } from '@/components/magic-importer'
 import type { ScrapedProfile } from '@/app/actions/magic-scrape'
 import PhonePreview from '@/components/PhonePreview'
+import AuthModal from '@/components/AuthModal'
 import { Waves, Zap, Tornado, Flame, Check } from 'lucide-react'
 
 interface Link {
@@ -52,12 +53,13 @@ interface ProfileData {
 }
 
 export default function BuilderPage() {
-    const [isAuthenticated, setIsAuthenticated] = useState(false)
+    const [isAuthenticated, setIsAuthenticated] = useState(true) // Always allow access
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
     const [userId, setUserId] = useState<string | null>(null)
     const [username, setUsername] = useState('') // NEW: Claim URL State
     const [showSuccessModal, setShowSuccessModal] = useState(false) // NEW: Success Modal State
+    const [showAuthModal, setShowAuthModal] = useState(false) // NEW: Auth Modal for guests
     const [profile, setProfile] = useState<ProfileData>({
         title: '',
         description: '',
@@ -217,18 +219,14 @@ export default function BuilderPage() {
     async function saveProfile() {
         setSaving(true)
 
-        // 🔒 Auth Guard with Recovery
+        // 🔒 Guest Check: Show auth modal instead of redirecting
         if (!userId) {
-            console.log("⚠️ No user ID found. Redirecting to login...");
-            // Save draft to localStorage so it persists after login
+            console.log("⚠️ Guest user detected. Showing auth modal...");
+            // Save current state to localStorage
             localStorage.setItem('taylored_brand_data', JSON.stringify(profile));
 
-            showToast('Please log in to save! Redirecting...', 'error');
-            setTimeout(() => {
-                // Determine base URL to redirect back to builder
-                window.location.href = '/login?next=/builder';
-            }, 1500);
             setSaving(false);
+            setShowAuthModal(true); // Show modal instead of redirect
             return;
         }
 
@@ -299,6 +297,52 @@ export default function BuilderPage() {
             console.error('Logout error:', error);
             // Force reload anyway
             window.location.href = '/login';
+        }
+    }
+
+    // 🎉 NEW: Handle successful auth from modal
+    async function handleAuthSuccess(newUserId: string) {
+        try {
+            console.log('🎉 Auth successful! Migrating guest data to database...');
+            setShowAuthModal(false);
+            setUserId(newUserId);
+
+            // Read localStorage data
+            const guestData = localStorage.getItem('taylored_brand_data');
+            if (guestData) {
+                const parsed = JSON.parse(guestData);
+                console.log('📦 Found guest data to migrate:', parsed);
+
+                // Merge guest data with current profile state
+                const dataToSave = {
+                    id: newUserId,
+                    user_id: newUserId,
+                    username: username || parsed.username,
+                    ...profile,
+                    updated_at: new Date().toISOString()
+                };
+
+                // Save to Supabase
+                const { error } = await supabase
+                    .from('profiles')
+                    .upsert(dataToSave);
+
+                if (error) throw error;
+
+                console.log('✅ Guest data migrated successfully!');
+
+                // Clear localStorage after successful migration
+                localStorage.removeItem('taylored_brand_data');
+
+                // Show success modal
+                setShowSuccessModal(true);
+            } else {
+                // No guest data, just save current state
+                await saveProfile();
+            }
+        } catch (error) {
+            console.error('❌ Migration failed:', error);
+            showToast('Account created but save failed: ' + (error as Error).message, 'error');
         }
     }
 
@@ -502,6 +546,15 @@ export default function BuilderPage() {
 
     return (
         <>
+            {/* AUTH MODAL - Shown for guest users */}
+            {showAuthModal && (
+                <AuthModal
+                    onClose={() => setShowAuthModal(false)}
+                    onSuccess={handleAuthSuccess}
+                    prefilledEmail=""
+                />
+            )}
+
             {/* SUCCESS MODAL */}
             {showSuccessModal && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-300">
