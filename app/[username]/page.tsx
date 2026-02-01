@@ -21,10 +21,15 @@ import { Metadata } from 'next';
 import Link from 'next/link';
 import AnalyticsTracker from '@/components/AnalyticsTracker';
 
-// 1. Setup Supabase for Server Component
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-const supabase = createClient(supabaseUrl, supabaseKey);
+// Force dynamic rendering to prevent build-time execution
+export const dynamic = 'force-dynamic';
+
+// 1. Helper function to get Supabase client
+function getSupabaseClient() {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+    return createClient(supabaseUrl, supabaseKey);
+}
 
 // 2. Define the Page Props (Next.js 15: params is now a Promise)
 interface Props {
@@ -34,6 +39,7 @@ interface Props {
 // 3. Dynamic Metadata (Sets the browser tab title)
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const { username } = await params; // Next.js 15: await params
+    const supabase = getSupabaseClient();
     const { data } = await supabase
         .from('profiles')
         .select('title, description')
@@ -49,6 +55,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 // 4. The Main Page Component
 export default async function PublicProfile({ params }: Props) {
     const { username } = await params; // Next.js 15: await params
+    const supabase = getSupabaseClient();
 
     // Fetch the user's profile
     const { data: profile } = await supabase
