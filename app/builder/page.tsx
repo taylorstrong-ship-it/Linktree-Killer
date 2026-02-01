@@ -275,11 +275,14 @@ export default function BuilderPage() {
             // Merge: Socials first, then custom links
             const mergedLinks = [...socialLinks, ...profile.links];
 
+            // Remove 'dna' field from profile before saving (it's not in the database schema)
+            const { dna, ...profileWithoutDna } = profile as any;
+
             const updates = {
                 id: userId,
                 user_id: userId,
                 username: username, // Save the handle
-                ...profile,
+                ...profileWithoutDna,
                 links: mergedLinks, // Save merged links for backwards compatibility
                 socials: profile.socials, // Also save to new socials column
                 updated_at: new Date().toISOString()
