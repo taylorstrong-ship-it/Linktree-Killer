@@ -100,6 +100,11 @@ export default function Home() {
             };
 
             console.log('✅ Brand DNA extracted:', transformedData);
+            
+            // CRITICAL FIX: Save to localStorage immediately so builder can access it
+            localStorage.setItem('taylored_brand_data', JSON.stringify(transformedData));
+            console.log('💾 Saved to localStorage:', transformedData);
+            
             setBrandData(transformedData);
         } catch (err: any) {
             console.error('⚠️ API Failed. Activating Simulation Mode...', err);
@@ -124,6 +129,9 @@ export default function Home() {
                     ]
                 };
 
+                // Save simulation data to localStorage too
+                localStorage.setItem('taylored_brand_data', JSON.stringify(simulationData));
+                
                 setBrandData(simulationData);
                 setIsScanning(false);
                 setError(null); // Clear error to show success

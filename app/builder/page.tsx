@@ -181,17 +181,19 @@ export default function BuilderPage() {
                     const savedData = localStorage.getItem('taylored_brand_data');
                     if (savedData) {
                         try {
-                            const parsed = JSON.parse(savedData);
-                            console.log("📥 Loading from localStorage as fallback...");
-                            setProfile(prev => ({
-                                ...prev,
-                                ...parsed,
-                                description: parsed.bio || parsed.description || prev.description,
-                                theme_color: parsed.brand_colors?.[0] || prev.theme_color,
-                                links: (parsed.links && Array.isArray(parsed.links) && parsed.links.length > 0)
-                                    ? parsed.links
-                                    : prev.links
-                            }));
+                    const parsed = JSON.parse(savedData);
+                    console.log('📥 Loading from localStorage as fallback...');
+                    console.log('🔍 localStorage data:', parsed);
+                    console.log('🔗 Links found:', parsed.links);
+                    setProfile(prev => ({
+                        ...prev,
+                        ...parsed,
+                        description: parsed.bio || parsed.description || prev.description,
+                        theme_color: parsed.brand_colors?.[0] || prev.theme_color,
+                        links: (parsed.links && Array.isArray(parsed.links) && parsed.links.length > 0)
+                            ? parsed.links
+                            : prev.links
+                    }));
 
                             if (parsed.title) {
                                 const generated = parsed.title.toLowerCase().replace(/\s+/g, '');
@@ -288,6 +290,9 @@ export default function BuilderPage() {
                 socials: profile.socials, // Also save to new socials column
                 updated_at: new Date().toISOString()
             }
+            
+            console.log('💾 Saving profile with links:', mergedLinks);
+            console.log('💾 Full updates object:', updates);
 
             const { error } = await supabase
                 .from('profiles')
