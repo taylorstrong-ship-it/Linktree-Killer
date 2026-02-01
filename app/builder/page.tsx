@@ -8,6 +8,7 @@ import { MagicImporter } from '@/components/magic-importer'
 import type { ScrapedProfile } from '@/app/actions/magic-scrape'
 import PhonePreview from '@/components/PhonePreview'
 import AuthModal from '@/components/AuthModal'
+import { LinkEditor } from '@/components/builder/LinkEditor'
 import { Waves, Zap, Tornado, Flame, Check } from 'lucide-react'
 
 interface Link {
@@ -475,42 +476,6 @@ export default function BuilderPage() {
         }
     }
 
-    function addLink() {
-        setProfile(prev => ({
-            ...prev,
-            links: [...prev.links, { title: '', url: '' }]
-        }))
-    }
-
-    function updateLink(index: number, field: 'title' | 'url', value: string) {
-        setProfile(prev => ({
-            ...prev,
-            links: prev.links.map((link, i) =>
-                i === index ? { ...link, [field]: value } : link
-            )
-        }))
-    }
-
-    function removeLink(index: number) {
-        setProfile(prev => ({
-            ...prev,
-            links: prev.links.filter((_, i) => i !== index)
-        }))
-    }
-
-    function moveLink(index: number, direction: 'up' | 'down') {
-        setProfile(prev => {
-            const newLinks = [...prev.links]
-            const targetIndex = direction === 'up' ? index - 1 : index + 1
-
-            // Swap the links
-            if (targetIndex >= 0 && targetIndex < newLinks.length) {
-                [newLinks[index], newLinks[targetIndex]] = [newLinks[targetIndex], newLinks[index]]
-            }
-
-            return { ...prev, links: newLinks }
-        })
-    }
 
     function showToast(message: string, type: 'success' | 'error') {
         const toast = document.getElementById('toast')
@@ -1376,61 +1341,11 @@ export default function BuilderPage() {
                                 </span>
                                 <i className="fa-solid fa-chevron-down text-xs"></i>
                             </summary>
-                            <div className="space-y-3 pl-1 mt-3">
-                                {profile.links.map((link, index) => (
-                                    <div key={index} className="bg-gray-800/50 p-3 rounded-lg border border-gray-700/50">
-                                        <div className="grid gap-2">
-                                            <input
-                                                type="text"
-                                                value={link.title}
-                                                onChange={(e) => updateLink(index, 'title', e.target.value)}
-                                                placeholder="Link Title"
-                                                className="w-full p-2 text-xs bg-gray-800 border border-gray-700 rounded-md text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50"
-                                            />
-                                            <input
-                                                type="text"
-                                                value={link.url}
-                                                onChange={(e) => updateLink(index, 'url', e.target.value)}
-                                                placeholder="https://..."
-                                                className="w-full p-2 text-xs bg-gray-800 border border-gray-700 rounded-md text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50"
-                                            />
-                                        </div>
-                                        <div className="flex gap-2 mt-2">
-                                            <button
-                                                onClick={() => moveLink(index, 'up')}
-                                                disabled={index === 0}
-                                                className="flex-1 text-xs py-1.5 px-2 bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:text-gray-600 text-white rounded transition flex items-center justify-center gap-1"
-                                                title="Move Up"
-                                            >
-                                                <i className="fa-solid fa-arrow-up"></i>
-                                                Up
-                                            </button>
-                                            <button
-                                                onClick={() => moveLink(index, 'down')}
-                                                disabled={index === profile.links.length - 1}
-                                                className="flex-1 text-xs py-1.5 px-2 bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:text-gray-600 text-white rounded transition flex items-center justify-center gap-1"
-                                                title="Move Down"
-                                            >
-                                                <i className="fa-solid fa-arrow-down"></i>
-                                                Down
-                                            </button>
-                                            <button
-                                                onClick={() => removeLink(index)}
-                                                className="text-xs py-1.5 px-3 bg-red-900/20 hover:bg-red-900/40 text-red-400 rounded transition"
-                                                title="Delete"
-                                            >
-                                                <i className="fa-solid fa-trash"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-                                ))}
-                                <button
-                                    onClick={addLink}
-                                    className="w-full py-3 border-2 border-dashed border-gray-700 rounded-lg text-xs font-bold text-gray-500 hover:bg-gray-800/50 hover:border-blue-500 hover:text-blue-400 transition flex items-center justify-center gap-2"
-                                >
-                                    <i className="fa-solid fa-plus"></i>
-                                    Add Custom Link
-                                </button>
+                            <div className="pl-1 mt-3">
+                                <LinkEditor
+                                    links={profile.links}
+                                    onChange={(newLinks) => setProfile(prev => ({ ...prev, links: newLinks }))}
+                                />
                             </div>
                         </details>
                     </div>
