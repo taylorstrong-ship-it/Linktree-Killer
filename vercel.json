@@ -2,5 +2,15 @@
     "framework": "nextjs",
     "buildCommand": "next build",
     "installCommand": "npm install",
-    "outputDirectory": ".next"
+    "outputDirectory": ".next",
+    "rewrites": [
+        {
+            "source": "/apps/post-generator",
+            "destination": "/apps/post-generator/index.html"
+        },
+        {
+            "source": "/apps/post-generator/:path*",
+            "destination": "/apps/post-generator/:path*"
+        }
+    ]
 }

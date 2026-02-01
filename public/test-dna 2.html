@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DNA Engine Test</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background: #000;
+            color: #00ff41;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .container {
+            background: #0a0a0a;
+            border: 2px solid #00ff41;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 0 20px rgba(0, 255, 65, 0.2);
+        }
+        h1 {
+            color: #ff6b00;
+            text-align: center;
+            font-size: 2em;
+            margin-bottom: 30px;
+        }
+        input {
+            width: 100%;
+            padding: 15px;
+            background: #111;
+            border: 2px solid #00ff41;
+            color: #00ff41;
+            font-size: 16px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            margin-bottom: 15px;
+        }
+        button {
+            width: 100%;
+            padding: 15px;
+            background: #ff6b00;
+            border: none;
+            color: #000;
+            font-weight: bold;
+            font-size: 18px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        button:hover {
+            background: #00ff41;
+            transform: scale(1.02);
+        }
+        button:disabled {
+            background: #333;
+            color: #666;
+            cursor: not-allowed;
+        }
+        #loading {
+            display: none;
+            text-align: center;
+            color: #ff6b00;
+            margin: 20px 0;
+            font-size: 18px;
+        }
+        #result {
+            margin-top: 30px;
+            padding: 20px;
+            background: #050505;
+            border: 1px solid #00ff41;
+            border-radius: 4px;
+            display: none;
+        }
+        .field {
+            margin: 15px 0;
+            padding: 10px;
+            background: #0a0a0a;
+            border-left: 3px solid #00ff41;
+        }
+        .field-name {
+            color: #ff6b00;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .field-value {
+            color: #00ff41;
+            white-space: pre-wrap;
+        }
+        .money-link {
+            background: #ff6b00;
+            color: #000;
+            padding: 10px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .color-swatch {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 2px solid #fff;
+            border-radius: 4px;
+            vertical-align: middle;
+            margin-left: 10px;
+        }
+        .error {
+            color: #ff0000;
+            padding: 20px;
+            background: #330000;
+            border: 2px solid #ff0000;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔥 DNA ENGINE v2 - GOD MODE TEST</h1>
+        
+        <input 
+            type="text" 
+            id="urlInput" 
+            placeholder="Enter website URL (e.g., https://hairbyshea.com)"
+            value="https://hairbyshea.com"
+        />
+        
+        <button onclick="extractDNA()" id="extractBtn">
+            🎯 EXTRACT BRAND DNA
+        </button>
+        
+        <div id="loading">
+            🔍 Extracting DNA... This may take 3-5 seconds...
+        </div>
+        
+        <div id="result"></div>
+    </div>
+
+    <script>
+        async function extractDNA() {
+            const url = document.getElementById('urlInput').value.trim();
+            const loading = document.getElementById('loading');
+            const result = document.getElementById('result');
+            const btn = document.getElementById('extractBtn');
+            
+            if (!url) {
+                alert('Please enter a URL');
+                return;
+            }
+            
+            // Show loading
+            loading.style.display = 'block';
+            result.style.display = 'none';
+            btn.disabled = true;
+            btn.textContent = 'EXTRACTING...';
+            
+            try {
+                const response = await fetch('/api/brand-dna', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url })
+                });
+                
+                const data = await response.json();
+                
+                loading.style.display = 'none';
+                btn.disabled = false;
+                btn.textContent = '🎯 EXTRACT BRAND DNA';
+                
+                if (!data.success) {
+                    result.innerHTML = `<div class="error">❌ Error: ${data.message}</div>`;
+                    result.style.display = 'block';
+                    return;
+                }
+                
+                const dna = data.dna;
+                const isExternalBooking = /(square\.site|vagaro\.com|glossgenius\.com|booksy\.com|toast\.com)/i.test(dna.links.booking_url);
+                
+                result.innerHTML = `
+                    <div class="field">
+                        <div class="field-name">📊 Business Name</div>
+                        <div class="field-value">${dna.businessName}</div>
+                    </div>
+                    
+                    <div class="field">
+                        <div class="field-name">💬 Tagline</div>
+                        <div class="field-value">${dna.tagline || '(none)'}</div>
+                    </div>
+                    
+                    <div class="field">
+                        <div class="field-name">🏢 Industry</div>
+                        <div class="field-value">${dna.industry}</div>
+                    </div>
+                    
+                    <div class="field">
+                        <div class="field-name">✨ Vibe</div>
+                        <div class="field-value">${dna.vibe}</div>
+                    </div>
+                    
+                    <div class="field">
+                        <div class="field-name">🎨 Primary Color</div>
+                        <div class="field-value">
+                            ${dna.colors.primary}
+                            <span class="color-swatch" style="background: ${dna.colors.primary}"></span>
+                        </div>
+                    </div>
+                    
+                    <div class="field">
+                        <div class="field-name">🎨 Secondary Color</div>
+                        <div class="field-value">
+                            ${dna.colors.secondary}
+                            <span class="color-swatch" style="background: ${dna.colors.secondary}"></span>
+                        </div>
+                    </div>
+                    
+                    <div class="field money-link">
+                        <div class="field-name" style="color: #000;">💰 MONEY LINK ${isExternalBooking ? '(External Platform ✅)' : '(Main Site)'}</div>
+                        <div class="field-value" style="color: #000;">
+                            <a href="${dna.links.booking_url}" target="_blank" style="color: #000; text-decoration: underline;">
+                                ${dna.links.booking_url}
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <div class="field">
+                        <div class="field-name">📱 Instagram</div>
+                        <div class="field-value">${dna.links.instagram || '(not found)'}</div>
+                    </div>
+                    
+                    <div class="field">
+                        <div class="field-name">📱 Facebook</div>
+                        <div class="field-value">${dna.links.facebook || '(not found)'}</div>
+                    </div>
+                    
+                    <div class="field">
+                        <div class="field-name">📞 Contact</div>
+                        <div class="field-value">
+                            Phone: ${dna.contact.phone || '(not found)'}<br>
+                            Email: ${dna.contact.email || '(not found)'}<br>
+                            Address: ${dna.contact.address || '(not found)'}
+                        </div>
+                    </div>
+                    
+                    <div class="field">
+                        <div class="field-name">🤖 Voice Setup</div>
+                        <div class="field-value">
+                            Tone: ${dna.voice_setup.tone}<br>
+                            Welcome: "${dna.voice_setup.welcome_message}"
+                        </div>
+                    </div>
+                    
+                    <div class="field">
+                        <div class="field-name">🔬 Data Sources</div>
+                        <div class="field-value">${data.dataSources.join(', ') || 'markdown only'}</div>
+                    </div>
+                `;
+                
+                result.style.display = 'block';
+                
+            } catch (error) {
+                loading.style.display = 'none';
+                btn.disabled = false;
+                btn.textContent = '🎯 EXTRACT BRAND DNA';
+                result.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+                result.style.display = 'block';
+            }
+        }
+        
+        // Allow Enter key to submit
+        document.getElementById('urlInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                extractDNA();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -9,6 +9,14 @@ const nextConfig = {
             },
         ],
     },
+    async rewrites() {
+        return [
+            {
+                source: '/apps/post-generator',
+                destination: '/apps/post-generator/index.html',
+            },
+        ];
+    },
 };
 
 export default nextConfig;

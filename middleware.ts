@@ -11,19 +11,28 @@ export function middleware(request: NextRequest) {
     // 2. Check if current hostname is a main domain
     const isMainDomain = mainDomains.some(domain => hostname.includes(domain));
 
-    // 3. TRAFFIC CONTROL
-    // 🔓 PUBLIC ACCESS: Main Domain is always open (No Auth Check)
+    // 3. TRAFFIC CONTROL & INFINITE LOOP PROTECTION
+    // 🔓 PUBLIC ACCESS: Main Domain is always open
     if (isMainDomain) {
-        // If it's the main site, let them pass normally (to /builder, /api, etc.)
+        return NextResponse.next();
+    }
+
+    // 🛡️ REWRITE LOOP PROTECTION
+    // Prevent rewriting if we're already handling a profile route to avoid loops
+    if (url.pathname.startsWith('/profiles')) {
         return NextResponse.next();
     }
 
     // 4. THE REWRITE (For Custom Domains)
-    // If we are here, the user is on "bio.tayloredpetportraits.com" (or similar).
+    // If we are here, the user is on "bio.customdomain.com".
     // We rewrite the URL behind the scenes to a special profile folder.
-    // Example: bio.tayloredpetportraits.com -> /profiles/bio.tayloredpetportraits.com
-    url.pathname = `/profiles/${hostname}${url.pathname}`;
-    return NextResponse.rewrite(url);
+    // Example: bio.customdomain.com/about -> /profiles/bio.customdomain.com/about
+
+    // Clone the URL to avoid mutating the original request for logging/analytics
+    const urlRewrite = request.nextUrl.clone();
+    urlRewrite.pathname = `/profiles/${hostname}${url.pathname}`;
+
+    return NextResponse.rewrite(urlRewrite);
 }
 
 export const config = {

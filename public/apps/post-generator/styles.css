@@ -1,0 +1,348 @@
+/* PostGenerator 2.0 - Dark Theme Styles */
+
+/* ===================================
+   CSS VARIABLES (Dark Theme)
+   =================================== */
+:root {
+  /* Colors */
+  --bg-dark: #000000;
+  --card-dark: #1A1A1A;
+  --border-dark: #2D2D2D;
+  --orange: #FF6B35;
+  --purple: #6B46C1;
+  --green: #10B981;
+  --text-primary: #FFFFFF;
+  --text-secondary: #9CA3AF;
+
+  /*Fonts */
+  --font-heading: 'Playfair Display', serif;
+  --font-body: 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+/* ===================================
+   TERMINAL HEADER
+   =================================== */
+.terminal-header {
+  @apply text-2xl md:text-3xl font-jetbrains mb-2;
+  color: var(--text-primary);
+}
+
+.terminal-header span:first-child {
+  color: var(--orange);
+  font-weight: 600;
+}
+
+/* ===================================
+   DARK CARDS
+   =================================== */
+.dark-card {
+  background-color: var(--card-dark);
+  border: 1px solid var(--border-dark);
+  @apply rounded-lg p-6 transition-all;
+}
+
+.dark-card:hover {
+  border-color: rgba(255, 107, 53, 0.3);
+}
+
+/* ===================================
+   CARD HEADINGS
+   =================================== */
+.card-heading {
+  @apply text-lg font-semibold flex items-center gap-2 mb-4;
+  font-family: var(--font-heading);
+  color: var(--text-primary);
+}
+
+/* ===================================
+   INPUT FIELDS
+   =================================== */
+.dark-input {
+  background-color: var(--bg-dark);
+  border: 1px solid var(--border-dark);
+  color: var(--text-primary);
+  @apply px-4 py-2 rounded-lg transition-all;
+}
+
+.dark-input:focus {
+  outline: none;
+  border-color: var(--orange);
+  box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+}
+
+.dark-input::placeholder {
+  color: var(--text-secondary);
+}
+
+/* ===================================
+   COLOR INPUT
+   =================================== */
+.color-input {
+  width: 100%;
+  height: 44px;
+  border: 2px solid var(--border-dark);
+  border-radius: 8px;
+  cursor: pointer;
+  background-color: var(--bg-dark);
+  transition: all 0.2s;
+}
+
+.color-input:hover {
+  border-color: var(--orange);
+}
+
+.color-input::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.color-input::-webkit-color-swatch {
+  border: none;
+  border-radius: 6px;
+}
+
+/* ===================================
+   BUTTONS
+   =================================== */
+
+/* Primary Button (Orange) */
+.btn-primary {
+  background-color: var(--orange);
+  color: white;
+  @apply px-6 py-2 rounded-lg font-medium transition-all;
+}
+
+.btn-primary:hover {
+  background-color: #E85A28;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+/* Secondary Button */
+.btn-secondary {
+  background-color: var(--card-dark);
+  border: 2px dashed var(--border-dark);
+  color: var(--text-primary);
+  @apply px-4 py-2 rounded-lg font-medium transition-all;
+}
+
+.btn-secondary:hover {
+  border-color: var(--purple);
+  border-style: solid;
+  color: var(--purple);
+}
+
+/* Generate Button (Green) */
+.btn-generate {
+  background-color: var(--green);
+  color: white;
+  @apply px-6 py-3 rounded-lg font-semibold transition-all;
+}
+
+.btn-generate:hover {
+  background-color: #059669;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+/* Download Button (Purple) */
+.btn-download {
+  background-color: var(--purple);
+  color: white;
+  @apply px-6 py-3 rounded-lg font-semibold transition-all;
+}
+
+.btn-download:hover {
+  background-color: #5A35A8;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(107, 70, 193, 0.3);
+}
+
+/* Toggle Buttons */
+.btn-toggle {
+  background-color: transparent;
+  border: 1px solid var(--border-dark);
+  color: var(--text-secondary);
+  @apply px-4 py-2 rounded-lg font-medium transition-all;
+}
+
+.btn-toggle.active {
+  background-color: var(--orange);
+  border-color: var(--orange);
+  color: white;
+}
+
+.btn-toggle:hover:not(.active) {
+  border-color: var(--orange);
+  color: var(--orange);
+}
+
+/* ===================================
+   TEMPLATE CARDS
+   =================================== */
+.template-card {
+  @apply p-4 rounded-lg text-center transition-all cursor-pointer;
+  background-color: var(--bg-dark);
+  border: 2px solid var(--border-dark);
+  color: var(--text-primary);
+}
+
+.template-card:hover {
+  border-color: var(--orange);
+  transform: translateY(-2px);
+}
+
+.template-card.active {
+  border-color: var(--orange);
+  background-color: rgba(255, 107, 53, 0.1);
+}
+
+/* ===================================
+   ANIMATIONS
+   =================================== */
+@keyframes slide-in {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-slide-in {
+  animation: slide-in 0.3s ease-out;
+}
+
+.animate-fade-out {
+  animation: fade-out 0.3s ease-out;
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-in;
+}
+
+/* ===================================
+   SCROLLBAR (Dark Theme)
+   =================================== */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-dark);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-dark);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--orange);
+}
+
+/* ===================================
+   RESPONSIVE ADJUSTMENTS
+   =================================== */
+@media (max-width: 1024px) {
+  .grid-cols-3 {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .terminal-header {
+    font-size: 1.5rem;
+  }
+
+  .template-card {
+    padding: 12px;
+    font-size: 14px;
+  }
+
+  .template-card .text-3xl {
+    font-size: 24px;
+  }
+}
+
+/* ===================================
+   LOADING SPINNER
+   =================================== */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* ===================================
+   DISABLED STATES
+   =================================== */
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ===================================
+   FOCUS STATES
+   =================================== */
+*:focus {
+  outline: none;
+}
+
+button:focus-visible {
+  box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.3);
+}
+
+/* ===================================
+   FILE INPUT STYLING
+   =================================== */
+input[type="file"] {
+  display: none;
+}
+
+/* ===================================
+   TOAST NOTIFICATIONS
+   =================================== */
+.toast {
+  @apply fixed bottom-4 right-4 px-6 py-3 rounded-lg text-white shadow-lg z-50;
+}
+
+.toast.success {
+  background-color: var(--green);
+}
+
+.toast.error {
+  background-color: #EF4444;
+}
+
+.toast.info {
+  background-color: var(--purple);
+}

@@ -1,0 +1,8 @@
+// 1. THE EYES: SCRAPE THE SITE (Updated for Shopify/JSON-LD, Fixed for installed SDK)
+console.log(`🔥 DNA ENGINE: Scraping ${url}...`);
+
+const scrapeResult = await firecrawl.scrape(url, {
+  formats: ['markdown', 'html'], // REQUEST HTML TO FIND JSON-LD
+  onlyMainContent: false, // FALSE keeps the <head> tags we need
+  waitFor: 1000 // Waits for Shopify JS to hydrate the DOM
+});
