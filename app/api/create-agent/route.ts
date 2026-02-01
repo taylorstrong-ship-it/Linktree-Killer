@@ -5,11 +5,11 @@ import { VapiClient } from '@vapi-ai/server-sdk';
 
 export const maxDuration = 60; // Allow 60 seconds for scraping
 
-const firecrawl = new Firecrawl({ apiKey: process.env.FIRECRAWL_KEY });
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-const vapi = new VapiClient({ token: process.env.VAPI_PRIVATE_KEY || '' });
-
 export async function POST(req: Request) {
+    // Initialize clients inside the function to avoid build-time execution
+    const firecrawl = new Firecrawl({ apiKey: process.env.FIRECRAWL_KEY });
+    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    const vapi = new VapiClient({ token: process.env.VAPI_PRIVATE_KEY || '' });
     try {
         const { url } = await req.json();
         if (!url) return NextResponse.json({ success: false, error: "No URL provided" });
