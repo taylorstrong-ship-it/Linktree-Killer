@@ -1,3 +1,22 @@
+/**
+ * 🤖 AI-Assisted Maintenance Guide 🤖
+ * 
+ * **File:** app/page.tsx
+ * **Purpose:** This is the main landing page of the application.
+ * 
+ * **Key Logic:**
+ * 1. **URL Input:** Captures the user's website URL from an input field.
+ * 2. **API Call:** On form submission, it calls the `/api/brand-dna` endpoint.
+ * 3. **State Management:** Uses `useState` to manage the URL, scanning state, and returned brand data.
+ * 4. **Error Handling:** If the API call fails, it falls back to a pre-defined mock data set (`simulationData`).
+ * 5. **Redirection:** On success, it stores the brand data in `localStorage` and redirects the user to the `/builder` page.
+ * 
+ * **Common Issues to Check:**
+ * - **API Failures:** Check the `handleScan` function and the `/api/brand-dna` endpoint for errors.
+ * - **State Not Updating:** Ensure `setBrandData` and `setIsScanning` are being called correctly.
+ * - **Redirection Problems:** Verify `router.push('/builder')` is working as expected.
+ */
+
 'use client';
 
 import { useState, useEffect } from 'react';

@@ -1,3 +1,21 @@
+/**
+ * 🤖 AI-Assisted Maintenance Guide 🤖
+ * 
+ * **File:** app/[username]/page.tsx
+ * **Purpose:** This is the public-facing link-in-bio page for a user.
+ * 
+ * **Key Logic:**
+ * 1. **Dynamic Routing:** It uses the `[username]` parameter from the URL to fetch the correct profile.
+ * 2. **Data Fetching:** It fetches the profile data directly from the Supabase `profiles` table using the username.
+ * 3. **Rendering:** It renders the user's avatar, title, description, and a list of links.
+ * 4. **404 Handling:** If no profile is found for the given username, it displays a "User not found" message.
+ * 
+ * **Common Issues to Check:**
+ * - **Profile Not Found:** Ensure the username exists in the `profiles` table and that the RLS (Row Level Security) policies allow public access.
+ * - **Links Not Displaying:** Check that the `profile.links` array is being fetched and mapped correctly.
+ * - **Styling Issues:** Verify that the theme colors and font styles are being applied correctly from the profile data.
+ */
+
 import { createClient } from '@supabase/supabase-js';
 import { Metadata } from 'next';
 import Link from 'next/link';

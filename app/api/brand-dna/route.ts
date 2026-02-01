@@ -1,3 +1,24 @@
+/**
+ * 🤖 AI-Assisted Maintenance Guide 🤖
+ * 
+ * **File:** app/api/brand-dna/route.ts
+ * **Purpose:** This API endpoint is the core of the brand scraping functionality.
+ * 
+ * **Key Logic:**
+ * 1. **Receives URL:** It accepts a POST request with a URL in the JSON body.
+ * 2. **Initial Scrape:** It uses Firecrawl to scrape the initial content of the provided URL.
+ * 3. **Deep Scrape (CTA Detection):** It then performs a "deep scrape" to find Call-to-Action (CTA) buttons by looking for common patterns and keywords (e.g., "Book Now", "Shop", "Contact").
+ * 4. **Logo Extraction:** It attempts to find a logo by checking for `og:image`, `apple-touch-icon`, and `favicon` meta tags.
+ * 5. **Data Aggregation:** It combines all the extracted information (metadata, CTAs, logo, colors) into a single `dna` object.
+ * 6. **Response:** It returns a JSON response with `success: true` and the `dna` object.
+ * 
+ * **Common Issues to Check:**
+ * - **Firecrawl API Key:** Ensure the `FIRECRAWL_API_KEY` environment variable is set and valid.
+ * - **Scraping Failures:** The target website might be blocking scrapers or have an unusual structure. Check the Firecrawl logs for errors.
+ * - **CTA Detection Logic:** The regex and keyword matching in the `extractCTAButtons` function might need to be adjusted for different types of websites.
+ * - **Logo Not Found:** The website may not have standard meta tags for its logo.
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import FirecrawlApp from '@mendable/firecrawl-js';
 import OpenAI from 'openai';

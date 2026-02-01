@@ -1,3 +1,27 @@
+/**
+ * 🤖 AI-Assisted Maintenance Guide 🤖
+ * 
+ * **File:** app/builder/page.tsx
+ * **Purpose:** This is the core page builder where users customize their link-in-bio page.
+ * 
+ * **Key Logic:**
+ * 1. **Data Loading:** It first tries to load user data from the Supabase database. If that fails, it checks `localStorage` for data from the initial scan.
+ * 2. **State Management:** A large `useState` hook manages the entire profile object, including links, theme, and social media handles.
+ * 3. **Link Management:**
+ *    - `addLink`: Adds a new empty link object to the `profile.links` array.
+ *    - `removeLink`: Removes a link from the array by its index.
+ *    - `updateLink`: Updates a specific link's title or URL.
+ *    - `moveLink`: Reorders links using up/down buttons (NO DRAG AND DROP YET).
+ * 4. **Saving Data:** The `saveProfile` function saves the entire profile object to the Supabase `profiles` table.
+ * 5. **Authentication:** It checks for an authenticated user. If the user is a guest, it prompts them to sign up or log in before saving.
+ * 
+ * **Common Issues to Check:**
+ * - **Links Not Saving:** Check the `saveProfile` function for errors. Ensure the `links` array is correctly formatted before sending to Supabase.
+ * - **Data Not Loading:** Verify the `initializeProfile` function is correctly fetching data from Supabase or `localStorage`.
+ * - **Authentication Errors:** Check the Supabase client and the user session logic.
+ * - **Drag and Drop:** This is not implemented. The `moveLink` function is the current method for reordering.
+ */
+
 // @ts-nocheck
 'use client'
 
