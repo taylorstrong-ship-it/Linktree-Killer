@@ -145,6 +145,13 @@ export default function PhonePreview({
         if (lowerUrl.includes('github.com')) return { icon: 'fa-github', color: '#181717', label: 'GitHub' };
         if (lowerUrl.includes('snapchat.com')) return { icon: 'fa-snapchat', color: '#FFFC00', label: 'Snapchat' };
         if (lowerUrl.includes('whatsapp.com')) return { icon: 'fa-whatsapp', color: '#25D366', label: 'WhatsApp' };
+        // FIX: Use exact domain matching to prevent craft.me from matching t.me
+        try {
+            const urlObj = new URL(url.startsWith('http') ? url : `https://${url}`);
+            const domain = urlObj.hostname.toLowerCase().replace('www.', '');
+            if (domain === 't.me' || domain === 'telegram.org' || domain === 'telegram.me') return { icon: 'fa-telegram', color: '#0088cc', label: 'Telegram' };
+        } catch (e) { }
+        // Only check substring for other socials after Telegram check
         if (lowerUrl.includes('t.me/') || lowerUrl.includes('telegram.org') || lowerUrl.startsWith('https://t.me')) return { icon: 'fa-telegram', color: '#0088cc', label: 'Telegram' };
         if (lowerUrl.includes('spotify.com')) return { icon: 'fa-spotify', color: '#1DB954', label: 'Spotify' };
         if (lowerUrl.includes('soundcloud.com')) return { icon: 'fa-soundcloud', color: '#ff5500', label: 'SoundCloud' };
