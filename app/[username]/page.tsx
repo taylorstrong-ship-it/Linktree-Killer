@@ -20,6 +20,7 @@ import { createClient } from '@supabase/supabase-js';
 import { Metadata } from 'next';
 import Link from 'next/link';
 import AnalyticsTracker from '@/components/AnalyticsTracker';
+import LivingBackground from '@/components/LivingBackground';
 
 // 1. Setup Supabase for Server Component
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -153,7 +154,7 @@ function getFont(style: string) {
 }
 
 function BackgroundLayer({ profile }: { profile: any }) {
-    const { background_type, theme_color, accent_color, video_background_url } = profile;
+    const { background_type, theme_color, accent_color, video_background_url, animation_speed, animation_type } = profile;
 
     if (background_type === 'video' && video_background_url) {
         return (
@@ -168,17 +169,16 @@ function BackgroundLayer({ profile }: { profile: any }) {
         );
     }
 
-    // Default: Mesh / Lava Gradient
+    // Mesh / Lava Gradient - Use actual LivingBackground component
     return (
-        <div
-            className="fixed inset-0 z-0 bg-slate-950"
-            style={{
-                background: `radial-gradient(circle at 50% 50%, ${theme_color}40 0%, ${accent_color || '#000'}40 100%)`
-            }}
-        >
-            {/* Simple animated blobs for public view */}
-            <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] rounded-full mix-blend-screen filter blur-[80px] opacity-40 animate-blob" style={{ backgroundColor: theme_color }}></div>
-            <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] rounded-full mix-blend-screen filter blur-[80px] opacity-40 animate-blob animation-delay-2000" style={{ backgroundColor: accent_color || '#8b5cf6' }}></div>
-        </div>
+        <>
+            <div className="fixed inset-0 z-0 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900" />
+            <LivingBackground
+                primaryColor={theme_color || '#3b82f6'}
+                secondaryColor={accent_color || '#8b5cf6'}
+                animationSpeed={animation_speed || 'medium'}
+                animationType={animation_type || 'drift'}
+            />
+        </>
     );
 }

@@ -170,7 +170,6 @@ export default function PhonePreview({
                             animationSpeed={animation_speed}
                             animationType={animation_type}
                         />
-                        <div className="absolute inset-0 backdrop-blur-sm" />
                     </>
                 ) : (
                     <>
@@ -277,10 +276,31 @@ export default function PhonePreview({
                         />
                     )}
 
-                    {/* Action Buttons (ALL LINKS - No filtering) */}
+                    {/* Social Icons (Top Row - Fixed) */}
+                    <div className="flex flex-wrap justify-center gap-4 mb-4 shrink-0">
+                        {links && links.filter(link => getSocialIcon(link.url)).map((link, index) => {
+                            const social = getSocialIcon(link.url);
+                            if (!social) return null;
+                            return (
+                                <a
+                                    key={`social-${index}`}
+                                    href={link.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="w-12 h-12 rounded-full flex items-center justify-center bg-white shadow-lg transition-transform hover:scale-110 hover:shadow-xl"
+                                    style={{ color: social.color }}
+                                    title={link.title || social.label}
+                                >
+                                    <i className={`fa-brands ${social.icon} text-2xl`}></i>
+                                </a>
+                            );
+                        })}
+                    </div>
+
+                    {/* Action Buttons - NON-Social Links Only */}
                     <div className="w-full space-y-3 overflow-y-auto max-h-[400px] pb-12 px-1 scrollbar-hide">
                         {links && links.length > 0 ? (
-                            links.map((link, index) => (
+                            links.filter(link => !getSocialIcon(link.url)).map((link, index) => (
                                 link.title && link.url && (
                                     <a
                                         key={`action-${index}`}
