@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PostGenerator 2.0 | Taylored Solutions</title>
+  <title>PostGenerator 3.0 | AI Visual Generator | Taylored Solutions</title>
 
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -17,14 +17,14 @@
         extend: {
           colors: {
             brand: {
-              orange: '#FF6B35', // Taylored Orange (Brand Standard)
+              orange: '#FF6B35',
               purple: '#6B46C1',
               green: '#10B981'
             },
             dark: {
-              bg: '#000000',
-              card: '#1A1A1A',
-              border: '#2D2D2D'
+              bg: '#050505',
+              card: '#0A0A0A',
+              border: '#1A1A1A'
             }
           },
           fontFamily: {
@@ -51,304 +51,156 @@
   <script>
     window.ENV = {
       SUPABASE_URL: 'https://qxkicdhsrlpehgcsapsh.supabase.co',
-      SUPABASE_ANON_KEY: 'sb_publishable_TTBR0ES-pM7LOWDsywEy7A_9BSlhWGg'
+      SUPABASE_ANON_KEY: 'sb_publishable_TTBR0ES-pM7LOWDsywEy7A_9BSlhWGg',
+      N8N_WEBHOOK_URL: 'https://your-n8n-instance.n8n.cloud/webhook/instagram-post' // TODO: Configure actual webhook
     }
   </script>
 
 </head>
 
-<body class="bg-dark-bg text-white font-inter">
+<body class="bg-dark-bg text-white font-inter min-h-screen">
 
   <!-- Navigation -->
   <nav id="navigation"></nav>
 
   <!-- Main Content -->
-  <div class="container mx-auto px-4 py-8 max-w-7xl">
+  <div class="container mx-auto px-4 py-8 max-w-5xl">
 
     <!-- Terminal Header -->
-    <header class="mb-8">
-      <div class="terminal-header">
-        <span class="text-brand-orange font-jetbrains">&gt;</span>
-        <span class="font-jetbrains ml-2">PostGenerator 2.0</span>
+    <header class="mb-12 text-center">
+      <div class="terminal-header justify-center">
+        <span class="text-brand-orange font-jetbrains text-2xl">&gt;</span>
+        <span class="font-jetbrains ml-2 text-xl">PostGenerator 3.0</span>
       </div>
-      <p class="text-gray-400 mt-2 text-sm">AI-powered social media post creation with brand DNA</p>
+      <p class="text-gray-400 mt-3 text-lg">AI-Powered Visual Generation • Powered by Gemini 3</p>
     </header>
 
-    <!-- 3-Column Layout -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Hidden Brand DNA Loader (loads from localStorage silently) -->
+    <div id="brand-dna-status" class="hidden"></div>
 
-      <!-- LEFT COLUMN: Brand Setup -->
-      <aside class="space-y-6">
+    <!-- Prompt-First Interface -->
+    <div class="space-y-8">
 
-        <!-- Brand DNA Import (hidden when profile loaded) -->
-        <section id="brand-dna-section" class="dark-card">
-          <h3 class="card-heading">
-            <svg class="w-5 h-5 text-brand-orange" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-            </svg>
-            Import Brand DNA
-          </h3>
-          <p class="text-sm text-gray-400 mb-4">Extract your brand identity automatically from your website.</p>
-          <div class="flex gap-2">
-            <input type="url" id="website-url" placeholder="example.com" class="dark-input flex-1" />
-            <button id="import-btn" class="btn-primary">
-              Import
-            </button>
-          </div>
-          <div id="brand-dna-preview" class="mt-4 hidden"></div>
-        </section>
+      <!-- Hero Input: "What are we promoting today?" -->
+      <section class="hero-section">
+        <label for="user-prompt" class="block text-gray-300 mb-3 text-sm font-medium">
+          What are we promoting today?
+        </label>
+        <input type="text" id="user-prompt" placeholder="Margherita pizza special - $12 tonight only"
+          class="glassmorphism-input w-full" autocomplete="off" />
+        <p class="text-gray-500 text-xs mt-2">AI will design a scroll-stopping Instagram post with your text integrated
+          into the scene</p>
+      </section>
 
-        <!-- Style Analysis (hidden when profile loaded) -->
-        <section id="style-analysis-section" class="dark-card">
-          <h3 class="card-heading">
-            <svg class="w-5 h-5 text-brand-purple" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <!-- Upload Zone: Product/Inspiration Photo -->
+      <section class="upload-section">
+        <label class="block text-gray-300 mb-3 text-sm font-medium">
+          Product or Inspiration Photo <span class="text-gray-500">(Optional)</span>
+        </label>
+        <div id="dropzone" class="upload-zone glassmorphism-card" ondrop="handleDrop(event)"
+          ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)"
+          onclick="document.getElementById('file-input').click()">
+          <div class="upload-content">
+            <svg class="w-12 h-12 text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
             </svg>
-            Learn from Your Posts
-          </h3>
-          <p class="text-sm text-gray-400 mb-4">Upload 3-5 example posts. AI will analyze your visual style.</p>
-          <input type="file" id="example-posts" accept="image/*" multiple class="hidden" />
-          <button id="upload-examples-btn" class="w-full btn-secondary">
-            + Upload Examples
-          </button>
-          <div id="example-thumbnails" class="grid grid-cols-3 gap-2 mt-4"></div>
-          <button id="analyze-style-btn" class="hidden w-full mt-4 btn-secondary">
-            Analyze Style
-          </button>
-          <div id="style-profile-preview" class="mt-4 hidden"></div>
-        </section>
-
-        <!-- Brand Kit -->
-        <section class="dark-card">
-          <h3 class="card-heading">
-            <svg class="w-5 h-5 text-brand-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
-            </svg>
-            Brand Kit
-          </h3>
-
-          <!-- Brand DNA Loaded Message (hidden by default) -->
-          <div id="brand-loaded-message"
-            class="hidden mb-4 p-3 bg-brand-green/10 border border-brand-green/30 rounded-lg">
-            <p class="text-sm text-brand-green">✓ Brand DNA loaded. You can edit it below.</p>
+            <p class="text-gray-300 font-medium">Drop your image here</p>
+            <p class="text-gray-500 text-sm mt-1">Or click to browse</p>
           </div>
+          <input type="file" id="file-input" accept="image/*" hidden onchange="handleFileSelect(event)" />
+        </div>
+      </section>
 
-          <div class="space-y-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-300 mb-2">Brand Name</label>
-              <input type="text" id="brand-name" placeholder="My Brand" class="dark-input w-full" />
-            </div>
+      <!-- Vibe Selector -->
+      <section class="vibe-section">
+        <label for="vibe-selector" class="block text-gray-300 mb-3 text-sm font-medium">
+          Aesthetic Vibe
+        </label>
+        <select id="vibe-selector" class="glassmorphism-select w-full">
+          <option value="luxury">✨ Luxury - Minimal, elegant, premium</option>
+          <option value="industrial" selected>⚙️ Industrial - Raw, concrete, dramatic</option>
+          <option value="street">🎨 Street - Neon, graffiti, urban energy</option>
+        </select>
+      </section>
 
-            <div>
-              <label class="block text-sm font-medium text-gray-300 mb-2">Logo (optional)</label>
-              <input type="file" id="brand-logo" accept="image/*" class="hidden" />
-              <button id="upload-logo-btn" class="w-full btn-secondary">
-                Upload Logo
-              </button>
-              <div id="logo-preview" class="mt-2"></div>
-            </div>
-
-            <div class="grid grid-cols-2 gap-4">
-              <div>
-                <label class="block text-sm font-medium text-gray-300 mb-2">Primary Color</label>
-                <input type="color" id="primary-color" value="#FF6B35" class="color-input" />
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-300 mb-2">Secondary Color</label>
-                <input type="color" id="secondary-color" value="#6B46C1" class="color-input" />
-              </div>
-            </div>
-
-            <button id="save-brand-btn" class="w-full btn-primary font-semibold">
-              Save Brand Kit
-            </button>
-          </div>
-        </section>
-
-      </aside>
-
-      <!-- MIDDLE COLUMN: Post Creation -->
-      <main class="lg:col-span-1 space-y-6">
-
-        <!-- Post Type Toggle -->
-        <section class="dark-card">
-          <div class="flex gap-2">
-            <button id="single-post-toggle" class="flex-1 btn-toggle active">
-              Single Post
-            </button>
-            <button id="carousel-toggle" class="flex-1 btn-toggle">
-              Carousel
-            </button>
-          </div>
-        </section>
-
-        <!-- Template Selector -->
-        <section class="dark-card">
-          <h3 class="card-heading mb-4">Choose Template</h3>
-          <div class="grid grid-cols-2 gap-3">
-
-            <button class="template-card" data-template="tall-portrait" data-size="1080x1440">
-              <div class="text-3xl mb-2">📱</div>
-              <div class="font-semibold">Tall Portrait</div>
-              <div class="text-xs text-gray-400">3:4 (1080×1440)</div>
-              <div class="text-xs text-brand-orange mt-1">Instagram Feed</div>
-            </button>
-
-            <button class="template-card active" data-template="portrait" data-size="1080x1350">
-              <div class="text-3xl mb-2">📐</div>
-              <div class="font-semibold">Portrait</div>
-              <div class="text-xs text-gray-400">4:5 (1080×1350)</div>
-              <div class="text-xs text-brand-orange mt-1">Instagram Feed</div>
-            </button>
-
-            <button class="template-card" data-template="square" data-size="1080x1080">
-              <div class="text-3xl mb-2">⬜</div>
-              <div class="font-semibold">Square</div>
-              <div class="text-xs text-gray-400">1:1 (1080×1080)</div>
-              <div class="text-xs text-brand-orange mt-1">Instagram Feed</div>
-            </button>
-
-            <button class="template-card" data-template="story" data-size="1080x1920">
-              <div class="text-3xl mb-2">📲</div>
-              <div class="font-semibold">Story</div>
-              <div class="text-xs text-gray-400">9:16 (1080×1920)</div>
-              <div class="text-xs text-brand-orange mt-1">Stories, Reels</div>
-            </button>
-
-            <button class="template-card" data-template="social" data-size="1200x630">
-              <div class="text-3xl mb-2">💼</div>
-              <div class="font-semibold">Social</div>
-              <div class="text-xs text-gray-400">16:9 (1200×630)</div>
-              <div class="text-xs text-brand-orange mt-1">Facebook, LinkedIn</div>
-            </button>
-
-          </div>
-        </section>
-
-        <!-- Single Post Form -->
-        <section id="single-post-section" class="dark-card">
-          <h3 class="card-heading mb-4">Post Content</h3>
-          <div class="space-y-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-300 mb-2">Headline <span class="text-gray-500">(60 chars
-                  max)</span></label>
-              <input type="text" id="headline" maxlength="60" placeholder="Transform Your Marketing"
-                class="dark-input w-full" />
-              <div class="text-xs text-gray-500 text-right mt-1"><span id="headline-count">0</span>/60</div>
-            </div>
-
-            <div>
-              <label class="block text-sm font-medium text-gray-300 mb-2">Body <span class="text-gray-500">(150 chars
-                  max)</span></label>
-              <textarea id="body" maxlength="150" rows="3" placeholder="Create stunning posts in seconds"
-                class="dark-input w-full"></textarea>
-              <div class="text-xs text-gray-500 text-right mt-1"><span id="body-count">0</span>/150</div>
-            </div>
-
-            <div>
-              <label class="block text-sm font-medium text-gray-300 mb-2">CTA <span class="text-gray-500">(30 chars
-                  max)</span></label>
-              <input type="text" id="cta" maxlength="30" placeholder="Get Started Free" class="dark-input w-full" />
-              <div class="text-xs text-gray-500 text-right mt-1"><span id="cta-count">0</span>/30</div>
-            </div>
-
-            <button id="generate-single-btn" class="w-full btn-generate font-semibold text-lg">
-              Generate Post
-            </button>
-          </div>
-        </section>
-
-        <!-- Carousel Editor -->
-        <section id="carousel-section" class="dark-card hidden">
-          <div class="flex items-center justify-between mb-4">
-            <h3 class="card-heading">Carousel Editor</h3>
-            <div class="text-sm text-gray-400">Slide <span id="current-slide">1</span> of <span
-                id="total-slides">1</span></div>
-          </div>
-
-          <div class="space-y-4">
-            <div>
-              <input type="text" id="carousel-headline" maxlength="60" placeholder="Slide Headline"
-                class="dark-input w-full" />
-            </div>
-
-            <div>
-              <textarea id="carousel-body" maxlength="150" rows="2" placeholder="Slide Body"
-                class="dark-input w-full"></textarea>
-            </div>
-
-            <div>
-              <input type="text" id="carousel-cta" maxlength="30" placeholder="Slide CTA" class="dark-input w-full" />
-            </div>
-
-            <div class="flex gap-2">
-              <button id="prev-slide-btn" class="px-4 py-2 btn-secondary">
-                ← Previous
-              </button>
-              <button id="add-slide-btn" class="flex-1 btn-secondary">
-                + Add Slide
-              </button>
-              <button id="next-slide-btn" class="px-4 py-2 btn-secondary">
-                Next →
-              </button>
-            </div>
-
-            <button id="generate-carousel-btn" class="w-full btn-generate font-semibold text-lg">
-              Generate Carousel
-            </button>
-          </div>
-        </section>
-
-      </main>
-
-      <!-- RIGHT COLUMN: Preview -->
-      <aside class="space-y-6">
-
-        <section class="dark-card">
-          <h3 class="card-heading mb-4">Preview</h3>
-
-          <!-- Single Post Preview -->
-          <div id="single-preview">
-            <div class="aspect-square bg-dark-bg rounded-lg flex items-center justify-center border border-dark-border">
-              <div class="text-center">
-                <div class="text-4xl mb-2">🖼️</div>
-                <div class="text-sm text-gray-400">Your post will appear here</div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Carousel Preview -->
-          <div id="carousel-preview" class="hidden">
-            <div id="carousel-gallery" class="grid grid-cols-2 gap-4"></div>
-          </div>
-
-          <!-- Download Button -->
-          <button id="download-btn" class="hidden w-full mt-6 btn-download font-semibold">
-            Download
-          </button>
-        </section>
-
-      </aside>
+      <!-- Generate Button -->
+      <button id="generate-btn" class="btn-generate w-full" onclick="generateVisuals()">
+        <span id="btn-text">✨ Generate 4 AI Variations</span>
+        <span id="btn-loading" class="hidden">
+          <svg class="animate-spin h-5 w-5 inline-block mr-2" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+            </path>
+          </svg>
+          Generating with AI...
+        </span>
+      </button>
 
     </div>
 
+    <!-- Results Grid (Masonry) -->
+    <section id="results-section" class="mt-16 hidden">
+      <h3 class="text-2xl font-playfair mb-6 text-center">Your AI-Generated Posts</h3>
+      <div id="results-grid" class="masonry-grid">
+        <!-- AI-generated images populate here -->
+      </div>
+    </section>
+
   </div>
 
-  <!-- Loading Overlay -->
-  <div id="loading-overlay"
-    class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50">
-    <div class="dark-card p-8 max-w-sm">
-      <div class="flex items-center space-x-4">
-        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-orange"></div>
-        <span id="loading-text" class="text-lg font-medium">Processing...</span>
+  <!-- Lightbox Modal -->
+  <div id="lightbox" class="lightbox hidden" onclick="closeLightbox(event)">
+    <div class="lightbox-content" onclick="event.stopPropagation()">
+      <button class="lightbox-close" onclick="closeLightbox()">&times;</button>
+      <img id="lightbox-img" alt="Generated post" />
+      <div class="lightbox-actions">
+        <button class="btn-lightbox-download" onclick="downloadImage()">
+          <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
+          Download High-Res
+        </button>
+        <button class="btn-lightbox-schedule" onclick="scheduleToInstagram()">
+          <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+          Schedule to Instagram
+        </button>
       </div>
     </div>
   </div>
 
-  <!-- Scripts -->
-  <script type="module" src="/apps/post-generator/app.js"></script>
+  <!-- Toast Notification -->
+  <div id="toast-container" class="fixed bottom-4 right-4 z-50"></div>
+
+  <!-- Loading Overlay -->
+  <div id="loading-overlay" class="loading-overlay hidden">
+    <div class="loading-content">
+      <div class="loading-spinner"></div>
+      <p class="text-xl font-medium mt-4">Generating your visual...</p>
+      <p class="text-gray-400 text-sm mt-2">AI is designing 4 unique variations</p>
+    </div>
+  </div>
+
+  <!-- Supabase Client -->
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'
+
+    window.supabaseClient = createClient(
+      window.ENV.SUPABASE_URL,
+      window.ENV.SUPABASE_ANON_KEY
+    )
+
+    // Auto-load brand DNA from localStorage
+    window.addEventListener('DOMContentLoaded', loadBrandDNA)
+  </script>
+
+  <!-- App Logic -->
+  <script src="/apps/post-generator/app.js"></script>
 
 </body>
 

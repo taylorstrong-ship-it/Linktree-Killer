@@ -1,497 +1,317 @@
-// PostGenerator 2.0: Main Application Orchestrator (Dark Theme)
+// PostGenerator 3.0 - AI Visual Generation
+// Powered by Gemini 3 + Brand DNA
 
-import { createSupabaseClient } from '/packages/config/supabase-client.js'
-import { getBrandProfile, extractAndSaveBrandDNA, updateBrandProfile } from '/packages/config/brand-dna.js'
-import * as StyleAnalysis from '/apps/post-generator/modules/style-analysis.js'
-import * as Carousel from '/apps/post-generator/modules/carousel.js'
+// Global state
+let currentBrandDNA = null;
+let uploadedImageBase64 = null;
+let currentLightboxUrl = null;
 
-const supabase = createSupabaseClient()
-
-// App state
-let currentUser = null
-let currentBrandProfile = null
-let selectedTemplate = 'portrait'
-let isCarouselMode = false
-let generatedImageUrls = []
-
-// Initialize app
-async function init() {
-    // Check authentication
-    const { data: { user } } = await supabase.auth.getUser()
-
-    if (!user) {
-        window.location.href = '/login?redirect=/apps/post-generator'
-        return
-    }
-
-    currentUser = user
-    console.log('✓ User authenticated:', user.email)
-
-    // Load brand profile
-    await loadBrandProfile()
-
-    // Setup event listeners
-    setupEventListeners()
-
-    // Initialize modules
-    StyleAnalysis.setupFileUpload()
-    Carousel.initCarouselEditor()
-
-    console.log('✓ PostGenerator 2.0 initialized')
-}
-
-// Load brand profile (Hybrid: LocalStorage First → Database Fallback)
-async function loadBrandProfile() {
+// Initialize on load
+async function loadBrandDNA() {
     try {
-        // STEP 1: Check localStorage first (Guest Mode / "Speed to Magic")
-        const localData = localStorage.getItem('taylored_brand_data')
+        const localData = localStorage.getItem('taylored_brand_data');
 
         if (localData) {
-            try {
-                const brandDNA = JSON.parse(localData)
-                console.log('✓ Brand DNA loaded from localStorage:', brandDNA.company_name || 'Guest')
+            currentBrandDNA = JSON parse(localData);
+            console.log('✓ Brand DNA loaded:', currentBrandDNA.company_name || 'Guest');
 
-                // Hydrate the form with localStorage data
-                currentBrandProfile = {
-                    company_name: brandDNA.company_name || '',
-                    logo_url: brandDNA.logo_url || '',
-                    primary_color: brandDNA.primary_color || '#FF6B35',
-                    secondary_color: brandDNA.secondary_color || '#6B46C1',
-                    fonts: brandDNA.fonts || [],
-                    social_links: brandDNA.social_links || []
-                }
-
-                // Pre-fill brand kit form
-                if (currentBrandProfile.company_name) {
-                    document.getElementById('brand-name').value = currentBrandProfile.company_name
-                }
-                if (currentBrandProfile.primary_color) {
-                    document.getElementById('primary-color').value = currentBrandProfile.primary_color
-                }
-                if (currentBrandProfile.secondary_color) {
-                    document.getElementById('secondary-color').value = currentBrandProfile.secondary_color
-                }
-                if (currentBrandProfile.logo_url) {
-                    displayLogo(currentBrandProfile.logo_url)
-                }
-
-                // Hide import sections and show loaded message
-                document.getElementById('brand-dna-section').classList.add('hidden')
-                document.getElementById('style-analysis-section').classList.add('hidden')
-                document.getElementById('brand-loaded-message').classList.remove('hidden')
-
-                return // Exit early - we have our data
-            } catch (parseError) {
-                console.warn('⚠ Failed to parse localStorage data, falling back to database:', parseError)
-                // Continue to database fallback
+            // Inject brand color into CSS
+            if (currentBrandDNA.primary_color) {
+                document.documentElement.style.setProperty('--brand-color', currentBrandDNA.primary_color);
+                const rgb = hexToRgb(currentBrandDNA.primary_color);
+                document.documentElement.style.setProperty('--brand-rgb', `${rgb.r}, ${rgb.g}, ${rgb.b}`);
             }
-        }
-
-        // STEP 2: Fallback to database (Returning User)
-        if (!currentUser) {
-            console.log('ℹ No localStorage data and no authenticated user')
-            return
-        }
-
-        const profile = await getBrandProfile(currentUser.id)
-
-        if (profile) {
-            // Brand profile exists in database - pre-fill and hide import sections
-            currentBrandProfile = profile
-            console.log('✓ Brand profile loaded from database:', profile.company_name)
-
-            // Pre-fill brand kit form
-            if (profile.company_name) {
-                document.getElementById('brand-name').value = profile.company_name
-            }
-            if (profile.primary_color) {
-                document.getElementById('primary-color').value = profile.primary_color
-            }
-            if (profile.secondary_color) {
-                document.getElementById('secondary-color').value = profile.secondary_color
-            }
-            if (profile.logo_url) {
-                displayLogo(profile.logo_url)
-            }
-
-            // Hide import sections and show loaded message
-            document.getElementById('brand-dna-section').classList.add('hidden')
-            document.getElementById('style-analysis-section').classList.add('hidden')
-            document.getElementById('brand-loaded-message').classList.remove('hidden')
         } else {
-            // No brand profile - show import sections
-            console.log('ℹ No brand profile found in database')
-            document.getElementById('brand-dna-section').classList.remove('hidden')
-            document.getElementById('style-analysis-section').classList.remove('hidden')
-            document.getElementById('brand-loaded-message').classList.add('hidden')
+            console.warn('⚠ No Brand DNA in localStorage. Using defaults.');
+            // Use default Taylored Orange
+            document.documentElement.style.setProperty('--brand-color', '#FF6B35');
+            document.documentElement.style.setProperty('--brand-rgb', '255, 107, 53');
         }
     } catch (error) {
-        console.error('Error loading brand profile:', error)
-        showToast('Failed to load brand profile', 'error')
+        console.error('Error loading Brand DNA:', error);
     }
 }
 
-function setupEventListeners() {
-    // Brand DNA Import
-    document.getElementById('import-btn').addEventListener('click', handleBrandDNAImport)
-
-    // Style Analysis
-    document.getElementById('analyze-style-btn').addEventListener('click', handleStyleAnalysis)
-    document.getElementById('upload-examples-btn').addEventListener('click', () => {
-        document.getElementById('example-posts').click()
-    })
-
-    // Brand Kit
-    document.getElementById('upload-logo-btn').addEventListener('click', () => {
-        document.getElementById('brand-logo').click()
-    })
-    document.getElementById('brand-logo').addEventListener('change', handleLogoUpload)
-    document.getElementById('save-brand-btn').addEventListener('click', handleSaveBrand)
-
-    // Post Type Toggle
-    document.getElementById('single-post-toggle').addEventListener('click', () => switchMode(false))
-    document.getElementById('carousel-toggle').addEventListener('click', () => switchMode(true))
-
-    // Template Selection
-    document.querySelectorAll('.template-card').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const template = e.currentTarget.dataset.template
-            selectTemplate(template)
-        })
-    })
-
-    // Character counters
-    setupCharacterCounters()
-
-    // Generate buttons
-    document.getElementById('generate-single-btn').addEventListener('click', handleGenerateSingle)
-    document.getElementById('generate-carousel-btn').addEventListener('click', handleGenerateCarousel)
-
-    // Download button
-    document.getElementById('download-btn').addEventListener('click', handleDownload)
+// Image Upload Handlers
+function handleDragOver(event) {
+    event.preventDefault();
+    event.currentTarget.classList.add('drag-over');
 }
 
-// Brand DNA Import
-async function handleBrandDNAImport() {
-    const urlInput = document.getElementById('website-url')
-    const url = urlInput.value.trim()
+function handleDragLeave(event) {
+    event.currentTarget.classList.remove('drag-over');
+}
 
-    if (!url) {
-        showToast('Please enter a website URL', 'error')
-        return
+async function handleDrop(event) {
+    event.preventDefault();
+    event.currentTarget.classList.remove('drag-over');
+
+    const file = event.dataTransfer.files[0];
+    if (!file || !file.type.startsWith('image/')) {
+        showToast('Please upload an image file', 'error');
+        return;
     }
 
-    showLoading('Extracting brand DNA...')
+    await processImage(file);
+}
+
+async function handleFileSelect(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    await processImage(file);
+}
+
+async function processImage(file) {
+    try {
+        // Convert to Base64
+        const base64 = await fileToBase64(file);
+        uploadedImageBase64 = base64;
+
+        // Show preview in dropzone
+        const dropzone = document.getElementById('dropzone');
+        dropzone.style.backgroundImage = `url(data:image/jpeg;base64,${base64})`;
+        dropzone.style.backgroundSize = 'cover';
+        dropzone.style.backgroundPosition = 'center';
+        dropzone.querySelector('.upload-content').classList.add('hidden');
+
+        showToast('Image uploaded successfully', 'success');
+    } catch (error) {
+        console.error('Error processing image:', error);
+        showToast('Failed to process image', 'error');
+    }
+}
+
+function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+            // Remove data:image/jpeg;base64, prefix
+            const base64 = reader.result.split(',')[1];
+            resolve(base64);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
+}
+
+// Generate Visuals (Main Function)
+async function generateVisuals() {
+    const userPrompt = document.getElementById('user-prompt').value.trim();
+    const vibe = document.getElementById('vibe-selector').value;
+
+    if (!userPrompt) {
+        showToast('Please tell us what you're promoting', 'error');
+    document.getElementById('user-prompt').focus();
+        return;
+    }
+
+    if (!currentBrandDNA) {
+        showToast('Brand DNA not loaded. Please refresh and try again.', 'error');
+        return;
+    }
+
+    // Show loading
+    setLoading(true);
 
     try {
-        const profile = await extractAndSaveBrandDNA(url, 'post_generator')
-        currentBrandProfile = profile
-        hideLoading()
-        showToast('Brand DNA extracted successfully!', 'success')
+        const { data: { session } } = await window.supabaseClient.auth.getSession();
 
-        // Pre-fill form
-        if (profile.company_name) {
-            document.getElementById('brand-name').value = profile.company_name
-        }
-        if (profile.primary_color) {
-            document.getElementById('primary-color').value = profile.primary_color
-        }
-        if (profile.secondary_color) {
-            document.getElementById('secondary-color').value = profile.secondary_color
-        }
-        if (profile.logo_url) {
-            displayLogo(profile.logo_url)
+        const response = await fetch(`${window.ENV.SUPABASE_URL}/functions/v1/generate-visuals`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${session?.access_token || window.ENV.SUPABASE_ANON_KEY}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                userPrompt,
+                vibe,
+                referenceImageBase64: uploadedImageBase64,
+                brandDNA: currentBrandDNA
+            })
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Generation failed');
         }
 
-        // Hide import sections and show loaded message
-        document.getElementById('brand-dna-section').classList.add('hidden')
-        document.getElementById('style-analysis-section').classList.add('hidden')
-        document.getElementById('brand-loaded-message').classList.remove('hidden')
+        const data = await response.json();
+        console.log('Generation response:', data);
+
+        // For now, show the response (Edge Function returns text, not images yet)
+        if (data.imageUrls && data.imageUrls.length > 0) {
+            renderResults(data.imageUrls);
+        } else {
+            // Temporary: Show placeholder while awaiting actual image generation
+            showToast('AI generation complete! Image rendering pending model upgrade.', 'info');
+            console.log('Generated text:', data.generatedText);
+        }
+
     } catch (error) {
-        hideLoading()
-        showToast('Could not import brand DNA. Please try manual setup.', 'error')
-        console.error(error)
+        console.error('Generation error:', error);
+        showToast(`Failed to generate: ${error.message}`, 'error');
+    } finally {
+        setLoading(false);
     }
 }
 
-// Style Analysis
-async function handleStyleAnalysis() {
-    showLoading('Analyzing your style...')
+// Render Results Grid
+function renderResults(imageUrls) {
+    const resultsSection = document.getElementById('results-section');
+    const resultsGrid = document.getElementById('results-grid');
 
-    try {
-        const styleProfile = await StyleAnalysis.analyzeStyle()
-        StyleAnalysis.displayStyleProfile(styleProfile)
-        hideLoading()
-        showToast('Style profile created!', 'success')
-
-        // Wire up save button
-        document.getElementById('save-style-profile-btn')?.addEventListener('click', async () => {
-            if (!currentBrandProfile) {
-                showToast('Please save your brand kit first', 'error')
-                return
-            }
-
-            try {
-                await StyleAnalysis.saveStyleProfile(currentBrandProfile.id, styleProfile)
-                showToast('Style profile saved!', 'success')
-            } catch (error) {
-                showToast('Failed to save style profile', 'error')
-            }
-        })
-    } catch (error) {
-        hideLoading()
-        showToast(error.message, 'error')
-    }
-}
-
-// Logo Upload
-function handleLogoUpload(e) {
-    const file = e.target.files[0]
-    if (!file) return
-
-    const reader = new FileReader()
-    reader.onload = (e) => {
-        displayLogo(e.target.result)
-    }
-    reader.readAsDataURL(file)
-}
-
-function displayLogo(url) {
-    const preview = document.getElementById('logo-preview')
-    preview.innerHTML = `
-    <div class="mt-2 p-3 bg-dark-bg border border-dark-border rounded-lg">
-      <img src="${url}" alt="Logo preview" class="max-h-20 mx-auto" />
+    resultsGrid.innerHTML = imageUrls.map((url, index) => `
+    <div class="result-card glassmorphism-card" onclick="openLightbox('${url}')">
+      <img src="${url}" alt="Generated variation ${index + 1}" loading="lazy" />
+      <div class="result-overlay">
+        <p class="text-sm font-medium">Variation ${index + 1}</p>
+      </div>
     </div>
-  `
+  `).join('');
+
+    resultsSection.classList.remove('hidden');
+    resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-// Save Brand
-async function handleSaveBrand() {
-    const name = document.getElementById('brand-name').value.trim()
-    const primaryColor = document.getElementById('primary-color').value
-    const secondaryColor = document.getElementById('secondary-color').value
+// Lightbox Functions
+function openLightbox(imageUrl) {
+    currentLightboxUrl = imageUrl;
+    const lightbox = document.getElementById('lightbox');
+    document.getElementById('lightbox-img').src = imageUrl;
+    lightbox.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+}
 
-    if (!name) {
-        showToast('Please enter a brand name', 'error')
-        return
-    }
+function closeLightbox(event) {
+    if (event && event.target.id !== 'lightbox') return;
 
-    showLoading('Saving brand kit...')
+    const lightbox = document.getElementById('lightbox');
+    lightbox.classList.add('hidden');
+    document.body.style.overflow = 'auto';
+    currentLightboxUrl = null;
+}
+
+// Download Image
+async function downloadImage() {
+    if (!currentLightboxUrl) return;
 
     try {
-        // TODO: Handle logo upload to Supabase Storage
-        const logoUrl = null
+        const response = await fetch(currentLightboxUrl);
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
 
-        if (currentBrandProfile) {
-            // Update existing profile
-            currentBrandProfile = await updateBrandProfile(currentBrandProfile.id, {
-                company_name: name,
-                logo_url: logoUrl,
-                primary_color: primaryColor,
-                secondary_color: secondaryColor
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `taylored-post-${Date.now()}.jpg`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+
+        showToast('Downloaded successfully!', 'success');
+    } catch (error) {
+        console.error('Download error:', error);
+        showToast('Failed to download image', 'error');
+    }
+}
+
+// Schedule to Instagram (N8N Webhook)
+async function scheduleToInstagram() {
+    if (!currentLightboxUrl) return;
+
+    const userPrompt = document.getElementById('user-prompt').value;
+
+    try {
+        const response = await fetch(window.ENV.N8N_WEBHOOK_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                image_url: currentLightboxUrl,
+                caption: userPrompt,
+                brand_name: currentBrandDNA?.company_name || 'Taylored Client',
+                access_token: 'future-instagram-token' // TODO: Implement Instagram OAuth
             })
+        });
+
+        if (response.ok) {
+            showToast('Scheduled to Instagram successfully!', 'success');
+            closeLightbox();
         } else {
-            // Create new profile
-            const { getBrandProfile: get, extractAndSaveBrandDNA: extract, updateBrandProfile: update, createBrandProfile } = await import('/packages/config/brand-dna.js')
-            currentBrandProfile = await createBrandProfile(currentUser.id, {
-                company_name: name,
-                logo_url: logoUrl,
-                primary_color: primaryColor,
-                secondary_color: secondaryColor,
-                source_app: 'post_generator'
-            })
-
-            // Hide import sections and show loaded message
-            document.getElementById('brand-dna-section').classList.add('hidden')
-            document.getElementById('style-analysis-section').classList.add('hidden')
-            document.getElementById('brand-loaded-message').classList.remove('hidden')
+            throw new Error('Webhook failed');
         }
-
-        hideLoading()
-        showToast('Brand kit saved!', 'success')
     } catch (error) {
-        hideLoading()
-        showToast('Failed to save brand kit', 'error')
-        console.error(error)
+        console.error('Instagram scheduling error:', error);
+        showToast('Instagram scheduling unavailable. Contact support.', 'error');
     }
 }
 
-// Mode Switching
-function switchMode(carousel) {
-    isCarouselMode = carousel
+// UI Helper Functions
+function setLoading(isLoading) {
+    const overlay = document.getElementById('loading-overlay');
+    const btnText = document.getElementById('btn-text');
+    const btnLoading = document.getElementById('btn-loading');
+    const generateBtn = document.getElementById('generate-btn');
 
-    const singleToggle = document.getElementById('single-post-toggle')
-    const carouselToggle = document.getElementById('carousel-toggle')
-    const singleSection = document.getElementById('single-post-section')
-    const carouselSection = document.getElementById('carousel-section')
-
-    if (carousel) {
-        singleToggle.classList.remove('active')
-        carouselToggle.classList.add('active')
-        singleSection.classList.add('hidden')
-        carouselSection.classList.remove('hidden')
+    if (isLoading) {
+        overlay.classList.remove('hidden');
+        btnText.classList.add('hidden');
+        btnLoading.classList.remove('hidden');
+        generateBtn.disabled = true;
     } else {
-        singleToggle.classList.add('active')
-        carouselToggle.classList.remove('active')
-        singleSection.classList.remove('hidden')
-        carouselSection.classList.add('hidden')
+        overlay.classList.add('hidden');
+        btnText.classList.remove('hidden');
+        btnLoading.classList.add('hidden');
+        generateBtn.disabled = false;
     }
-}
-
-// Template Selection
-function selectTemplate(template) {
-    selectedTemplate = template
-
-    document.querySelectorAll('.template-card').forEach(btn => {
-        btn.classList.remove('active')
-    })
-
-    const selectedBtn = document.querySelector(`[data-template="${template}"]`)
-    selectedBtn.classList.add('active')
-}
-
-// Character Counters
-function setupCharacterCounters() {
-    const counters = [
-        { input: 'headline', counter: 'headline-count' },
-        { input: 'body', counter: 'body-count' },
-        { input: 'cta', counter: 'cta-count' }
-    ]
-
-    counters.forEach(({ input, counter }) => {
-        const el = document.getElementById(input)
-        if (el) {
-            el.addEventListener('input', () => {
-                const counterEl = document.getElementById(counter)
-                if (counterEl) {
-                    counterEl.textContent = el.value.length
-                }
-            })
-        }
-    })
-}
-
-// Generate Single Post
-async function handleGenerateSingle() {
-    if (!currentBrandProfile) {
-        showToast('Please save your brand kit first', 'error')
-        return
-    }
-
-    const headline = document.getElementById('headline').value.trim()
-    const body = document.getElementById('body').value.trim()
-    const cta = document.getElementById('cta').value.trim()
-
-    if (!headline && !body) {
-        showToast('Please enter a headline or body text', 'error')
-        return
-    }
-
-    showLoading('Generating post...')
-
-    try {
-        const { data, error } = await supabase.functions.invoke('generate-post', {
-            body: {
-                brandProfile: currentBrandProfile,
-                template: selectedTemplate,
-                textContent: { headline, body, cta }
-            }
-        })
-
-        if (error) throw error
-
-        generatedImageUrls = [data.imageUrl]
-        displaySinglePost(data.imageUrl)
-        hideLoading()
-        showToast('Post generated!', 'success')
-    } catch (error) {
-        hideLoading()
-        showToast('Failed to generate post', 'error')
-        console.error(error)
-    }
-}
-
-// Generate Carousel
-async function handleGenerateCarousel() {
-    if (!currentBrandProfile) {
-        showToast('Please save your brand kit first', 'error')
-        return
-    }
-
-    showLoading('Generating carousel...')
-
-    try {
-        const imageUrls = await Carousel.generateCarousel(currentBrandProfile, selectedTemplate)
-        generatedImageUrls = imageUrls
-        Carousel.displayCarousel(imageUrls)
-        hideLoading()
-        showToast('Carousel generated!', 'success')
-
-        // Show download button
-        document.getElementById('download-btn').classList.remove('hidden')
-    } catch (error) {
-        hideLoading()
-        showToast(error.message, 'error')
-    }
-}
-
-// Display Single Post
-function displaySinglePost(imageUrl) {
-    const preview = document.getElementById('single-preview')
-    preview.innerHTML = `
-    <img src="${imageUrl}" alt="Generated post" class="w-full rounded-lg shadow-lg" />
-  `
-
-    document.getElementById('download-btn').classList.remove('hidden')
-}
-
-// Download
-async function handleDownload() {
-    if (isCarouselMode) {
-        showLoading('Creating ZIP file...')
-        try {
-            await Carousel.downloadAsZip(generatedImageUrls)
-            hideLoading()
-        } catch (error) {
-            hideLoading()
-            showToast('Failed to download carousel', 'error')
-        }
-    } else {
-        // Download single image
-        const link = document.createElement('a')
-        link.href = generatedImageUrls[0]
-        link.download = `post-${Date.now()}.png`
-        link.click()
-        showToast('Post downloaded!', 'success')
-    }
-}
-
-// UI Helpers
-function showLoading(text = 'Loading...') {
-    document.getElementById('loading-text').textContent = text
-    document.getElementById('loading-overlay').classList.remove('hidden')
-}
-
-function hideLoading() {
-    document.getElementById('loading-overlay').classList.add('hidden')
 }
 
 function showToast(message, type = 'info') {
-    const toast = document.createElement('div')
-    toast.className = `toast ${type} animate-slide-in`
-    toast.textContent = message
+    const container = document.getElementById('toast-container');
 
-    document.body.appendChild(toast)
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type} animate-slide-in`;
+
+    const icons = {
+        success: '✓',
+        error: '✕',
+        warning: '⚠',
+        info: 'ℹ'
+    };
+
+    toast.innerHTML = `
+    <span class="toast-icon">${icons[type] || icons.info}</span>
+    <span class="toast-message">${message}</span>
+  `;
+
+    container.appendChild(toast);
 
     setTimeout(() => {
-        toast.classList.add('animate-fade-out')
-        setTimeout(() => toast.remove(), 300)
-    }, 3000)
+        toast.classList.add('animate-slide-out');
+        setTimeout(() => toast.remove(), 300);
+    }, 4000);
 }
 
-// Initialize on load
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init)
-} else {
-    init()
+function hexToRgb(hex) {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? {
+        r: parseInt(result[1], 16),
+        g: parseInt(result[2], 16),
+        b: parseInt(result[3], 16)
+    } : { r: 255, g: 107, b: 53 }; // Default to Taylored Orange
 }
+
+// Keyboard shortcuts
+document.addEventListener('keydown', (e) => {
+    // ESC to close lightbox
+    if (e.key === 'Escape' && !document.getElementById('lightbox').classList.contains('hidden')) {
+        closeLightbox();
+    }
+
+    // Cmd/Ctrl + Enter to generate
+    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+        generateVisuals();
+    }
+});
+
+console.log('PostGenerator 3.0 loaded ✓');
