@@ -20,6 +20,7 @@ import { createClient } from '@supabase/supabase-js';
 import { Metadata } from 'next';
 import Link from 'next/link';
 import AnalyticsTracker from '@/components/AnalyticsTracker';
+import LivingBackground from '@/components/LivingBackground';
 
 // Force dynamic rendering to prevent build-time execution
 export const dynamic = 'force-dynamic';
@@ -113,6 +114,29 @@ export default async function PublicProfile({ params }: Props) {
                     <p className="text-slate-200 opacity-90">{profile.description}</p>
                 </div>
 
+                {/* Social Icons (Top Row) */}
+                {profile.links && profile.links.some((link: any) => getSocialIcon(link.url)) && (
+                    <div className="flex flex-wrap justify-center gap-4 mb-6">
+                        {profile.links.filter((link: any) => getSocialIcon(link.url)).map((link: any, i: number) => {
+                            const social = getSocialIcon(link.url);
+                            if (!social) return null;
+                            return (
+                                <a
+                                    key={`social-${i}`}
+                                    href={link.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="w-12 h-12 rounded-full flex items-center justify-center bg-white shadow-lg transition-transform hover:scale-110 hover:shadow-xl"
+                                    style={{ color: social.color }}
+                                    title={link.title || social.label}
+                                >
+                                    <i className={`fa-brands ${social.icon} text-2xl`}></i>
+                                </a>
+                            );
+                        })}
+                    </div>
+                )}
+
                 {/* Newsletter (If enabled) */}
                 {profile.newsletter_active && (
                     <div className="mb-6 p-6 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 text-center">
@@ -124,18 +148,20 @@ export default async function PublicProfile({ params }: Props) {
                     </div>
                 )}
 
-                {/* Links Stack */}
+                {/* Action Buttons (Only non-social links) */}
                 <div className="flex flex-col gap-4 pb-12">
-                    {profile.links?.map((link: any, i: number) => (
-                        <a
-                            key={i}
-                            href={link.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="group relative p-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center justify-between backdrop-blur-sm"
-                        >
-                            <span className={`font-medium ${getFont(profile.font_style)}`}>{link.title}</span>
-                        </a>
+                    {profile.links?.filter((link: any) => !getSocialIcon(link.url)).map((link: any, i: number) => (
+                        link.title && link.url && (
+                            <a
+                                key={i}
+                                href={link.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="group relative p-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center justify-between backdrop-blur-sm"
+                            >
+                                <span className={`font-medium ${getFont(profile.font_style)}`}>{link.title}</span>
+                            </a>
+                        )
                     ))}
                 </div>
 
@@ -159,6 +185,25 @@ function getFont(style: string) {
     return 'font-sans';
 }
 
+function getSocialIcon(url: string) {
+    if (!url) return null;
+    const lowerUrl = url.toLowerCase();
+    if (lowerUrl.includes('instagram.com')) return { icon: 'fa-instagram', color: '#E4405F', label: 'Instagram' };
+    if (lowerUrl.includes('twitter.com') || lowerUrl.includes('x.com')) return { icon: 'fa-x-twitter', color: '#000000', label: 'X' };
+    if (lowerUrl.includes('tiktok.com')) return { icon: 'fa-tiktok', color: '#000000', label: 'TikTok' };
+    if (lowerUrl.includes('facebook.com')) return { icon: 'fa-facebook', color: '#1877F2', label: 'Facebook' };
+    if (lowerUrl.includes('youtube.com')) return { icon: 'fa-youtube', color: '#FF0000', label: 'YouTube' };
+    if (lowerUrl.includes('linkedin.com')) return { icon: 'fa-linkedin', color: '#0077B5', label: 'LinkedIn' };
+    if (lowerUrl.includes('twitch.tv')) return { icon: 'fa-twitch', color: '#9146FF', label: 'Twitch' };
+    if (lowerUrl.includes('github.com')) return { icon: 'fa-github', color: '#181717', label: 'GitHub' };
+    if (lowerUrl.includes('snapchat.com')) return { icon: 'fa-snapchat', color: '#FFFC00', label: 'Snapchat' };
+    if (lowerUrl.includes('whatsapp.com')) return { icon: 'fa-whatsapp', color: '#25D366', label: 'WhatsApp' };
+    if (lowerUrl.includes('t.me') || lowerUrl.includes('telegram.org')) return { icon: 'fa-telegram', color: '#0088cc', label: 'Telegram' };
+    if (lowerUrl.includes('spotify.com')) return { icon: 'fa-spotify', color: '#1DB954', label: 'Spotify' };
+    if (lowerUrl.includes('soundcloud.com')) return { icon: 'fa-soundcloud', color: '#ff5500', label: 'SoundCloud' };
+    return null;
+}
+
 function BackgroundLayer({ profile }: { profile: any }) {
     const { background_type, theme_color, accent_color, video_background_url } = profile;
 
@@ -175,17 +220,15 @@ function BackgroundLayer({ profile }: { profile: any }) {
         );
     }
 
-    // Default: Mesh / Lava Gradient
+    // Use the same LivingBackground as the preview
     return (
-        <div
-            className="fixed inset-0 z-0 bg-slate-950"
-            style={{
-                background: `radial-gradient(circle at 50% 50%, ${theme_color}40 0%, ${accent_color || '#000'}40 100%)`
-            }}
-        >
-            {/* Simple animated blobs for public view */}
-            <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] rounded-full mix-blend-screen filter blur-[80px] opacity-40 animate-blob" style={{ backgroundColor: theme_color }}></div>
-            <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] rounded-full mix-blend-screen filter blur-[80px] opacity-40 animate-blob animation-delay-2000" style={{ backgroundColor: accent_color || '#8b5cf6' }}></div>
+        <div className="fixed inset-0 z-0 bg-slate-950">
+            <LivingBackground
+                primaryColor={theme_color || '#000000'}
+                secondaryColor={accent_color || '#8b5cf6'}
+                animationSpeed="medium"
+                animationType="lava"
+            />
         </div>
     );
 }
