@@ -43,7 +43,6 @@ Deno.serve(async (req) => {
             throw new Error('GOOGLE_AI_STUDIO_KEY not configured')
         }
 
-        // Build system prompt with brand DNA
         const fontFamily = brandDNA.fonts?.[0]?.family || 'Modern Sans-Serif'
         const vibeModifier = VIBE_MODIFIERS[vibe] || VIBE_MODIFIERS.industrial
 
@@ -55,25 +54,27 @@ Brand Guidelines:
 - Font Style: ${fontFamily}
 - Aesthetic Vibe: ${vibe}
 
-Task: Generate a photorealistic Instagram post (1080x1080px) that features:
+Task: Generate a photorealistic, AGENCY-QUALITY Instagram post (1080x1080px) that features:
 - The promotional text: "${userPrompt}"
-- Text must be LEGIBLE and integrated naturally into the scene (like a neon sign, menu board, overlay, or product label)
-- Use the brand colors prominently in the design
+- Text must be PERFECTLY SPELLED and integrated naturally into the scene (neon sign, menu board, product label, overlay)
+- Use the brand colors prominently and tastefully in the composition
+- Lighting must be professional-grade (studio quality or dramatic outdoor lighting)
 - Style: ${vibeModifier}
-- High quality, professional photography aesthetic
+- The final image should look like it was shot by a professional photographer and designed by an expert graphic designer
 
-${referenceImageBase64 ? 'A reference photo is provided. Use it as inspiration for composition, product placement, or scene setting.' : 'Create an original composition that matches the brand aesthetic.'}
+${referenceImageBase64 ? 'A reference photo is provided. Use it as the foundation for composition, product placement, and scene authenticity. Match the product exactly.' : 'Create an original composition that is scroll-stopping and sale-driving.'}
 
-Make it eye-catching and scroll-stopping for social media.`
+CRITICAL: This must look REAL. No AI artifacts. Perfect text spelling. Professional color grading.`
 
-        // Build request for Gemini 3 API
-        const model = 'gemini-2.0-flash-exp' // Using Flash for cost efficiency (can upgrade to gemini-3-pro-image-preview if needed)
+        // Build request for Gemini 3 Pro Image API
+        // Using gemini-3-pro-image-preview for MAXIMUM quality and reasoning capability
+        const model = 'gemini-3-pro-image-preview'
         const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`
 
         // Build content parts
         const contentParts: any[] = [
             { text: systemPrompt },
-            { text: `Generate this promotional post: ${userPrompt}` }
+            { text: `Generate this promotional visual: ${userPrompt}` }
         ]
 
         // Add reference image if provided
@@ -86,11 +87,12 @@ Make it eye-catching and scroll-stopping for social media.`
             })
         }
 
-        console.log('Calling Gemini API with model:', model)
+        console.log('Calling Gemini 3 Pro Image API')
         console.log('Prompt:', userPrompt)
         console.log('Vibe:', vibe)
+        console.log('Brand:', brandDNA.company_name)
 
-        // Call Gemini API
+        // Call Gemini API with MAXIMUM quality settings
         const geminiResponse = await fetch(apiUrl, {
             method: 'POST',
             headers: {
@@ -100,10 +102,12 @@ Make it eye-catching and scroll-stopping for social media.`
             body: JSON.stringify({
                 contents: [{ parts: contentParts }],
                 generationConfig: {
-                    temperature: 0.9,
-                    topK: 40,
-                    topP: 0.95,
-                    candidateCount: 1 // Note: Gemini 2.0 Flash doesn't support multiple candidates yet
+                    temperature: 0.95, // High creativity while maintaining coherence
+                    topK: 50,
+                    topP: 0.98,
+                    candidateCount: 4, // Request 4 variations for client choice
+                    response_mime_type: 'image/jpeg', // Native image generation
+                    maxOutputTokens: 8192 // Maximum quality output
                 }
             })
         })
@@ -115,29 +119,77 @@ Make it eye-catching and scroll-stopping for social media.`
         }
 
         const geminiData = await geminiResponse.json()
-        console.log('Gemini response received')
+        console.log('Gemini 3 Pro response received')
 
-        // Extract text response (Gemini 2.0 Flash returns text, not images directly)
-        // For actual image generation, we'll need to use a different approach or model
-        // For now, return a placeholder response structure
-        const generatedText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text
-
-        if (!generatedText) {
-            throw new Error('No content generated from Gemini API')
+        // Extract image data from candidates
+        const candidates = geminiData.candidates
+        if (!candidates || candidates.length === 0) {
+            throw new Error('No image variations generated from Gemini API')
         }
 
-        // TODO: Replace this with actual image generation once we have the correct Gemini Image model
-        // For now, we'll return a structured response that the frontend can handle
+        // Initialize Supabase client for Storage uploads
+        const supabaseUrl = Deno.env.get('SUPABASE_URL')!
+        const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+        const supabase = createClient(supabaseUrl, supabaseServiceKey)
+
+        // Process each candidate and upload to Storage
+        const imageUrls: string[] = []
+        const timestamp = Date.now()
+
+        for (let i = 0; i < candidates.length; i++) {
+            const candidate = candidates[i]
+            const imageData = candidate.content?.parts?.[0]?.inline_data
+
+            if (!imageData || !imageData.data) {
+                console.warn(`Candidate ${i} has no image data, skipping`)
+                continue
+            }
+
+            // Convert Base64 to Blob
+            const base64Data = imageData.data
+            const mimeType = imageData.mime_type || 'image/jpeg'
+            const buffer = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0))
+
+            // Generate unique filename
+            const filename = `${brandDNA.company_name.replace(/\s+/g, '-').toLowerCase()}-${timestamp}-v${i + 1}.jpg`
+            const filepath = `${filename}`
+
+            // Upload to Supabase Storage (generated-posts bucket)
+            const { error: uploadError } = await supabase.storage
+                .from('generated-posts')
+                .upload(filepath, buffer, {
+                    contentType: mimeType,
+                    upsert: false
+                })
+
+            if (uploadError) {
+                console.error(`Upload error for variation ${i}:`, uploadError)
+                continue
+            }
+
+            // Get public URL
+            const { data: { publicUrl } } = supabase.storage
+                .from('generated-posts')
+                .getPublicUrl(filepath)
+
+            imageUrls.push(publicUrl)
+            console.log(`✓ Uploaded variation ${i + 1}: ${publicUrl}`)
+        }
+
+        if (imageUrls.length === 0) {
+            throw new Error('Failed to upload any generated images to Storage')
+        }
+
+        // Return success response with image URLs
         const response = {
             success: true,
-            message: 'AI generation complete. Note: Image generation requires Gemini Image model upgrade.',
-            generatedText,
+            imageUrls,
+            count: imageUrls.length,
             userPrompt,
             vibe,
-            brandDNA,
-            imageUrls: [] // Will be populated once image generation is implemented
+            brandName: brandDNA.company_name,
+            message: `Generated ${imageUrls.length} agency-quality variations`
         }
-
         return new Response(
             JSON.stringify(response),
             {
