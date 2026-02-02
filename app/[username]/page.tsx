@@ -94,7 +94,7 @@ export default async function PublicProfile({ params }: Props) {
             <div className="relative z-10 max-w-md mx-auto min-h-screen flex flex-col p-6">
 
                 {/* Profile Header */}
-                <div className="flex flex-col items-center text-center mt-12 mb-8">
+                <div className="flex flex-col items-center text-center mt-12 mb-8 bg-black/30 backdrop-blur-md rounded-2xl p-6 border border-white/10">
                     <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-white/20 mb-4 shadow-xl">
                         {profile.avatar_url ? (
                             <img src={profile.avatar_url} alt={profile.title} className="w-full h-full object-cover" />
@@ -102,8 +102,8 @@ export default async function PublicProfile({ params }: Props) {
                             <div className="w-full h-full bg-slate-700 animate-pulse" />
                         )}
                     </div>
-                    <h1 className={`text-2xl font-bold mb-1 ${getFont(profile.font_style)}`}>{profile.title}</h1>
-                    <p className="text-slate-200 opacity-90">{profile.description}</p>
+                    <h1 className={`text-2xl font-bold mb-1 text-white drop-shadow-lg ${getFont(profile.font_style)}`}>{profile.title}</h1>
+                    <p className="text-white opacity-90 drop-shadow-md">{profile.description}</p>
                 </div>
 
                 {/* Newsletter (If enabled) */}

@@ -295,8 +295,6 @@ export default function BuilderPage() {
 
             if (error) throw error
 
-            if (error) throw error
-
             // showToast('Changes Saved!', 'success') // Replaced by Modal
             setShowSuccessModal(true); // 🎉 Show Success Modal
 
