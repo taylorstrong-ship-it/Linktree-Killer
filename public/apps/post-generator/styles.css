@@ -8,7 +8,8 @@
   --bg-dark: #000000;
   --card-dark: #1A1A1A;
   --border-dark: #2D2D2D;
-  --orange: #FFAD7A;
+  --orange: #FF6B35;
+  /* Taylored Orange (Brand Standard) */
   --purple: #6B46C1;
   --green: #10B981;
   --text-primary: #FFFFFF;
@@ -113,7 +114,8 @@
 }
 
 .btn-primary:hover {
-  background-color: #E85A28;
+  background-color: #E85528;
+  /* Darker Taylored Orange */
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
 }

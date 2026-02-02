@@ -40,15 +40,65 @@ async function init() {
     console.log('✓ PostGenerator 2.0 initialized')
 }
 
-// Load brand profile
+// Load brand profile (Hybrid: LocalStorage First → Database Fallback)
 async function loadBrandProfile() {
     try {
+        // STEP 1: Check localStorage first (Guest Mode / "Speed to Magic")
+        const localData = localStorage.getItem('taylored_brand_data')
+
+        if (localData) {
+            try {
+                const brandDNA = JSON.parse(localData)
+                console.log('✓ Brand DNA loaded from localStorage:', brandDNA.company_name || 'Guest')
+
+                // Hydrate the form with localStorage data
+                currentBrandProfile = {
+                    company_name: brandDNA.company_name || '',
+                    logo_url: brandDNA.logo_url || '',
+                    primary_color: brandDNA.primary_color || '#FF6B35',
+                    secondary_color: brandDNA.secondary_color || '#6B46C1',
+                    fonts: brandDNA.fonts || [],
+                    social_links: brandDNA.social_links || []
+                }
+
+                // Pre-fill brand kit form
+                if (currentBrandProfile.company_name) {
+                    document.getElementById('brand-name').value = currentBrandProfile.company_name
+                }
+                if (currentBrandProfile.primary_color) {
+                    document.getElementById('primary-color').value = currentBrandProfile.primary_color
+                }
+                if (currentBrandProfile.secondary_color) {
+                    document.getElementById('secondary-color').value = currentBrandProfile.secondary_color
+                }
+                if (currentBrandProfile.logo_url) {
+                    displayLogo(currentBrandProfile.logo_url)
+                }
+
+                // Hide import sections and show loaded message
+                document.getElementById('brand-dna-section').classList.add('hidden')
+                document.getElementById('style-analysis-section').classList.add('hidden')
+                document.getElementById('brand-loaded-message').classList.remove('hidden')
+
+                return // Exit early - we have our data
+            } catch (parseError) {
+                console.warn('⚠ Failed to parse localStorage data, falling back to database:', parseError)
+                // Continue to database fallback
+            }
+        }
+
+        // STEP 2: Fallback to database (Returning User)
+        if (!currentUser) {
+            console.log('ℹ No localStorage data and no authenticated user')
+            return
+        }
+
         const profile = await getBrandProfile(currentUser.id)
 
         if (profile) {
-            // Brand profile exists - pre-fill and hide import sections
+            // Brand profile exists in database - pre-fill and hide import sections
             currentBrandProfile = profile
-            console.log('✓ Brand profile loaded:', profile.company_name)
+            console.log('✓ Brand profile loaded from database:', profile.company_name)
 
             // Pre-fill brand kit form
             if (profile.company_name) {
@@ -70,7 +120,7 @@ async function loadBrandProfile() {
             document.getElementById('brand-loaded-message').classList.remove('hidden')
         } else {
             // No brand profile - show import sections
-            console.log('ℹ No brand profile found')
+            console.log('ℹ No brand profile found in database')
             document.getElementById('brand-dna-section').classList.remove('hidden')
             document.getElementById('style-analysis-section').classList.remove('hidden')
             document.getElementById('brand-loaded-message').classList.add('hidden')

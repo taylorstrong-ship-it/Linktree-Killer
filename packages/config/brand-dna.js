@@ -61,29 +61,35 @@ export async function extractAndSaveBrandDNA(url, sourceApp = 'unknown') {
         // Check if user already has a brand profile
         const existingProfile = await getBrandProfile(user.id)
 
+        const profileData = {
+            company_name: brandDNA.company_name,
+            logo_url: brandDNA.logo_url,
+            primary_color: brandDNA.primary_color,
+            secondary_color: brandDNA.secondary_color,
+            accent_color: brandDNA.accent_color,
+            background_color: brandDNA.background_color,
+            text_primary_color: brandDNA.text_primary_color,
+            text_secondary_color: brandDNA.text_secondary_color,
+            color_scheme: brandDNA.color_scheme,
+            fonts: brandDNA.fonts,
+            typography: brandDNA.typography,
+            social_links: brandDNA.social_links || [],
+            business_type: brandDNA.business_type || 'general',
+            suggested_ctas: brandDNA.suggested_ctas || [],
+            source_app: sourceApp
+        }
+
         if (existingProfile) {
             // Update existing profile
-            return await updateBrandProfile(existingProfile.id, {
-                company_name: brandDNA.company_name,
-                logo_url: brandDNA.logo_url,
-                primary_color: brandDNA.primary_color,
-                secondary_color: brandDNA.secondary_color,
-                fonts: brandDNA.fonts,
-                source_app: sourceApp
-            })
+            return await updateBrandProfile(existingProfile.id, profileData)
         } else {
             // Create new profile
             const { data, error } = await supabase
                 .from('brand_profiles')
                 .insert({
                     user_id: user.id,
-                    company_name: brandDNA.company_name,
-                    logo_url: brandDNA.logo_url,
-                    primary_color: brandDNA.primary_color,
-                    secondary_color: brandDNA.secondary_color,
-                    fonts: brandDNA.fonts,
-                    tone: 'professional', // Default tone
-                    source_app: sourceApp
+                    ...profileData,
+                    tone: 'professional' // Default tone
                 })
                 .select()
                 .single()
