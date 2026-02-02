@@ -61,50 +61,61 @@ export default function Home() {
         setIsScanning(true);
 
         try {
-            console.log('📡 Calling Brand DNA API:', targetUrl);
+            console.log('📡 Calling Supabase Edge Function (Direct) - Bypassing Vercel timeout');
 
-            // Call the new /api/brand-dna endpoint with CTA detection
-            const response = await fetch('/api/brand-dna', {
+            // 🚑 FIX: Call Supabase Edge Function DIRECTLY (60s timeout instead of Vercel's 10s)
+            const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+            const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+
+            const response = await fetch(`${supabaseUrl}/functions/v1/extract-brand-dna`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Authorization': `Bearer ${supabaseAnonKey}`,
+                    'Content-Type': 'application/json'
+                },
                 body: JSON.stringify({ url: targetUrl }),
             });
 
             if (!response.ok) {
-                throw new Error(`API returned ${response.status}`);
+                const errorText = await response.text();
+                console.error('Edge Function Error:', errorText);
+                throw new Error(`Edge Function returned ${response.status}`);
             }
 
             const result = await response.json();
 
             if (!result.success) {
-                throw new Error(result.message || 'Brand DNA extraction failed');
+                throw new Error(result.error || 'Brand DNA extraction failed');
             }
+
+            // Extract Brand DNA from response
+            const dna = result.brandDNA;
 
             // Transform Brand DNA response to match Builder expectations
             const transformedData = {
-                username: result.dna.businessName.toLowerCase().replace(/\s+/g, ''),
-                title: result.dna.businessName,
-                bio: result.dna.description,
-                description: result.dna.description, // Builder checks both bio and description
-                theme_color: result.dna.colors.primary,
-                brand_colors: [result.dna.colors.primary, result.dna.colors.secondary],
-                fonts: ['Inter'], // Default for now
-                avatar_url: '', // Will be added in next update
-                // CRITICAL: Builder expects 'links', not 'social_links'
-                links: result.dna.cta_buttons.map((btn: any) => ({
-                    title: btn.title,
-                    url: btn.url
+                username: dna.company_name.toLowerCase().replace(/\s+/g, ''),
+                title: dna.company_name,
+                bio: dna.description,
+                description: dna.description,
+                theme_color: dna.primary_color,
+                brand_colors: [dna.primary_color, dna.secondary_color, dna.accent_color],
+                fonts: dna.fonts.length > 0 ? dna.fonts : ['Inter'],
+                avatar_url: dna.logo_url || dna.favicon_url || '',
+                // CRITICAL: Builder expects 'links', map from suggested_ctas
+                links: dna.suggested_ctas.map((cta: any) => ({
+                    title: cta.title,
+                    url: cta.url
                 })),
-                // Keep full DNA for future use (social extraction, etc.)
-                dna: result.dna
+                // Keep full DNA for future use
+                dna: dna
             };
 
             console.log('✅ Brand DNA extracted:', transformedData);
-            
+
             // CRITICAL FIX: Save to localStorage immediately so builder can access it
             localStorage.setItem('taylored_brand_data', JSON.stringify(transformedData));
             console.log('💾 Saved to localStorage:', transformedData);
-            
+
             setBrandData(transformedData);
         } catch (err: any) {
             console.error('⚠️ API Failed. Activating Simulation Mode...', err);
@@ -131,7 +142,7 @@ export default function Home() {
 
                 // Save simulation data to localStorage too
                 localStorage.setItem('taylored_brand_data', JSON.stringify(simulationData));
-                
+
                 setBrandData(simulationData);
                 setIsScanning(false);
                 setError(null); // Clear error to show success
