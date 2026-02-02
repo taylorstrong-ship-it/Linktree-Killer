@@ -38,6 +38,7 @@ import { Waves, Zap, Tornado, Flame, Check } from 'lucide-react'
 interface Link {
     title: string
     url: string
+    position?: number  // For drag-and-drop ordering
 }
 
 interface ProfileData {
@@ -181,19 +182,57 @@ export default function BuilderPage() {
                     const savedData = localStorage.getItem('taylored_brand_data');
                     if (savedData) {
                         try {
-                    const parsed = JSON.parse(savedData);
-                    console.log('📥 Loading from localStorage as fallback...');
-                    console.log('🔍 localStorage data:', parsed);
-                    console.log('🔗 Links found:', parsed.links);
-                    setProfile(prev => ({
-                        ...prev,
-                        ...parsed,
-                        description: parsed.bio || parsed.description || prev.description,
-                        theme_color: parsed.brand_colors?.[0] || prev.theme_color,
-                        links: (parsed.links && Array.isArray(parsed.links) && parsed.links.length > 0)
-                            ? parsed.links
-                            : prev.links
-                    }));
+                            const parsed = JSON.parse(savedData);
+                            console.log('📥 Loading from localStorage as fallback...');
+                            console.log('🔍 localStorage data:', parsed);
+                            console.log('🔗 Links found:', parsed.links);
+                            console.log('🎨 Brand colors:', parsed.brand_colors);
+                            console.log('📱 Social links:', parsed.social_links);
+
+                            // Map Brand DNA to profile structure
+                            const brandDNAProfile = {
+                                ...prev,
+                                // Basic Info
+                                title: parsed.title || prev.title,
+                                description: parsed.bio || parsed.description || prev.description,
+                                avatar_url: parsed.logo_url || parsed.avatar_url || prev.avatar_url,
+
+                                // Colors - Full palette from Firecrawl v2
+                                theme_color: parsed.brand_colors?.[0] || parsed.primary_color || prev.theme_color,
+                                accent_color: parsed.brand_colors?.[1] || parsed.accent_color || prev.accent_color,
+
+                                // Typography - Font detection
+                                font_style: parsed.fonts?.[0]?.toLowerCase().includes('serif')
+                                    ? 'elegant'
+                                    : parsed.fonts?.[0]?.toLowerCase().includes('mono')
+                                        ? 'brutal'
+                                        : 'modern',
+
+                                // Social Links - Auto-populate from Brand DNA
+                                socials: {
+                                    instagram: parsed.social_links?.find((s: any) => s.platform === 'instagram')?.url || prev.socials.instagram,
+                                    tiktok: parsed.social_links?.find((s: any) => s.platform === 'tiktok')?.url || prev.socials.tiktok,
+                                    facebook: parsed.social_links?.find((s: any) => s.platform === 'facebook')?.url || prev.socials.facebook,
+                                    email: parsed.social_links?.find((s: any) => s.platform === 'email')?.url?.replace('mailto:', '') || prev.socials.email,
+                                },
+
+                                // Links - Map suggested CTAs or use existing links
+                                links: parsed.suggested_ctas && parsed.suggested_ctas.length > 0
+                                    ? parsed.suggested_ctas.map((cta: any, idx: number) => ({
+                                        title: cta.label || cta.title,
+                                        url: cta.url,
+                                        position: idx
+                                    }))
+                                    : (parsed.links && Array.isArray(parsed.links) && parsed.links.length > 0)
+                                        ? parsed.links.map((link: any, idx: number) => ({
+                                            title: link.title || link.label,
+                                            url: link.url,
+                                            position: idx
+                                        }))
+                                        : prev.links
+                            };
+
+                            setProfile(brandDNAProfile);
 
                             if (parsed.title) {
                                 const generated = parsed.title.toLowerCase().replace(/\s+/g, '');
@@ -211,15 +250,43 @@ export default function BuilderPage() {
                     if (savedData) {
                         try {
                             const parsed = JSON.parse(savedData);
-                            setProfile(prev => ({
+                            console.log('📥 Guest Mode: Loading Brand DNA from localStorage...');
+
+                            // Apply same comprehensive Brand DNA mapping for guest users
+                            const brandDNAProfile = {
                                 ...prev,
-                                ...parsed,
+                                title: parsed.title || prev.title,
                                 description: parsed.bio || parsed.description || prev.description,
-                                theme_color: parsed.brand_colors?.[0] || prev.theme_color,
-                                links: (parsed.links && Array.isArray(parsed.links) && parsed.links.length > 0)
-                                    ? parsed.links
-                                    : prev.links
-                            }));
+                                avatar_url: parsed.logo_url || parsed.avatar_url || prev.avatar_url,
+                                theme_color: parsed.brand_colors?.[0] || parsed.primary_color || prev.theme_color,
+                                accent_color: parsed.brand_colors?.[1] || parsed.accent_color || prev.accent_color,
+                                font_style: parsed.fonts?.[0]?.toLowerCase().includes('serif')
+                                    ? 'elegant'
+                                    : parsed.fonts?.[0]?.toLowerCase().includes('mono')
+                                        ? 'brutal'
+                                        : 'modern',
+                                socials: {
+                                    instagram: parsed.social_links?.find((s: any) => s.platform === 'instagram')?.url || '',
+                                    tiktok: parsed.social_links?.find((s: any) => s.platform === 'tiktok')?.url || '',
+                                    facebook: parsed.social_links?.find((s: any) => s.platform === 'facebook')?.url || '',
+                                    email: parsed.social_links?.find((s: any) => s.platform === 'email')?.url?.replace('mailto:', '') || '',
+                                },
+                                links: parsed.suggested_ctas && parsed.suggested_ctas.length > 0
+                                    ? parsed.suggested_ctas.map((cta: any, idx: number) => ({
+                                        title: cta.label || cta.title,
+                                        url: cta.url,
+                                        position: idx
+                                    }))
+                                    : (parsed.links && Array.isArray(parsed.links) && parsed.links.length > 0)
+                                        ? parsed.links.map((link: any, idx: number) => ({
+                                            title: link.title || link.label,
+                                            url: link.url,
+                                            position: idx
+                                        }))
+                                        : prev.links
+                            };
+
+                            setProfile(brandDNAProfile);
 
                             if (parsed.title) {
                                 const generated = parsed.title.toLowerCase().replace(/\s+/g, '');
@@ -263,20 +330,26 @@ export default function BuilderPage() {
             // CRITICAL: Merge socials back into links array for database storage
             const socialLinks: Link[] = [];
             if (profile.socials.instagram) {
-                socialLinks.push({ title: 'Instagram', url: profile.socials.instagram });
+                socialLinks.push({ title: 'Instagram', url: profile.socials.instagram, position: 0 });
             }
             if (profile.socials.tiktok) {
-                socialLinks.push({ title: 'TikTok', url: profile.socials.tiktok });
+                socialLinks.push({ title: 'TikTok', url: profile.socials.tiktok, position: 1 });
             }
             if (profile.socials.facebook) {
-                socialLinks.push({ title: 'Facebook', url: profile.socials.facebook });
+                socialLinks.push({ title: 'Facebook', url: profile.socials.facebook, position: 2 });
             }
             if (profile.socials.email) {
-                socialLinks.push({ title: 'Email', url: `mailto:${profile.socials.email}` });
+                socialLinks.push({ title: 'Email', url: `mailto:${profile.socials.email}`, position: 3 });
             }
 
-            // Merge: Socials first, then custom links
-            const mergedLinks = [...socialLinks, ...profile.links];
+            // Ensure all custom links have positions (based on array order)
+            const customLinksWithPosition = profile.links.map((link, idx) => ({
+                ...link,
+                position: link.position !== undefined ? link.position : (socialLinks.length + idx)
+            }));
+
+            // Merge: Socials first, then custom links (position preserved)
+            const mergedLinks = [...socialLinks, ...customLinksWithPosition];
 
             // Remove 'dna' field from profile before saving (it's not in the database schema)
             const { dna, ...profileWithoutDna } = profile as any;
@@ -286,11 +359,11 @@ export default function BuilderPage() {
                 user_id: userId,
                 username: username, // Save the handle
                 ...profileWithoutDna,
-                links: mergedLinks, // Save merged links for backwards compatibility
+                links: mergedLinks, // Save merged links with positions
                 socials: profile.socials, // Also save to new socials column
                 updated_at: new Date().toISOString()
             }
-            
+
             console.log('💾 Saving profile with links:', mergedLinks);
             console.log('💾 Full updates object:', updates);
 

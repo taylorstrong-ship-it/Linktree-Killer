@@ -6,6 +6,7 @@ import { GripVertical, Trash2 } from 'lucide-react'
 interface Link {
     title: string
     url: string
+    position?: number
 }
 
 interface LinkItemProps {
