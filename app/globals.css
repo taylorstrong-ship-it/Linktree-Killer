@@ -109,3 +109,23 @@ details[open]>summary i.fa-chevron-down {
     stroke-linecap: round;
     stroke-linejoin: round;
 }
+
+/* 📱 Mobile Touch Optimizations */
+* {
+    -webkit-tap-highlight-color: transparent;
+}
+
+@media (max-width: 767px) {
+
+    /* Ensure all interactive elements have minimum 44px touch targets */
+    button,
+    a[role="button"] {
+        min-height: 44px !important;
+        min-width: 44px !important;
+    }
+
+    /* Mobile safe area padding */
+    body {
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+}
