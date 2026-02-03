@@ -79,7 +79,7 @@ interface ProfileData {
 }
 
 export default function BuilderPage() {
-    const [isAuthenticated, setIsAuthenticated] = useState(true) // Always allow access
+    const [isAuthenticated, setIsAuthenticated] = useState(false) // Default to guest mode
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
     const [userId, setUserId] = useState<string | null>(null)
@@ -625,9 +625,8 @@ export default function BuilderPage() {
         )
     }
 
-    if (!isAuthenticated) {
-        return null // Will redirect to login
-    }
+    // Allow both authenticated and guest users to access builder
+    // Guest users will see "Guest Mode" badge and be prompted to sign up when saving
 
     return (
         <>
@@ -692,13 +691,20 @@ export default function BuilderPage() {
                                 <i className="fa-solid fa-wand-magic-sparkles text-blue-500"></i>
                                 Taylored Link in Bio
                             </h1>
-                            <button
-                                onClick={handleLogout}
-                                className="text-xs text-gray-400 hover:text-white border border-white/10 px-3 py-1.5 rounded-lg font-medium bg-gray-800/50 hover:bg-gray-800 transition"
-                            >
-                                <i className="fa-solid fa-arrow-right-from-bracket mr-1"></i>
-                                Log Out
-                            </button>
+                            {userId ? (
+                                <button
+                                    onClick={handleLogout}
+                                    className="text-xs text-gray-400 hover:text-white border border-white/10 px-3 py-1.5 rounded-lg font-medium bg-gray-800/50 hover:bg-gray-800 transition"
+                                >
+                                    <i className="fa-solid fa-arrow-right-from-bracket mr-1"></i>
+                                    Log Out
+                                </button>
+                            ) : (
+                                <div className="text-xs text-amber-400 border border-amber-500/30 px-3 py-1.5 rounded-lg font-medium bg-amber-500/10 flex items-center gap-1.5">
+                                    <i className="fa-solid fa-eye"></i>
+                                    Guest Mode
+                                </div>
+                            )}
                         </div>
                     </div>
 
@@ -1492,11 +1498,23 @@ export default function BuilderPage() {
                     </div>
                 </div>
 
-                {/* Preview Area - Glassmorphism */}
-                <div className="flex-1 flex flex-col items-center justify-center relative p-8">
-                    {/* iPhone Frame with thick border and shadow */}
-                    <div className="relative">
-                        <div className="w-[380px] h-[760px] bg-black rounded-[60px] p-[14px] shadow-2xl shadow-black/40">
+                {/* Preview Area - Scaled Mobile Preview */}
+                <div className="flex-1 flex flex-col items-center justify-center relative p-8 bg-slate-950">
+                    {/* Preview Label */}
+                    <div className="flex items-center gap-2 text-gray-400 text-sm mb-6">
+                        <i className="fa-solid fa-mobile-screen-button"></i>
+                        <span>Mobile Preview</span>
+                    </div>
+
+                    {/* Scaled Mobile Container - Portrait Mode */}
+                    <div className="relative" style={{
+                        width: '380px',
+                        height: '760px',
+                        transform: 'scale(0.75)',
+                        transformOrigin: 'top center'
+                    }}>
+                        {/* iPhone Frame with thick border and shadow */}
+                        <div className="w-full h-full bg-black rounded-[60px] p-[14px] shadow-2xl shadow-black/40">
                             <div className="w-full h-full bg-white rounded-[46px] overflow-hidden relative">
                                 <PhonePreview
                                     title={profile.title}
