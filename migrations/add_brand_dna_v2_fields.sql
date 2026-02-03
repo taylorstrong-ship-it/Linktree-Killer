@@ -11,7 +11,8 @@ ADD COLUMN IF NOT EXISTS typography JSONB DEFAULT '{}'::jsonb,
 ADD COLUMN IF NOT EXISTS accent_color TEXT,
 ADD COLUMN IF NOT EXISTS background_color TEXT,
 ADD COLUMN IF NOT EXISTS text_primary_color TEXT,
-ADD COLUMN IF NOT EXISTS text_secondary_color TEXT;
+ADD COLUMN IF NOT EXISTS text_secondary_color TEXT,
+ADD COLUMN IF NOT EXISTS brand_personality TEXT DEFAULT 'professional';
 
 -- Update existing records with empty arrays/defaults
 UPDATE brand_profiles
@@ -20,10 +21,12 @@ SET
     business_type = COALESCE(business_type, 'general'),
     suggested_ctas = COALESCE(suggested_ctas, '[]'::jsonb),
     color_scheme = COALESCE(color_scheme, 'light'),
-    typography = COALESCE(typography, '{}'::jsonb)
+    typography = COALESCE(typography, '{}'::jsonb),
+    brand_personality = COALESCE(brand_personality, 'professional')
 WHERE social_links IS NULL 
    OR business_type IS NULL 
-   OR suggested_ctas IS NULL;
+   OR suggested_ctas IS NULL
+   OR brand_personality IS NULL;
 
 -- Add index for business_type queries
 CREATE INDEX IF NOT EXISTS idx_brand_profiles_business_type ON brand_profiles(business_type);
@@ -32,3 +35,4 @@ CREATE INDEX IF NOT EXISTS idx_brand_profiles_business_type ON brand_profiles(bu
 COMMENT ON COLUMN brand_profiles.social_links IS 'Array of social media platform links: [{"platform": "instagram", "url": "..."}]';
 COMMENT ON COLUMN brand_profiles.business_type IS 'Detected business type: salon, restaurant, ecommerce, services, portfolio, general';
 COMMENT ON COLUMN brand_profiles.suggested_ctas IS 'Smart CTAs based on business type: [{"label": "Book Now", "url": "...", "icon": "fa-calendar"}]';
+COMMENT ON COLUMN brand_profiles.brand_personality IS 'Brand personality/vibe descriptor for AI generation (e.g., "Futuristic and Zen", "Bold and Energetic");

@@ -26,6 +26,7 @@ import { Search, Sparkles, ChevronDown, Smartphone, Palette, Type, Fingerprint }
 import MatrixOverlay from '@/components/hub/MatrixOverlay';
 import BioLinkBuilder from '@/components/hub/BioLinkBuilder';
 import AdCampaignGenerator from '@/components/hub/AdCampaignGenerator';
+import BrandDashboard from '@/components/dashboard/BrandDashboard';
 
 // --- HYBRID DNA INTERFACE (STORY MODE) ---
 
@@ -99,7 +100,10 @@ export default function Home() {
                 description: dna.description,
                 theme_color: dna.primary_color,
                 brand_colors: [dna.primary_color, dna.secondary_color, dna.accent_color],
-                fonts: dna.fonts.length > 0 ? dna.fonts : ['Inter'],
+                // FIX: Extract font family strings from font objects
+                fonts: dna.fonts.length > 0
+                    ? dna.fonts.map((f: any) => typeof f === 'string' ? f : f.family || 'Inter')
+                    : ['Inter'],
                 avatar_url: dna.logo_url || dna.favicon_url || '',
                 // CRITICAL: Builder expects 'links', map from suggested_ctas
                 links: dna.suggested_ctas.map((cta: any) => ({
@@ -363,68 +367,8 @@ export default function Home() {
                             </motion.div>
                         </section>
 
-                        {/* SECTION 2: THE INSTANT RESULT (Scroll Reveal) */}
-                        <section className="min-h-screen w-full bg-[#0a0a0a] relative z-20 py-24 px-6">
-                            <div className="max-w-7xl mx-auto">
-                                <motion.div
-                                    initial={{ opacity: 0, y: 50 }}
-                                    whileInView={{ opacity: 1, y: 0 }}
-                                    viewport={{ once: true, margin: "-100px" }}
-                                    transition={{ duration: 0.8 }}
-                                    className="text-center mb-24"
-                                >
-                                    <h2 className="text-5xl md:text-7xl font-sans font-bold text-white tracking-tighter">Ready to <span className="text-[#FFAD7A]">Launch.</span></h2>
-                                    <p className="mt-6 text-xl text-white/50 font-sans max-w-2xl mx-auto">
-                                        We've synthesized your assets into a deployment-ready ecosystem.
-                                    </p>
-                                </motion.div>
-
-                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-8 items-start">
-
-                                    {/* LEFT: PHONE PREVIEW (Sticky) */}
-                                    <div className="lg:sticky lg:top-32 flex justify-center">
-                                        <div className="relative group" onClick={handleLaunch}>
-                                            <div className="absolute -inset-4 bg-[#FFAD7A] rounded-[3rem] blur-2xl opacity-20 group-hover:opacity-30 transition-opacity"></div>
-                                            <div className="relative transform transition-transform duration-500 hover:scale-[1.02] hover:-rotate-1 cursor-pointer">
-                                                {/* Reusing BioLinkBuilder but wrapping it to isolate the phone visual if possible, 
-                                                    or just rendering it. The component might have its own layout. 
-                                                    Let's use the component but constrain it. */}
-                                                <div className="bg-[#111] p-4 rounded-[3rem] border-8 border-[#333] shadow-2xl">
-                                                    <BioLinkBuilder brandData={brandData} />
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* RIGHT: AD CREATIVES + ACTIONS */}
-                                    <div className="space-y-12">
-                                        <div className="bg-[#1E1E1E] border border-[#333] rounded-3xl p-8">
-                                            <div className="flex items-center gap-4 mb-8">
-                                                <div className="p-3 bg-[#FFAD7A]/10 rounded-xl text-[#FFAD7A]">
-                                                    <Sparkles className="w-6 h-6" />
-                                                </div>
-                                                <div>
-                                                    <h3 className="text-2xl font-bold font-sans text-white">Campaign Generator</h3>
-                                                    <p className="text-white/40 text-sm">AI-Generated Social Assets</p>
-                                                </div>
-                                            </div>
-                                            <AdCampaignGenerator />
-                                        </div>
-
-                                        {/* FINAL CTA */}
-                                        <div className="text-center py-12">
-                                            <button
-                                                onClick={() => { setScanComplete(false); setUrl(''); window.scrollTo(0, 0); }}
-                                                className="text-white/30 hover:text-white transition-colors font-sans text-sm uppercase tracking-widest border-b border-transparent hover:border-white pb-1"
-                                            >
-                                                Reset Matrix & Decrypt New Target
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                </div>
-                            </div>
-                        </section>
+                        {/* SECTION 2: BRAND DASHBOARD (The Dashboard) */}
+                        <BrandDashboard brandData={brandData} />
 
                     </div>
                 )

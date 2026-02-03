@@ -675,7 +675,7 @@ export default function BuilderPage() {
                         <div className="flex justify-between items-center mb-4">
                             <h1 className="font-bold text-xl text-white flex items-center gap-2">
                                 <i className="fa-solid fa-wand-magic-sparkles text-blue-500"></i>
-                                Creative Studio
+                                Taylored Link in Bio
                             </h1>
                             <button
                                 onClick={handleLogout}

@@ -12,14 +12,27 @@ async function loadBrandDNA() {
         const localData = localStorage.getItem('taylored_brand_data');
 
         if (localData) {
-            currentBrandDNA = JSON parse(localData);
+            currentBrandDNA = JSON.parse(localData);
             console.log('✓ Brand DNA loaded:', currentBrandDNA.company_name || 'Guest');
 
-            // Inject brand color into CSS
-            if (currentBrandDNA.primary_color) {
-                document.documentElement.style.setProperty('--brand-color', currentBrandDNA.primary_color);
-                const rgb = hexToRgb(currentBrandDNA.primary_color);
-                document.documentElement.style.setProperty('--brand-rgb', `${rgb.r}, ${rgb.g}, ${rgb.b}`);
+            // 🧬 HYDRATE THE UI - Show Brand Context Bar
+            const header = document.getElementById('brand-header');
+            const logo = document.getElementById('brand-logo');
+            const name = document.getElementById('brand-name');
+
+            if (header && logo && name) {
+                header.classList.remove('hidden');
+                logo.src = currentBrandDNA.logo_url || 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48"><rect fill="%23FF6B35" width="48" height="48"/></svg>';
+                name.textContent = currentBrandDNA.company_name || 'Your Brand';
+
+                // 🎨 Dynamic Theming - Apply brand color to borders
+                if (currentBrandDNA.primary_color) {
+                    document.documentElement.style.setProperty('--brand-color', currentBrandDNA.primary_color);
+                    logo.style.borderColor = currentBrandDNA.primary_color;
+
+                    const rgb = hexToRgb(currentBrandDNA.primary_color);
+                    document.documentElement.style.setProperty('--brand-rgb', `${rgb.r}, ${rgb.g}, ${rgb.b}`);
+                }
             }
         } else {
             console.warn('⚠ No Brand DNA in localStorage. Using defaults.');
@@ -27,9 +40,56 @@ async function loadBrandDNA() {
             document.documentElement.style.setProperty('--brand-color', '#FF6B35');
             document.documentElement.style.setProperty('--brand-rgb', '255, 107, 53');
         }
+
+        // 🎯 URL PARAMETER LISTENER - Campaign handoff from Brand Dashboard
+        checkURLParameters();
     } catch (error) {
         console.error('Error loading Brand DNA:', error);
     }
+}
+
+// Check for URL parameters and auto-fill prompt
+function checkURLParameters() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const promptParam = urlParams.get('prompt');
+
+    if (promptParam) {
+        const userPromptField = document.getElementById('user-prompt');
+        if (userPromptField) {
+            // Typewriter effect for ghostwriter feature
+            typewriterEffect(userPromptField, promptParam, () => {
+                // Auto-trigger generation after typing completes
+                setTimeout(() => {
+                    showToast('Campaign brief loaded! Ready to generate.', 'success');
+                    // Optionally auto-start generation here
+                }, 500);
+            });
+        }
+
+        // Clean URL (remove parameter after reading)
+        window.history.replaceState({}, document.title, window.location.pathname);
+    }
+}
+
+// Typewriter effect for ghostwriter feature
+function typewriterEffect(element, text, callback) {
+    let index = 0;
+    element.value = '';
+    element.focus();
+
+    const speed = 30; // ms per character
+
+    function type() {
+        if (index < text.length) {
+            element.value += text.charAt(index);
+            index++;
+            setTimeout(type, speed);
+        } else if (callback) {
+            callback();
+        }
+    }
+
+    type();
 }
 
 // Image Upload Handlers
@@ -95,14 +155,20 @@ function fileToBase64(file) {
     });
 }
 
-// Generate Visuals (Main Function)
-async function generateVisuals() {
+// Generate Campaign (Main Function - Pomelli-style 3-piece)
+async function generateCampaign() {
+    const campaignName = document.getElementById('campaign-name').value.trim();
     const userPrompt = document.getElementById('user-prompt').value.trim();
-    const vibe = document.getElementById('vibe-selector').value;
+
+    if (!campaignName) {
+        showToast('Please enter a campaign name', 'error');
+        document.getElementById('campaign-name').focus();
+        return;
+    }
 
     if (!userPrompt) {
-        showToast('Please tell us what you're promoting', 'error');
-    document.getElementById('user-prompt').focus();
+        showToast('Please tell us what you\'re promoting', 'error');
+        document.getElementById('user-prompt').focus();
         return;
     }
 
@@ -112,66 +178,75 @@ async function generateVisuals() {
     }
 
     // Show loading
-    setLoading(true);
+    setLoadingStage('Planning campaign...', true);
 
     try {
         const { data: { session } } = await window.supabaseClient.auth.getSession();
 
-        const response = await fetch(`${window.ENV.SUPABASE_URL}/functions/v1/generate-visuals`, {
+        const response = await fetch(`${window.ENV.SUPABASE_URL}/functions/v1/generate-campaign`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${session?.access_token || window.ENV.SUPABASE_ANON_KEY}`,
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
+                campaignName,
                 userPrompt,
-                vibe,
                 referenceImageBase64: uploadedImageBase64,
                 brandDNA: currentBrandDNA
             })
         });
 
+        setLoadingStage('Generating visuals...', true);
+
         if (!response.ok) {
             const error = await response.json();
-            throw new Error(error.error || 'Generation failed');
+            throw new Error(error.error || 'Campaign generation failed');
         }
 
         const data = await response.json();
-        console.log('Generation response:', data);
+        console.log('Campaign generated:', data);
 
-        // For now, show the response (Edge Function returns text, not images yet)
-        if (data.imageUrls && data.imageUrls.length > 0) {
-            renderResults(data.imageUrls);
+        if (data.success && data.campaign) {
+            renderCampaign(data.campaign);
+            showToast('Campaign generated successfully!', 'success');
         } else {
-            // Temporary: Show placeholder while awaiting actual image generation
-            showToast('AI generation complete! Image rendering pending model upgrade.', 'info');
-            console.log('Generated text:', data.generatedText);
+            throw new Error('Invalid response from server');
         }
 
     } catch (error) {
-        console.error('Generation error:', error);
-        showToast(`Failed to generate: ${error.message}`, 'error');
+        console.error('Campaign generation error:', error);
+        showToast(`Failed to generate campaign: ${error.message}`, 'error');
     } finally {
-        setLoading(false);
+        setLoadingStage('', false);
     }
 }
 
-// Render Results Grid
-function renderResults(imageUrls) {
-    const resultsSection = document.getElementById('results-section');
-    const resultsGrid = document.getElementById('results-grid');
+// Render Campaign (3-Column Layout)
+function renderCampaign(campaign) {
+    // Populate images
+    document.getElementById('story-preview').src = campaign.storyImageUrl;
+    document.getElementById('feed-preview').src = campaign.feedImageUrl;
+    document.getElementById('info-preview').src = campaign.infoImageUrl;
 
-    resultsGrid.innerHTML = imageUrls.map((url, index) => `
-    <div class="result-card glassmorphism-card" onclick="openLightbox('${url}')">
-      <img src="${url}" alt="Generated variation ${index + 1}" loading="lazy" />
-      <div class="result-overlay">
-        <p class="text-sm font-medium">Variation ${index + 1}</p>
-      </div>
-    </div>
-  `).join('');
+    // Populate caption
+    document.getElementById('caption-text').textContent = campaign.caption;
 
-    resultsSection.classList.remove('hidden');
-    resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    // Populate hashtags as badges
+    const hashtagsContainer = document.getElementById('hashtags-container');
+    hashtagsContainer.innerHTML = campaign.hashtags
+        .map(tag => `<span class="hashtag-badge">${tag}</span>`)
+        .join('');
+
+    // Show campaign section
+    document.getElementById('campaign-section').classList.remove('hidden');
+    document.getElementById('campaign-section').scrollIntoView({
+        behavior: 'smooth',
+        block: 'start'
+    });
+
+    // Store campaign data globally for downloads
+    window.currentCampaign = campaign;
 }
 
 // Lightbox Functions
@@ -244,19 +319,80 @@ async function scheduleToInstagram() {
         console.error('Instagram scheduling error:', error);
         showToast('Instagram scheduling unavailable. Contact support.', 'error');
     }
+
+    // Download Individual Campaign Asset
+    async function downloadAsset(type) {
+        if (!window.currentCampaign) {
+            showToast('No campaign loaded', 'error');
+            return;
+        }
+
+        const urlMap = {
+            story: window.currentCampaign.storyImageUrl,
+            feed: window.currentCampaign.feedImageUrl,
+            info: window.currentCampaign.infoImageUrl
+        };
+
+        const url = urlMap[type];
+        if (!url) return;
+
+        try {
+            const response = await fetch(url);
+            const blob = await response.blob();
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `${type}-${Date.now()}.jpg`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(link.href);
+
+            showToast(`${type.charAt(0).toUpperCase() + type.slice(1)} downloaded!`, 'success');
+        } catch (error) {
+            console.error(`Download error for ${type}:`, error);
+            showToast(`Failed to download ${type}`, 'error');
+        }
+    }
+
+    // Download Complete Campaign Bundle
+    async function downloadBundle() {
+        if (!window.currentCampaign) {
+            showToast('No campaign loaded', 'error');
+            return;
+        }
+
+        showToast('Downloading campaign bundle...', 'info');
+
+        try {
+            // Download all 3 assets sequentially with slight delay
+            await downloadAsset('story');
+            await new Promise(resolve => setTimeout(resolve, 300));
+            await downloadAsset('feed');
+            await new Promise(resolve => setTimeout(resolve, 300));
+            await downloadAsset('info');
+
+            showToast('Complete campaign bundle downloaded!', 'success');
+        } catch (error) {
+            console.error('Bundle download error:', error);
+            showToast('Failed to download complete bundle', 'error');
+        }
+    }
+
 }
 
 // UI Helper Functions
-function setLoading(isLoading) {
+function setLoadingStage(stage, isLoading) {
     const overlay = document.getElementById('loading-overlay');
     const btnText = document.getElementById('btn-text');
     const btnLoading = document.getElementById('btn-loading');
+    const loadingStage = document.getElementById('loading-stage');
     const generateBtn = document.getElementById('generate-btn');
 
     if (isLoading) {
         overlay.classList.remove('hidden');
         btnText.classList.add('hidden');
         btnLoading.classList.remove('hidden');
+        if (stage) loadingStage.textContent = stage;
         generateBtn.disabled = true;
     } else {
         overlay.classList.add('hidden');

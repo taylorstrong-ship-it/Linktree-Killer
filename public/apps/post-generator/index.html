@@ -51,7 +51,7 @@
   <script>
     window.ENV = {
       SUPABASE_URL: 'https://qxkicdhsrlpehgcsapsh.supabase.co',
-      SUPABASE_ANON_KEY: 'sb_publishable_TTBR0ES-pM7LOWDsywEy7A_9BSlhWGg',
+      SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF4a2ljZGhzcmxwZWhnY3NhcHNoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkwNzY2MDUsImV4cCI6MjA4NDY1MjYwNX0.htBzjPEJMLoFY-xguJO2zVHvbW-7evWXGXBgAUwFLS0',
       N8N_WEBHOOK_URL: 'https://your-n8n-instance.n8n.cloud/webhook/instagram-post' // TODO: Configure actual webhook
     }
   </script>
@@ -70,27 +70,45 @@
     <header class="mb-12 text-center">
       <div class="terminal-header justify-center">
         <span class="text-brand-orange font-jetbrains text-2xl">&gt;</span>
-        <span class="font-jetbrains ml-2 text-xl">PostGenerator 3.0</span>
+        <span class="font-jetbrains ml-2 text-xl">Taylored Content Creator</span>
       </div>
       <p class="text-gray-400 mt-3 text-lg">AI-Powered Visual Generation • Powered by Gemini 3</p>
     </header>
 
-    <!-- Hidden Brand DNA Loader (loads from localStorage silently) -->
-    <div id="brand-dna-status" class="hidden"></div>
+    <!-- 🧬 Brand Context Bar (Hidden by default, shown via JS) -->
+    <div id="brand-header" class="hidden flex items-center gap-4 mb-8 p-4 bg-white/5 border border-white/10 rounded-xl">
+      <img id="brand-logo" class="w-12 h-12 rounded-full object-cover border-2 border-[#FF6B35]" alt="Brand Logo" />
+      <div>
+        <p class="text-xs text-gray-400 uppercase tracking-widest">Designing For</p>
+        <h2 id="brand-name" class="text-xl font-bold text-white">Brand Name</h2>
+      </div>
+      <div class="ml-auto">
+        <span
+          class="px-3 py-1 text-xs font-medium text-[#FF6B35] bg-[#FF6B35]/10 rounded-full border border-[#FF6B35]/20">
+          Vibe Active
+        </span>
+      </div>
+    </div>
 
     <!-- Prompt-First Interface -->
     <div class="space-y-8">
 
-      <!-- Hero Input: "What are we promoting today?" -->
+      <!-- Hero Input: Campaign Details -->
       <section class="hero-section">
+        <label for="campaign-name" class="block text-gray-300 mb-3 text-sm font-medium">
+          Campaign Name
+        </label>
+        <input type="text" id="campaign-name" placeholder="Tuesday Night Special"
+          class="glassmorphism-input w-full mb-6" autocomplete="off" />
+
         <label for="user-prompt" class="block text-gray-300 mb-3 text-sm font-medium">
-          What are we promoting today?
+          What are we promoting?
         </label>
         <input type="text" id="user-prompt" placeholder="Margherita pizza special - $12 tonight only"
           class="glassmorphism-input w-full" autocomplete="off" />
-        <p class="text-gray-500 text-xs mt-2">AI will design a scroll-stopping Instagram post with your text integrated
-          into the scene</p>
+        <p class="text-gray-500 text-xs mt-2">AI will create a 3-piece campaign: Story + Feed + Info slide</p>
       </section>
+
 
       <!-- Upload Zone: Product/Inspiration Photo -->
       <section class="upload-section">
@@ -112,21 +130,11 @@
         </div>
       </section>
 
-      <!-- Vibe Selector -->
-      <section class="vibe-section">
-        <label for="vibe-selector" class="block text-gray-300 mb-3 text-sm font-medium">
-          Aesthetic Vibe
-        </label>
-        <select id="vibe-selector" class="glassmorphism-select w-full">
-          <option value="luxury">✨ Luxury - Minimal, elegant, premium</option>
-          <option value="industrial" selected>⚙️ Industrial - Raw, concrete, dramatic</option>
-          <option value="street">🎨 Street - Neon, graffiti, urban energy</option>
-        </select>
-      </section>
+
 
       <!-- Generate Button -->
-      <button id="generate-btn" class="btn-generate w-full" onclick="generateVisuals()">
-        <span id="btn-text">✨ Generate 4 AI Variations</span>
+      <button id="generate-btn" class="btn-generate w-full" onclick="generateCampaign()">
+        <span id="btn-text">✨ Generate 3-Piece Campaign</span>
         <span id="btn-loading" class="hidden">
           <svg class="animate-spin h-5 w-5 inline-block mr-2" fill="none" viewBox="0 0 24 24">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -134,17 +142,82 @@
               d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
             </path>
           </svg>
-          Generating with AI...
+          <span id="loading-stage">Planning campaign...</span>
         </span>
       </button>
 
     </div>
 
-    <!-- Results Grid (Masonry) -->
-    <section id="results-section" class="mt-16 hidden">
-      <h3 class="text-2xl font-playfair mb-6 text-center">Your AI-Generated Posts</h3>
-      <div id="results-grid" class="masonry-grid">
-        <!-- AI-generated images populate here -->
+    <!-- Campaign Results (3-Column Layout) -->
+    <section id="campaign-section" class="mt-16 hidden">
+      <h3 class="text-2xl font-playfair mb-6 text-center">Your Campaign</h3>
+
+      <div class="campaign-grid grid grid-cols-1 md:grid-cols-3 gap-6">
+
+        <!-- Column 1: Story (9:16 vertical) -->
+        <div class="campaign-column glassmorphism-card p-6">
+          <h4 class="text-sm font-medium text-gray-400 mb-3 uppercase tracking-wide">Instagram Story</h4>
+          <div class="aspect-[9/16] rounded-lg overflow-hidden bg-dark-card mb-4 ring-1 ring-white/10">
+            <img id="story-preview" alt="Story" class="w-full h-full object-cover" />
+          </div>
+          <button class="btn-download-small w-full" onclick="downloadAsset('story')">
+            <svg class="w-4 h-4 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            Download Story
+          </button>
+        </div>
+
+        <!-- Column 2: Feed (1:1 square) -->
+        <div class="campaign-column glassmorphism-card p-6">
+          <h4 class="text-sm font-medium text-gray-400 mb-3 uppercase tracking-wide">Feed Post</h4>
+          <div class="aspect-square rounded-lg overflow-hidden bg-dark-card mb-4 ring-1 ring-white/10">
+            <img id="feed-preview" alt="Feed" class="w-full h-full object-cover" />
+          </div>
+          <button class="btn-download-small w-full" onclick="downloadAsset('feed')">
+            <svg class="w-4 h-4 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            Download Feed
+          </button>
+        </div>
+
+        <!-- Column 3: Caption + Info Slide -->
+        <div class="campaign-column glassmorphism-card p-6">
+          <h4 class="text-sm font-medium text-gray-400 mb-3 uppercase tracking-wide">Caption & Hashtags</h4>
+          <div class="bg-dark-card rounded-lg p-4 mb-6 ring-1 ring-white/10">
+            <p id="caption-text" class="text-gray-300 text-sm leading-relaxed mb-3"></p>
+            <div id="hashtags-container" class="flex flex-wrap gap-2"></div>
+          </div>
+
+          <h4 class="text-sm font-medium text-gray-400 mb-3 uppercase tracking-wide">Info Slide</h4>
+          <div class="aspect-square rounded-lg overflow-hidden bg-dark-card mb-4 ring-1 ring-white/10">
+            <img id="info-preview" alt="Info" class="w-full h-full object-cover" />
+          </div>
+          <button class="btn-download-small w-full" onclick="downloadAsset('info')">
+            <svg class="w-4 h-4 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            Download Info
+          </button>
+        </div>
+
+      </div>
+
+      <!-- Download Complete Bundle -->
+      <div class="text-center mt-8">
+        <button
+          class="btn-primary px-8 py-3 rounded-lg bg-brand-orange hover:bg-brand-orange/90 transition-colors font-medium"
+          onclick="downloadBundle()">
+          <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+          </svg>
+          Download Complete Campaign Bundle
+        </button>
       </div>
     </section>
 

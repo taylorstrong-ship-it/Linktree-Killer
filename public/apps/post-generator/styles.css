@@ -89,7 +89,7 @@
   box-shadow: 0 0 30px rgba(var(--brand-rgb), 0.3);
 }
 
-. glassmorphism-select {
+.glassmorphism-select {
   background: var(--glass-bg);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
@@ -443,24 +443,61 @@
   .btn-lightbox-download,
   .btn-lightbox-schedule {
     width: 100%;
+    color: var(--text-primary);
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
     justify-content: center;
+    gap: 0.5rem;
   }
-}
 
-/* ===================================
+  .btn-download-small:hover {
+    background: var(--brand-color);
+    border-color: var(--brand-color);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(var(--brand-rgb), 0.3);
+  }
+
+  .btn-primary {
+    background: var(--brand-color);
+    color: white;
+    font-weight: 600;
+    padding: 0.875rem 2rem;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    box-shadow: 0 4px 16px rgba(var(--brand-rgb), 0.3);
+  }
+
+  .btn-primary:hover {
+    background: rgba(var(--brand-rgb), 0.9);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(var(--brand-rgb), 0.4);
+  }
+
+  /* ===================================
    UTILITY CLASSES
    =================================== */
-.hidden {
-  display: none !important;
-}
+  .hidden {
+    display: none !important;
+  }
 
-/* Smooth scroll behavior */
-html {
-  scroll-behavior: smooth;
-}
+  /* Smooth scroll behavior */
+  html {
+    scroll-behavior: smooth;
+  }
 
-/* Selection color */
-::selection {
-  background: rgba(var(--brand-rgb), 0.3);
-  color: white;
-}
+  /* Selection color */
+  ::selection {
+    background: rgba(var(--brand-rgb), 0.3);
+    color: white;
+  }
