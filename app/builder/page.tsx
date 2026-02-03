@@ -169,9 +169,19 @@ export default function BuilderPage() {
                             setUsername(rawData.username);
                         }
 
-                        // CRITICAL: Clear stale localStorage data after successful DB load
-                        console.log("🗑️ Clearing stale localStorage data...");
-                        localStorage.removeItem('taylored_brand_data');
+                        // STABILITY FIX H1: Only clear localStorage after DB confirmation
+                        // This prevents race conditions in multi-tab scenarios
+                        console.log("🗑️ Clearing stale localStorage data after DB confirmation...");
+                        const dbConfirmed = await supabase
+                            .from('profiles')
+                            .select('id')
+                            .eq('id', user.id)
+                            .single();
+
+                        if (dbConfirmed.data) {
+                            localStorage.removeItem('taylored_brand_data');
+                            console.log("✅ localStorage cleared after DB verification");
+                        }
 
                         setLoading(false);
                         return; // Successfully loaded from DB
@@ -201,12 +211,14 @@ export default function BuilderPage() {
                                 theme_color: parsed.brand_colors?.[0] || parsed.primary_color || prev.theme_color,
                                 accent_color: parsed.brand_colors?.[1] || parsed.accent_color || prev.accent_color,
 
-                                // Typography - Font detection
-                                font_style: parsed.fonts?.[0]?.toLowerCase().includes('serif')
-                                    ? 'elegant'
-                                    : parsed.fonts?.[0]?.toLowerCase().includes('mono')
-                                        ? 'brutal'
-                                        : 'modern',
+                                // Typography - Font detection (STABILITY FIX C2: Type guard for font objects)
+                                font_style: (() => {
+                                    const font = parsed.fonts?.[0];
+                                    const fontString = typeof font === 'string' ? font : (font?.family || '');
+                                    if (fontString.toLowerCase().includes('serif')) return 'elegant';
+                                    if (fontString.toLowerCase().includes('mono')) return 'brutal';
+                                    return 'modern';
+                                })(),
 
                                 // Social Links - Auto-populate from Brand DNA
                                 socials: {
@@ -260,11 +272,14 @@ export default function BuilderPage() {
                                 avatar_url: parsed.logo_url || parsed.avatar_url || prev.avatar_url,
                                 theme_color: parsed.brand_colors?.[0] || parsed.primary_color || prev.theme_color,
                                 accent_color: parsed.brand_colors?.[1] || parsed.accent_color || prev.accent_color,
-                                font_style: parsed.fonts?.[0]?.toLowerCase().includes('serif')
-                                    ? 'elegant'
-                                    : parsed.fonts?.[0]?.toLowerCase().includes('mono')
-                                        ? 'brutal'
-                                        : 'modern',
+                                // Typography - Font detection (STABILITY FIX C2: Type guard for font objects)
+                                font_style: (() => {
+                                    const font = parsed.fonts?.[0];
+                                    const fontString = typeof font === 'string' ? font : (font?.family || '');
+                                    if (fontString.toLowerCase().includes('serif')) return 'elegant';
+                                    if (fontString.toLowerCase().includes('mono')) return 'brutal';
+                                    return 'modern';
+                                })(),
                                 socials: {
                                     instagram: parsed.social_links?.find((s: any) => s.platform === 'instagram')?.url || '',
                                     tiktok: parsed.social_links?.find((s: any) => s.platform === 'tiktok')?.url || '',

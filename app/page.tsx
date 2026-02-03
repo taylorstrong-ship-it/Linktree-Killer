@@ -321,7 +321,10 @@ export default function Home() {
                                     </div>
                                     <h1 className="text-9xl font-serif text-[#FFAD7A] opacity-90">Aa</h1>
                                     <p className="mt-4 text-white/40 font-sans text-sm uppercase tracking-widest">
-                                        {brandData?.fonts?.[0] || 'Modern Sans'}
+                                        {(() => {
+                                            const font = brandData?.fonts?.[0];
+                                            return typeof font === 'string' ? font : (font?.family || 'Modern Sans');
+                                        })()}
                                     </p>
                                 </div>
 
@@ -331,17 +334,25 @@ export default function Home() {
                                         <Palette className="w-6 h-6" />
                                     </div>
                                     <div className="flex -space-x-4">
-                                        {(brandData?.brand_colors || ['#333', '#555', '#777']).slice(0, 3).map((color: string, i: number) => (
-                                            <div
-                                                key={i}
-                                                className="w-20 h-20 rounded-full border-4 border-[#1E1E1E] shadow-xl relative group cursor-pointer"
-                                                style={{ backgroundColor: color }}
-                                            >
-                                                <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-black text-white text-[10px] px-2 py-1 rounded font-mono">
-                                                    {color}
+                                        {(() => {
+                                            // STABILITY FIX C1: Type guard for brand_colors (prevents Font Bug-type errors)
+                                            const colors = Array.isArray(brandData?.brand_colors)
+                                                ? brandData.brand_colors.map((c: any) =>
+                                                    typeof c === 'string' ? c : (c?.hex || c?.value || '#333')
+                                                )
+                                                : ['#333', '#555', '#777'];
+                                            return colors.slice(0, 3).map((color: string, i: number) => (
+                                                <div
+                                                    key={i}
+                                                    className="w-20 h-20 rounded-full border-4 border-[#1E1E1E] shadow-xl relative group cursor-pointer"
+                                                    style={{ backgroundColor: color }}
+                                                >
+                                                    <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-black text-white text-[10px] px-2 py-1 rounded font-mono">
+                                                        {color}
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        ))}
+                                            ));
+                                        })()}
                                     </div>
                                     <p className="mt-8 text-white/40 font-sans text-sm uppercase tracking-widest">Color Physics</p>
                                 </div>
