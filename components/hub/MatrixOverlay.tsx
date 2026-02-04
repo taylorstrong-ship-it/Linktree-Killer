@@ -19,126 +19,25 @@ interface MatrixOverlayProps {
     onComplete: () => void;
     brandColor?: string;  // Dynamic color from DNA
     logoUrl?: string;     // Logo for watermark
-    realTimeData?: {      // Real DNA data to display
-        businessName?: string;
-        industry?: string;
-        vibe?: string;
-        instagram?: string;
-        facebook?: string;
-        bookingUrl?: string;
-    };
+    logs?: { text: string, color: string }[]; // External logs with colors
 }
 
-export default function MatrixOverlay({ isScanning, onComplete, brandColor, logoUrl, realTimeData }: MatrixOverlayProps) {
-    const [logs, setLogs] = useState<string[]>([]);
+export default function MatrixOverlay({ isScanning, onComplete, brandColor, logoUrl, logs: externalLogs }: MatrixOverlayProps) {
     const [terminalColor, setTerminalColor] = useState('#FF5F00'); // Hacker Orange
     const [showFlash, setShowFlash] = useState(false);
-    const [showLogo, setShowLogo] = useState(false);
 
     // Reset on scan start
     useEffect(() => {
         if (!isScanning) {
-            setLogs([]);
             setTerminalColor('#FF5F00'); // Reset to orange
             setShowFlash(false);
-            setShowLogo(false);
-            return;
         }
+    }, [isScanning]);
 
-        // Sequence Logic
-        let step = 0;
-        const maxSteps = 8; // Total messages to show
 
-        const interval = setInterval(() => {
-            let newMessage = "";
 
-            if (step === 0) {
-                newMessage = OPENER;
-            } else if (step < maxSteps - 1) {
-                // Pick random cook message
-                newMessage = COOK_PHASE[Math.floor(Math.random() * COOK_PHASE.length)];
-            } else {
-                newMessage = FINISHER;
-            }
-
-            if (step < maxSteps) {
-                setLogs(prev => [...prev, newMessage]);
-                step++;
-            } else {
-                clearInterval(interval);
-                setTimeout(onComplete, 800);
-            }
-        }, 600);
-
-        return () => clearInterval(interval);
-    }, [isScanning, onComplete]);
-
-    // Show real-time data as it arrives
-    useEffect(() => {
-        if (!realTimeData || !isScanning) return;
-
-        const dataLogs: string[] = [];
-
-        if (realTimeData.industry) {
-            dataLogs.push(`🎯 INDUSTRY DETECTED: ${realTimeData.industry.toUpperCase()}`);
-        }
-        if (realTimeData.businessName) {
-            dataLogs.push(`🏢 BUSINESS NAME: ${realTimeData.businessName.toUpperCase()}`);
-        }
-        if (realTimeData.instagram || realTimeData.facebook) {
-            const socials = [];
-            if (realTimeData.instagram) socials.push('INSTAGRAM');
-            if (realTimeData.facebook) socials.push('FACEBOOK');
-            dataLogs.push(`📱 SOCIALS FOUND: ${socials.join(' + ')}`);
-        }
-        if (realTimeData.bookingUrl) {
-            const platform = realTimeData.bookingUrl.includes('square') ? 'SQUARE UP' :
-                realTimeData.bookingUrl.includes('vagaro') ? 'VAGARO' :
-                    realTimeData.bookingUrl.includes('gloss') ? 'GLOSSGENIUS' : 'BOOKING PLATFORM';
-            dataLogs.push(`🔗 SECURED: ${platform}`);
-        }
-
-        // Add data logs with delays
-        // Add data logs with delays - SLOW DOWN for dramatic effect
-        dataLogs.forEach((log, index) => {
-            setTimeout(() => {
-                setLogs(prev => [...prev, log]);
-            }, index * 2000); // 2s per log - Let them read it!
-        });
-
-        // Trigger "YOINKING HEX CODES" and color morph
-        if (brandColor) {
-            // Wait for all data logs to finish + 1 second buffer
-            setTimeout(() => {
-                setLogs(prev => [...prev, '🎨 YOINKING THE HEX CODES...']);
-
-                // Flash effect
-                setTimeout(() => {
-                    setShowFlash(true);
-                    setTimeout(() => setShowFlash(false), 100);
-
-                    // Morph to brand color
-                    setTimeout(() => {
-                        setTerminalColor(brandColor);
-                        setShowLogo(true);
-                        setLogs(prev => [...prev, `>> DNA MATCH CONFIRMED: ${brandColor}`]);
-
-                        // Final vibe check
-                        const vibe = realTimeData?.vibe;
-                        if (vibe) {
-                            setTimeout(() => {
-                                setLogs(prev => [...prev, `✨ VIBE CHECK: ${vibe.toUpperCase()}`]);
-                                setTimeout(() => {
-                                    setLogs(prev => [...prev, '🚀 DEPLOYING BUILDER...']);
-                                    setTimeout(onComplete, 2000);
-                                }, 2000);
-                            }, 2000);
-                        }
-                    }, 150);
-                }, 300);
-            }, dataLogs.length * 2000 + 1000);
-        }
-    }, [realTimeData, brandColor, isScanning]);
+    // Use external logs or empty array
+    const displayLogs = externalLogs || [];
 
 
 
@@ -175,24 +74,7 @@ export default function MatrixOverlay({ isScanning, onComplete, brandColor, logo
                         transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
                     />
 
-                    {/* Logo Watermark - Synced with Color Morph */}
-                    {logoUrl && showLogo && (
-                        <motion.div
-                            initial={{ scale: 2, opacity: 0 }}
-                            animate={{ scale: 1, opacity: [0, 0.8, 0.15] }} // Flash to 80% then settle at 15%
-                            transition={{ duration: 1.5, times: [0, 0.4, 1] }} // Dramatic flash duration
-                            className="absolute inset-0 flex items-center justify-center pointer-events-none z-10"
-                        >
-                            <img
-                                src={logoUrl}
-                                alt="Brand Logo"
-                                className="max-w-md max-h-md"
-                                style={{
-                                    filter: `grayscale(100%) drop-shadow(0 0 20px ${terminalColor})`,
-                                }}
-                            />
-                        </motion.div>
-                    )}
+                    {/* Logo Watermark - Removed for new sequence */}
 
                     <div className="relative z-20 w-full max-w-2xl p-8">
                         <div
@@ -217,33 +99,33 @@ export default function MatrixOverlay({ isScanning, onComplete, brandColor, logo
                                     .scrollbar-none::-webkit-scrollbar { display: none; }
                                 `}</style>
 
-                                {logs.slice().reverse().map((log, i) => {
-                                    // Detect if this is a "Real Data" log (starts with specific emojis)
-                                    const isDataLog = ['🎯', '🏢', '📱', '🔗', '✨', '🎨'].some(emoji => log.includes(emoji));
-                                    const logColor = isDataLog ? '#00FF41' : terminalColor; // Matrix Green for data
+                                {displayLogs.slice().reverse().map((log, i) => {
+                                    // Determine color based on log color property
+                                    const logColor = log.color === 'green' ? '#00FF41' : '#FF5F00';
+                                    const isGreen = log.color === 'green';
 
                                     return (
                                         <motion.div
                                             key={i}
                                             initial={{ opacity: 0, x: -20 }}
                                             animate={{ opacity: 1, x: 0 }}
-                                            className="font-mono text-lg font-bold my-1"
+                                            className={`font-mono text-lg my-1 ${isGreen ? 'font-extrabold' : 'font-bold'}`}
                                             style={{
                                                 color: logColor,
-                                                textShadow: `0 0 ${isDataLog ? '8px' : '5px'} ${logColor}`
+                                                textShadow: `0 0 ${isGreen ? '10px' : '5px'} ${logColor}`
                                             }}
                                         >
                                             <span
                                                 className="mr-2"
                                                 style={{
-                                                    color: isDataLog ? '#00FF41' : `${terminalColor}60`,
+                                                    color: `${logColor}60`,
                                                     opacity: 0.7,
-                                                    textShadow: isDataLog ? '0 0 5px #00FF41' : `0 0 3px ${terminalColor}60`
+                                                    textShadow: `0 0 3px ${logColor}60`
                                                 }}
                                             >
                                                 [{new Date().toLocaleTimeString()}]
                                             </span>
-                                            {'>'} {log}
+                                            {log.text}
                                         </motion.div>
                                     );
                                 })}

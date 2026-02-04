@@ -40,6 +40,8 @@ export default function Home() {
     const [brandData, setBrandData] = useState<any>(null);
     const [error, setError] = useState<string | null>(null);
     const [showAuthModal, setShowAuthModal] = useState(false); // STABILITY PATCH: Login modal state
+    const [logs, setLogs] = useState<{ text: string, color: string }[]>([]); // Terminal logs with colors
+    const [scannedImage, setScannedImage] = useState<string | null>(null); // Final reveal image
 
     // Scroll listener for reveal effects could go here, but IntersectionObserver 
     // or framer-motion's whileInView is cleaner.
@@ -63,6 +65,24 @@ export default function Home() {
         setScanComplete(false);
         setError(null);
         setIsScanning(true);
+        setLogs([]); // Clear previous logs
+        setScannedImage(null); // Clear previous image
+
+        // 🎬 PHASE 1: SCANNING (ORANGE) - Playful "Let Him Cook" Vibes
+        const scanningLogs = [
+            '> Initializing Neural Handshake...',
+            '> Yoinking hex codes from the mainframe...',
+            '> Parsing Visual Hierarchy...',
+            '> Let him cook... 🔥'
+        ];
+
+        // Display scanning logs sequentially (FIX: Accumulate in local array)
+        const currentLogs: { text: string, color: string }[] = [];
+        for (let i = 0; i < scanningLogs.length; i++) {
+            await new Promise(resolve => setTimeout(resolve, 400));
+            currentLogs.push({ text: scanningLogs[i], color: 'orange' });
+            setLogs([...currentLogs]); // Direct state update, not callback
+        }
 
         try {
             console.log('📡 Calling Supabase Edge Function (Direct) - Bypassing Vercel timeout');
@@ -128,37 +148,97 @@ export default function Home() {
             localStorage.setItem('taylored_brand_data', JSON.stringify(transformedData));
             console.log('💾 Saved to localStorage:', transformedData);
 
+            // 🎬 PHASE 2: SUCCESS (GREEN) - FIX: Use direct array updates
+            const greenLogs: { text: string, color: string }[] = [];
+
+            // CRITICAL: First success log is TARGET ACQUIRED
+            await new Promise(resolve => setTimeout(resolve, 300));
+            greenLogs.push({ text: `> TARGET ACQUIRED: ${dna.company_name.toUpperCase()}`, color: 'green' });
+            setLogs([...greenLogs]);
+
+            // Wait for impact
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            // Then show the rest
+            const successMessages = [
+                `> INDUSTRY: ${dna.business_type}`,
+                `> SOCIAL SIGNALS: ${Object.keys(dna.social_links || {}).length} Channels`,
+                `> PALETTE: ${dna.primary_color}`
+            ];
+
+            for (let i = 0; i < successMessages.length; i++) {
+                await new Promise(resolve => setTimeout(resolve, 400));
+                greenLogs.push({ text: successMessages[i], color: 'green' });
+                setLogs([...greenLogs]);
+            }
+
+            // 🎬 PHASE 3: THE REVEAL
+            await new Promise(resolve => setTimeout(resolve, 800));
+            const revealImage = dna.og_image || dna.logo_url;
+            if (revealImage) {
+                setScannedImage(revealImage);
+                // Show image for 2.5 seconds
+                await new Promise(resolve => setTimeout(resolve, 2500));
+                setScannedImage(null); // Clear image
+            }
+
+            // 🎯 SHOW BRAND DASHBOARD (not redirect to /builder)
             setBrandData(transformedData);
+            setIsScanning(false);
+            setScanComplete(true);
+
         } catch (err: any) {
             console.error('⚠️ API Failed. Activating Simulation Mode...', err);
 
-            // SIMULATION CORE: Offline Mode Fallback
-            setTimeout(() => {
-                console.log('⚠️ API Blocked. Switching to Simulation Data.');
+            // 🎬 SIMULATION MODE: Show same sequence with mock data
+            const simulationData = {
+                username: 'neuralcoffee',
+                title: 'Neural Coffee Co.',
+                bio: 'Artisan coffee roasted by AI. Where machine learning meets morning rituals. ☕🤖',
+                theme_color: '#1a1a1a',
+                avatar_url: 'https://api.dicebear.com/7.x/shapes/svg?seed=neuralcoffee&backgroundColor=d4e79e',
+                fonts: ['Playfair Display', 'Inter'],
+                brand_colors: ['#1a1a1a', '#FFAD7A', '#8b7355', '#ffffff'],
+                social_links: [
+                    { platform: 'instagram' as const, url: 'https://instagram.com/neuralcoffee', label: 'Follow on Instagram' },
+                    { platform: 'tiktok' as const, url: 'https://tiktok.com/@neuralcoffee', label: 'TikTok' },
+                    { platform: 'generic' as const, url: 'https://neuralcoffee.com/menu', label: 'View Menu' }
+                ]
+            };
 
-                // INJECT COMPLETE MOCK DATA (STABILITY PATCH: Pre-sanitized strings)
-                const simulationData = {
-                    username: 'neuralcoffee',
-                    title: 'Neural Coffee Co.',
-                    bio: 'Artisan coffee roasted by AI. Where machine learning meets morning rituals. ☕🤖',
-                    theme_color: '#1a1a1a',
-                    avatar_url: 'https://api.dicebear.com/7.x/shapes/svg?seed=neuralcoffee&backgroundColor=d4e79e',
-                    fonts: ['Playfair Display', 'Inter'], // Already strings - no sanitization needed
-                    brand_colors: ['#1a1a1a', '#FFAD7A', '#8b7355', '#ffffff'], // Already strings
-                    social_links: [
-                        { platform: 'instagram' as const, url: 'https://instagram.com/neuralcoffee', label: 'Follow on Instagram' },
-                        { platform: 'tiktok' as const, url: 'https://tiktok.com/@neuralcoffee', label: 'TikTok' },
-                        { platform: 'generic' as const, url: 'https://neuralcoffee.com/menu', label: 'View Menu' }
-                    ]
-                };
+            // FIX: Use direct array updates for simulation mode too
+            const simLogs: { text: string, color: string }[] = [];
 
-                // Save simulation data to localStorage too
-                localStorage.setItem('taylored_brand_data', JSON.stringify(simulationData));
+            // CRITICAL: First success log is TARGET ACQUIRED
+            await new Promise(resolve => setTimeout(resolve, 300));
+            simLogs.push({ text: `> TARGET ACQUIRED: NEURAL COFFEE CO.`, color: 'green' });
+            setLogs([...simLogs]);
 
-                setBrandData(simulationData);
-                setIsScanning(false);
-                setError(null); // Clear error to show success
-            }, 3000); // 3s delay to simulate "Let Him Cook"
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            const successMessages = [
+                `> INDUSTRY: Coffee & AI`,
+                `> SOCIAL SIGNALS: 3 Channels`,
+                `> PALETTE: #1a1a1a`
+            ];
+
+            for (let i = 0; i < successMessages.length; i++) {
+                await new Promise(resolve => setTimeout(resolve, 400));
+                simLogs.push({ text: successMessages[i], color: 'green' });
+                setLogs([...simLogs]);
+            }
+
+            await new Promise(resolve => setTimeout(resolve, 800));
+            if (simulationData.avatar_url) {
+                setScannedImage(simulationData.avatar_url);
+                await new Promise(resolve => setTimeout(resolve, 2500));
+                setScannedImage(null); // Clear image
+            }
+
+            localStorage.setItem('taylored_brand_data', JSON.stringify(simulationData));
+            setBrandData(simulationData);
+            setIsScanning(false);
+            setScanComplete(true);
         }
     };
 
@@ -204,7 +284,48 @@ export default function Home() {
     return (
         <div className="min-h-screen lava-background text-white selection:bg-[#FFAD7A]/30 selection:text-[#FFAD7A] font-serif">
 
-            <MatrixOverlay isScanning={isScanning} onComplete={handleMatrixComplete} />
+            <MatrixOverlay isScanning={isScanning} onComplete={handleMatrixComplete} logs={logs} />
+
+            {/* 🎬 PHASE 3: IMAGE REVEAL OVERLAY */}
+            <AnimatePresence>
+                {scannedImage && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[60] bg-black flex flex-col items-center justify-center"
+                    >
+                        <motion.div
+                            initial={{ scale: 0.8, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            transition={{ duration: 0.5 }}
+                            className="relative"
+                        >
+                            <img
+                                src={scannedImage}
+                                alt="Brand Identity"
+                                className="max-w-md max-h-md rounded-lg border-4 border-green-500 shadow-[0_0_40px_rgba(0,255,65,0.6)]"
+                            />
+                        </motion.div>
+
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.3, duration: 0.5 }}
+                            className="mt-8 text-center"
+                        >
+                            <motion.p
+                                animate={{ opacity: [0.7, 1, 0.7] }}
+                                transition={{ duration: 1.5, repeat: Infinity }}
+                                className="text-green-500 font-mono text-2xl font-bold tracking-widest"
+                                style={{ textShadow: '0 0 10px rgba(0,255,65,0.8)' }}
+                            >
+                                IDENTITY CONFIRMED
+                            </motion.p>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             {/* STABILITY PATCH: Auth Modal for Direct Login */}
             {showAuthModal && (
@@ -262,7 +383,7 @@ export default function Home() {
                                 AI, <span className="italic text-[#FFAD7A]">Taylored</span> to Your Exact Vibe.
                             </h1>
                             <p className="text-xl text-white/40 font-sans font-light max-w-2xl mx-auto">
-                                Everyone's got access to <span className="text-[#FFAD7A] font-medium">AI</span>. What you need are <span className="text-[#FFAD7A] font-medium">Taylored AI</span> solutions that don't sound like generic <span className="text-[#FFAD7A] font-medium">AI</span> slop.
+                                Everyone's got access to <span className="text-[#FFAD7A] font-medium">AI</span>. What you need are <span className="text-[#FFAD7A] font-medium">Taylored AI Solutions</span> that don't sound like generic <span className="text-[#FFAD7A] font-medium">AI</span> slop.
                             </p>
 
 
