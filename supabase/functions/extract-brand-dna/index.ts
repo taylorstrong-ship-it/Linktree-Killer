@@ -170,14 +170,53 @@ Respond with ONLY a JSON object:
         console.log('🤖 AI Analysis:', aiAnalysis);
 
         // STEP 4: Construct Complete Brand DNA
+        // 🚑 HOTFIX: Smart Logo Selection with Fallback for Personal Brands
+        let finalLogo = branding.images?.logo || '';
+        const ogImage = branding.images?.ogImage || branding.images?.og_image || '';
+        const heroImage = branding.images?.heroImage || branding.images?.hero_image || '';
+
+        // 1. If logo is missing OR it looks like a generic favicon/globe icon...
+        if (!finalLogo ||
+            finalLogo.includes('favicon') ||
+            finalLogo.includes('site_icon') ||
+            finalLogo.includes('android-chrome') ||
+            finalLogo.includes('apple-touch-icon')) {
+
+            // 2. Try the Open Graph Image (High quality main photo)
+            if (ogImage) {
+                finalLogo = ogImage;
+                console.log('🎯 Using OG Image as logo:', ogImage);
+            }
+            // 3. Fallback to the Hero Image
+            else if (heroImage) {
+                finalLogo = heroImage;
+                console.log('🎯 Using Hero Image as logo:', heroImage);
+            }
+            // 4. Last resort: use favicon if available
+            else if (branding.images?.favicon) {
+                finalLogo = branding.images.favicon;
+                console.log('⚠️ Using favicon as fallback:', branding.images.favicon);
+            }
+        }
+
+        // 5. Ensure absolute URL (Handle relative paths like '/images/me.jpg')
+        if (finalLogo && !finalLogo.startsWith('http')) {
+            try {
+                finalLogo = new URL(finalLogo, url).toString();
+                console.log('🔗 Converted to absolute URL:', finalLogo);
+            } catch (e) {
+                console.error('⚠️ Failed to convert to absolute URL:', e);
+            }
+        }
+
         const brandDNA: BrandDNA = {
             // Core Identity
             company_name: branding.companyName || url.replace(/https?:\/\/(www\.)?/, '').split('/')[0],
             business_type: aiAnalysis.business_type || 'general',
             description: aiAnalysis.description || '',
 
-            // Visual Assets
-            logo_url: branding.images?.logo || branding.images?.favicon || '',
+            // Visual Assets (with smart fallback)
+            logo_url: finalLogo,
             favicon_url: branding.images?.favicon || '',
 
             // Colors (with fallbacks)
