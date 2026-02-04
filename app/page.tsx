@@ -27,6 +27,8 @@ import MatrixOverlay from '@/components/hub/MatrixOverlay';
 import BioLinkBuilder from '@/components/hub/BioLinkBuilder';
 import AdCampaignGenerator from '@/components/hub/AdCampaignGenerator';
 import BrandDashboard from '@/components/dashboard/BrandDashboard';
+import AuthModal from '@/components/AuthModal';
+import { safeFontString, safeColorString } from '@/lib/type-guards';
 
 // --- HYBRID DNA INTERFACE (STORY MODE) ---
 
@@ -37,6 +39,7 @@ export default function Home() {
     const [scanComplete, setScanComplete] = useState(false);
     const [brandData, setBrandData] = useState<any>(null);
     const [error, setError] = useState<string | null>(null);
+    const [showAuthModal, setShowAuthModal] = useState(false); // STABILITY PATCH: Login modal state
 
     // Scroll listener for reveal effects could go here, but IntersectionObserver 
     // or framer-motion's whileInView is cleaner.
@@ -92,17 +95,22 @@ export default function Home() {
             // Extract Brand DNA from response
             const dna = result.brandDNA;
 
+            // STABILITY PATCH: Sanitize fonts and colors before localStorage
             // Transform Brand DNA response to match Builder expectations
             const transformedData = {
                 username: dna.company_name.toLowerCase().replace(/\s+/g, ''),
                 title: dna.company_name,
                 bio: dna.description,
                 description: dna.description,
-                theme_color: dna.primary_color,
-                brand_colors: [dna.primary_color, dna.secondary_color, dna.accent_color],
-                // FIX: Extract font family strings from font objects
+                theme_color: safeColorString(dna.primary_color, '#3b82f6'),
+                brand_colors: [
+                    safeColorString(dna.primary_color, '#3b82f6'),
+                    safeColorString(dna.secondary_color, '#8b5cf6'),
+                    safeColorString(dna.accent_color, '#6366f1')
+                ],
+                // STABILITY FIX: Apply safeFontString to prevent [object Object] crashes
                 fonts: dna.fonts.length > 0
-                    ? dna.fonts.map((f: any) => typeof f === 'string' ? f : f.family || 'Inter')
+                    ? dna.fonts.map((f: any) => safeFontString(f, 'Inter'))
                     : ['Inter'],
                 avatar_url: dna.logo_url || dna.favicon_url || '',
                 // CRITICAL: Builder expects 'links', map from suggested_ctas
@@ -128,15 +136,15 @@ export default function Home() {
             setTimeout(() => {
                 console.log('⚠️ API Blocked. Switching to Simulation Data.');
 
-                // INJECT COMPLETE MOCK DATA
+                // INJECT COMPLETE MOCK DATA (STABILITY PATCH: Pre-sanitized strings)
                 const simulationData = {
                     username: 'neuralcoffee',
                     title: 'Neural Coffee Co.',
                     bio: 'Artisan coffee roasted by AI. Where machine learning meets morning rituals. ☕🤖',
                     theme_color: '#1a1a1a',
                     avatar_url: 'https://api.dicebear.com/7.x/shapes/svg?seed=neuralcoffee&backgroundColor=d4e79e',
-                    fonts: ['Playfair Display', 'Inter'],
-                    brand_colors: ['#1a1a1a', '#FFAD7A', '#8b7355', '#ffffff'],
+                    fonts: ['Playfair Display', 'Inter'], // Already strings - no sanitization needed
+                    brand_colors: ['#1a1a1a', '#FFAD7A', '#8b7355', '#ffffff'], // Already strings
                     social_links: [
                         { platform: 'instagram' as const, url: 'https://instagram.com/neuralcoffee', label: 'Follow on Instagram' },
                         { platform: 'tiktok' as const, url: 'https://tiktok.com/@neuralcoffee', label: 'TikTok' },
@@ -198,12 +206,47 @@ export default function Home() {
 
             <MatrixOverlay isScanning={isScanning} onComplete={handleMatrixComplete} />
 
+            {/* STABILITY PATCH: Auth Modal for Direct Login */}
+            {showAuthModal && (
+                <AuthModal
+                    onClose={() => setShowAuthModal(false)}
+                    onSuccess={(userId) => {
+                        console.log('✅ Login successful:', userId);
+                        setShowAuthModal(false);
+                        router.push('/builder');
+                    }}
+                    prefilledEmail=""
+                    initialMode="login"
+                />
+            )}
+
             {/* HEADER - Minimal */}
             <header className="fixed top-0 left-0 right-0 z-50 p-6 flex justify-between items-center mix-blend-difference text-white pointer-events-none">
                 <div className="flex items-center gap-2 pointer-events-auto">
                     <div className="w-8 h-8 bg-[#FFAD7A] rounded-lg flex items-center justify-center font-bold text-lg text-[#121212] shadow-lg shadow-[#FFAD7A]/20">T</div>
                     <span className="font-bold tracking-tight font-sans"><span className="text-[#FFAD7A]">Taylored AI Solutions</span> Hub</span>
                 </div>
+                {/* STABILITY PATCH: Ferrari-Aesthetic Login Button */}
+                <button
+                    onClick={() => setShowAuthModal(true)}
+                    className="pointer-events-auto group relative overflow-hidden
+                               px-4 py-2 rounded-lg
+                               bg-[#DC0000]/10 hover:bg-[#DC0000]/20
+                               border border-[#DC0000]/30 hover:border-[#DC0000]/60
+                               text-white font-sans font-medium text-sm
+                               transition-all duration-300
+                               shadow-lg shadow-[#DC0000]/10 hover:shadow-[#DC0000]/30"
+                >
+                    <span className="relative z-10 flex items-center gap-2">
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                        </svg>
+                        Login
+                    </span>
+                    {/* Ferrari red glow on hover */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-[#DC0000]/0 via-[#DC0000]/20 to-[#DC0000]/0 
+                                    translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
+                </button>
             </header>
 
             <main className="w-full">

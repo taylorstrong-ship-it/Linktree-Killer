@@ -8,10 +8,11 @@ interface AuthModalProps {
     onClose: () => void
     onSuccess: (userId: string) => void
     prefilledEmail?: string
+    initialMode?: 'login' | 'signup' // STABILITY PATCH: Support direct login access
 }
 
-export default function AuthModal({ onClose, onSuccess, prefilledEmail = '' }: AuthModalProps) {
-    const [mode, setMode] = useState<'login' | 'signup'>('signup')
+export default function AuthModal({ onClose, onSuccess, prefilledEmail = '', initialMode = 'signup' }: AuthModalProps) {
+    const [mode, setMode] = useState<'login' | 'signup'>(initialMode)
     const [email, setEmail] = useState(prefilledEmail)
     const [password, setPassword] = useState('')
     const [error, setError] = useState('')

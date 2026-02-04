@@ -174,12 +174,12 @@ export default function BrandDashboard({ brandData }: BrandDashboardProps) {
                                                     src={logoUrl}
                                                     alt={brandName}
                                                     className="w-20 h-20 rounded-full object-cover mb-4 ring-2"
-                                                    style={{ ringColor: primaryColor }}
+                                                    style={{ ['--tw-ring-color' as any]: primaryColor }}
                                                 />
                                             ) : (
                                                 <div
                                                     className="w-20 h-20 rounded-full mb-4 ring-2 flex items-center justify-center text-white font-bold text-2xl"
-                                                    style={{ backgroundColor: primaryColor, ringColor: primaryColor }}
+                                                    style={{ backgroundColor: primaryColor, ['--tw-ring-color' as any]: primaryColor }}
                                                 >
                                                     {brandName[0]}
                                                 </div>

@@ -81,6 +81,7 @@ interface ProfileData {
 export default function BuilderPage() {
     const [isAuthenticated, setIsAuthenticated] = useState(false) // Default to guest mode
     const [loading, setLoading] = useState(true)
+    const [authChecking, setAuthChecking] = useState(true) // STABILITY PATCH: Track auth check separately
     const [saving, setSaving] = useState(false)
     const [userId, setUserId] = useState<string | null>(null)
     const [username, setUsername] = useState('') // NEW: Claim URL State
@@ -120,24 +121,31 @@ export default function BuilderPage() {
         gallery_images: []
     })
 
-    // 🔌 DATABASE-FIRST LOADING WITH LINK SPLITTING
+    // 🔌 STABILITY PATCH: DUAL-MODE BUILDER LOGIC (THE GATEKEEPER)
+    // Priority: Session Check FIRST, then DB (Owner) or localStorage (Guest)
     useEffect(() => {
         async function initializeProfile() {
             try {
-                // Step 1: Check authentication
-                const { data: { user } } = await supabase.auth.getUser()
+                console.log('🔒 GATEKEEPER: Checking authentication...');
+                setAuthChecking(true);
 
-                if (user) {
-                    console.log("✅ User authenticated:", user.id);
-                    setIsAuthenticated(true)
-                    setUserId(user.id)
+                // STEP 1: Check Supabase session (NOT getUser - session is faster)
+                const { data: { session } } = await supabase.auth.getSession();
 
-                    // Step 2: Load from database
+                // STEP 2A: OWNER MODE - Session exists
+                if (session?.user) {
+                    const user = session.user;
+                    console.log("✅ OWNER MODE: User authenticated:", user.id);
+                    setIsAuthenticated(true);
+                    setUserId(user.id);
+                    setAuthChecking(false);
+
+                    // Fetch profile from Supabase (IGNORE localStorage)
                     const { data, error } = await supabase
                         .from('profiles')
                         .select('*')
                         .eq('id', user.id)
-                        .single()
+                        .single();
 
                     if (data && !error) {
                         console.log("📦 Loading profile from database...");
@@ -256,8 +264,10 @@ export default function BuilderPage() {
                     }
 
                 } else {
-                    // No authentication - Guest Mode
-                    console.log("⚠️ No authentication. Checking localStorage for guest data...");
+                    // STEP 2B: GUEST MODE - No session
+                    console.log("👤 GUEST MODE: No authentication. Checking localStorage...");
+                    setAuthChecking(false);
+
                     const savedData = localStorage.getItem('taylored_brand_data');
                     if (savedData) {
                         try {
@@ -308,10 +318,18 @@ export default function BuilderPage() {
                                 setUsername(generated);
                             }
 
-                            setIsAuthenticated(true) // Guest Mode
+                            setIsAuthenticated(true); // Enable Guest Mode UI
+                            console.log('✅ GUEST MODE: Loaded from localStorage');
                         } catch (e) {
-                            console.error("Data corruption", e);
+                            console.error("❌ Data corruption in localStorage:", e);
+                            // Redirect to home if data is corrupted
+                            window.location.href = '/';
                         }
+                    } else {
+                        // No localStorage data - redirect to home
+                        console.log('⚠️ GUEST MODE: No data found. Redirecting to home...');
+                        window.location.href = '/';
+                        return;
                     }
                 }
 
@@ -405,19 +423,25 @@ export default function BuilderPage() {
     async function handleLogout() {
         try {
             console.log('🚪 Logging out...');
-            // Clear all cached data
-            localStorage.clear();
+
+            // STABILITY PATCH: Clear localStorage BEFORE signOut to prevent zombie state
+            console.log('🧹 Clearing localStorage...');
+            localStorage.removeItem('taylored_brand_data');
+            localStorage.removeItem('taylored_guest_profile');
+
+            // Also clear all other cached data
             sessionStorage.clear();
 
             // Sign out from Supabase
             await supabase.auth.signOut();
+            console.log('✅ Logout complete');
 
-            // Force redirect to login (with full reload)
-            window.location.href = '/login';
+            // Force redirect to home (with full reload)
+            window.location.href = '/';
         } catch (error) {
             console.error('Logout error:', error);
-            // Force reload anyway
-            window.location.href = '/login';
+            // Force reload anyway to ensure clean state
+            window.location.href = '/';
         }
     }
 
@@ -614,12 +638,18 @@ export default function BuilderPage() {
         }
     }
 
-    if (loading) {
+    if (loading || authChecking) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-slate-950">
                 <div className="text-center">
-                    <i className="fas fa-spinner fa-spin text-4xl text-blue-500 mb-4"></i>
-                    <p className="text-gray-400">Loading studio...</p>
+                    {/* Ferrari Red Spinner */}
+                    <div className="relative w-16 h-16 mx-auto mb-6">
+                        <div className="absolute inset-0 border-4 border-[#DC0000]/20 rounded-full"></div>
+                        <div className="absolute inset-0 border-4 border-transparent border-t-[#DC0000] rounded-full animate-spin"></div>
+                    </div>
+                    <p className="text-gray-400 font-sans">
+                        {authChecking ? 'Verifying access...' : 'Loading studio...'}
+                    </p>
                 </div>
             </div>
         )
