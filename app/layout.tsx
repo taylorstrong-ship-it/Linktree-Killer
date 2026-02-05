@@ -10,7 +10,7 @@ export const metadata: Metadata = {
     applicationName: "Taylored AI Solutions",
     authors: [{ name: "Taylored AI Solutions" }],
     keywords: ["AI", "software", "high-performance", "link in bio", "indie hacker", "automation"],
-    metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"),
+    metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://www.tayloredsolutions.ai"),
     openGraph: {
         title: "Taylored AI Solutions | High-Performance AI Software",
         description: "High-performance AI software solutions built for indie hackers and modern teams.",
