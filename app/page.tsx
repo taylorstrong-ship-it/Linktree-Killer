@@ -409,9 +409,9 @@ export default function Home() {
 
             <main className="w-full">
                 <WorldContainer>
-                    {/* LEFT SECTION: CONTACT (x: -100vw) - Revealed when panning RIGHT */}
+                    {/* LEFT SECTION: ABOUT (x: 100vw in camera space) */}
                     <WorldSection className="lava-background">
-                        <ContactSection />
+                        <AboutSection />
                     </WorldSection>
 
                     {/* CENTER SECTION: HOME/SCANNER (x: 0) - Default view */}
@@ -427,7 +427,7 @@ export default function Home() {
                                         AI, <span className="italic text-[#FFAD7A]">Taylored</span> to Your Exact Vibe.
                                     </h1>
                                     <p className="text-base sm:text-lg md:text-xl text-white/40 font-sans font-light max-w-2xl mx-auto leading-relaxed px-6">
-                                        Everyone's got access to <span className="text-[#FFAD7A] font-medium">AI</span>. What you need are <span className="text-[#FFAD7A] font-medium">Taylored AI Solutions</span> that don't sound like generic <span className="text-[#FFAD7A] font-medium">AI</span> slop.
+                                        Everyone's got access to <span className="text-[#FFAD7A] font-medium">AI</span>. What you need are <span className="text-[#FFAD7A] font-medium">Taylored AI solutions</span>.
                                     </p>
 
 
@@ -594,9 +594,9 @@ export default function Home() {
                         }
                     </WorldSection>
 
-                    {/* RIGHT SECTION: ABOUT (x: 100vw) - Revealed when panning LEFT */}
+                    {/* RIGHT SECTION: CONTACT (x: -100vw in camera space) */}
                     <WorldSection className="lava-background">
-                        <AboutSection />
+                        <ContactSection />
                     </WorldSection>
                 </WorldContainer>
             </main >
