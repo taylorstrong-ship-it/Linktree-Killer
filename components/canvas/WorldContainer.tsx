@@ -42,7 +42,9 @@ export function WorldContainer({ children }: WorldContainerProps) {
             if (['home', 'about', 'contact'].includes(hash)) {
                 setViewState(hash);
             } else {
+                // Force redirect to #home if no valid hash
                 setViewState('home');
+                window.history.replaceState(null, '', '#home');
             }
         };
 
