@@ -32,8 +32,9 @@ import { MagicImporter } from '@/components/magic-importer'
 import type { ScrapedProfile } from '@/app/actions/magic-scrape'
 import PhonePreview from '@/components/PhonePreview'
 import AuthModal from '@/components/AuthModal'
-import { LinkEditor } from '@/components/builder/LinkEditor'
-import { Waves, Zap, Tornado, Flame, Check } from 'lucide-react'
+import { SortableLinksList } from '@/components/builder/SortableLinksList'
+import { Waves, Zap, Tornado, Flame, Check, Pencil, Eye } from 'lucide-react'
+import { AnimatePresence, motion } from 'framer-motion'
 
 interface Link {
     title: string
@@ -86,6 +87,7 @@ export default function BuilderPage() {
     const [userId, setUserId] = useState<string | null>(null)
     const [username, setUsername] = useState('') // NEW: Claim URL State
     const [showSuccessModal, setShowSuccessModal] = useState(false) // NEW: Success Modal State
+    const [viewMode, setViewMode] = useState<'editor' | 'preview'>('editor') // MOBILE: Toggle between editor and preview
     const [showAuthModal, setShowAuthModal] = useState(false) // NEW: Auth Modal for guests
     const [profile, setProfile] = useState<ProfileData>({
         title: '',
@@ -342,6 +344,19 @@ export default function BuilderPage() {
 
         initializeProfile();
     }, []);
+
+    // 📱 MOBILE: Orientation Detection - Auto-switch to desktop mode on landscape
+    useEffect(() => {
+        const handleResize = () => {
+            // Force desktop mode if width >= 768px (prevents mobile overlay in landscape)
+            if (window.innerWidth >= 768 && viewMode === 'preview') {
+                setViewMode('editor');
+            }
+        };
+
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, [viewMode]);
 
     async function saveProfile() {
         setSaving(true)
@@ -712,8 +727,8 @@ export default function BuilderPage() {
             <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@400;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
 
             <div className="flex h-screen bg-slate-950 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
-                {/* Sidebar - Dark Glassmorphism */}
-                <div className="w-[420px] bg-gray-900/60 backdrop-blur-xl border-r border-white/10 flex flex-col h-full shadow-2xl">
+                {/* Sidebar - Dark Glassmorphism - MOBILE: Conditionally visible based on viewMode */}
+                <div className={`w-full md:w-[420px] bg-gray-900/60 backdrop-blur-xl border-r border-white/10 flex flex-col h-full shadow-2xl ${viewMode === 'editor' ? 'block' : 'hidden'} md:block`}>
                     {/* Header */}
                     <div className="p-6 pb-3 border-b border-white/10">
                         <div className="flex justify-between items-center mb-4">
@@ -1498,7 +1513,7 @@ export default function BuilderPage() {
                                 <i className="fa-solid fa-chevron-down text-xs"></i>
                             </summary>
                             <div className="pl-1 mt-3">
-                                <LinkEditor
+                                <SortableLinksList
                                     links={profile.links}
                                     onChange={(newLinks) => setProfile(prev => ({ ...prev, links: newLinks }))}
                                 />
@@ -1528,8 +1543,8 @@ export default function BuilderPage() {
                     </div>
                 </div>
 
-                {/* Preview Area - Scaled Mobile Preview */}
-                <div className="flex-1 flex flex-col items-center justify-center relative p-8 bg-slate-950">
+                {/* Preview Area - Scaled Mobile Preview - DESKTOP ONLY */}
+                <div className="hidden md:flex flex-1 flex-col items-center justify-center relative p-8 bg-slate-950">
                     {/* Preview Label */}
                     <div className="flex items-center gap-2 text-gray-400 text-sm mb-6">
                         <i className="fa-solid fa-mobile-screen-button"></i>
@@ -1577,6 +1592,111 @@ export default function BuilderPage() {
                         <p className="text-sm text-gray-400 font-medium">
                             Built by <span className="text-blue-400 font-bold">Taylored AI Solutions</span>
                         </p>
+                    </div>
+                </div>
+
+                {/* 📱 MOBILE PREVIEW OVERLAY - Full screen slide-up animation (GPU Accelerated) */}
+                <AnimatePresence>
+                    {viewMode === 'preview' && (
+                        <motion.div
+                            initial={{ y: '100%', opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            exit={{ y: '100%', opacity: 0 }}
+                            transition={{ type: "spring", damping: 25, stiffness: 200 }}
+                            style={{ willChange: 'transform, opacity' }}
+                            className="fixed inset-0 z-50 bg-slate-950 md:hidden flex flex-col items-center justify-center p-8"
+                        >
+                            {/* Preview Label */}
+                            <div className="flex items-center gap-2 text-gray-400 text-sm mb-6">
+                                <i className="fa-solid fa-mobile-screen-button"></i>
+                                <span>Live Preview</span>
+                            </div>
+
+                            {/* Scaled Mobile Container - Portrait Mode */}
+                            <div className="relative" style={{
+                                width: '380px',
+                                height: '760px',
+                                transform: 'scale(0.75)',
+                                transformOrigin: 'top center'
+                            }}>
+                                {/* iPhone Frame with thick border and shadow */}
+                                <div className="w-full h-full bg-black rounded-[60px] p-[14px] shadow-2xl shadow-black/40">
+                                    <div className="w-full h-full bg-white rounded-[46px] overflow-hidden relative">
+                                        <PhonePreview
+                                            title={profile.title}
+                                            description={profile.description}
+                                            avatar_url={profile.avatar_url}
+                                            background_image={profile.background_image}
+                                            background_type={profile.background_type}
+                                            video_background_url={profile.video_background_url}
+                                            font_style={profile.font_style}
+                                            theme_color={profile.theme_color}
+                                            accent_color={profile.accent_color}
+                                            animation_speed={profile.animation_speed}
+                                            animation_type={profile.animation_type}
+                                            texture_overlay={profile.texture_overlay}
+                                            enable_spotlight={profile.enable_spotlight}
+                                            lead_gen_enabled={profile.lead_gen_enabled}
+                                            newsletter_active={profile.newsletter_active}
+                                            newsletter_heading={profile.newsletter_heading}
+                                            profile_id={userId || ''}
+                                            links={profile.links}
+                                            social_spotlight_url={profile.social_spotlight_url}
+                                            showcase={profile.showcase}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
+                {/* 📱 MOBILE BOTTOM NAVIGATION - Glassmorphism Toggle Bar with Liquid Animation */}
+                <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden backdrop-blur-md bg-black/80 border-t border-white/10 px-6 py-4 safe-area-inset-bottom">
+                    <div className="relative flex items-center gap-4 max-w-md mx-auto">
+                        {/* Liquid Background Indicator */}
+                        <motion.div
+                            layout
+                            layoutId="activeTab"
+                            className="absolute inset-0 bg-[#DC0000] rounded-xl shadow-lg shadow-[#DC0000]/30"
+                            style={{
+                                left: viewMode === 'editor' ? '0%' : '50%',
+                                width: '50%',
+                                paddingLeft: viewMode === 'editor' ? '0' : '0.5rem',
+                                paddingRight: viewMode === 'preview' ? '0' : '0.5rem'
+                            }}
+                            transition={{
+                                type: "spring",
+                                damping: 30,
+                                stiffness: 300
+                            }}
+                        />
+
+                        {/* Edit Tab */}
+                        <motion.button
+                            whileTap={{ scale: 0.98 }}
+                            onClick={() => setViewMode('editor')}
+                            className={`relative flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-semibold transition-colors z-10 ${viewMode === 'editor'
+                                ? 'text-white'
+                                : 'text-gray-400'
+                                }`}
+                        >
+                            <Pencil className="w-5 h-5" />
+                            <span>Edit</span>
+                        </motion.button>
+
+                        {/* Preview Tab */}
+                        <motion.button
+                            whileTap={{ scale: 0.98 }}
+                            onClick={() => setViewMode('preview')}
+                            className={`relative flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-semibold transition-colors z-10 ${viewMode === 'preview'
+                                ? 'text-white'
+                                : 'text-gray-400'
+                                }`}
+                        >
+                            <Eye className="w-5 h-5" />
+                            <span>Preview</span>
+                        </motion.button>
                     </div>
                 </div>
             </div>

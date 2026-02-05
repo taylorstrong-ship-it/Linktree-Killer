@@ -16,49 +16,62 @@ async function loadBrandDNA() {
             console.log('✓ Brand DNA loaded:', currentBrandDNA.company_name || 'Guest');
 
             // 🧬 HYDRATE THE UI - Show Brand Context Card
-            const header = document.getElementById('brand-header');
+            const card = document.getElementById('brand-dna-card');
             const logo = document.getElementById('brand-logo');
             const name = document.getElementById('brand-name');
+            const industry = document.getElementById('brand-industry');
             const personalityContainer = document.getElementById('brand-personality');
-            const dnaMeter = document.getElementById('dna-meter');
+            const dnaMeterFill = document.getElementById('dna-meter-fill');
             const dnaScore = document.getElementById('dna-score');
+            const swatchPrimary = document.getElementById('swatch-primary');
+            const swatchSecondary = document.getElementById('swatch-secondary');
 
-            if (header && logo && name) {
-                header.classList.remove('hidden');
+            if (card && logo && name) {
+                // Show card with Ferrari Glass reveal animation
+                card.classList.remove('hidden');
                 logo.src = currentBrandDNA.logo_url || currentBrandDNA.og_image || currentBrandDNA.hero_image ||
                     'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="96" height="96"%3E%3Crect fill="%23FF6B35" width="96" height="96"/%3E%3C/svg%3E';
-                name.textContent = currentBrandDNA.company_name || 'Your Brand';
+                // 🏢 Brand Name (safeString to prevent crashes)
+                name.textContent = safeString(currentBrandDNA.company_name, 'Your Brand');
+
+                // 🏭 Industry Tag (optional)
+                if (industry && currentBrandDNA.industry) {
+                    industry.textContent = safeString(currentBrandDNA.industry);
+                    industry.style.display = 'block';
+                } else if (industry) {
+                    industry.style.display = 'none';
+                }
 
                 // 🎨 Dynamic CSS Variable Injection (Ferrari Theming)
                 if (currentBrandDNA.primary_color && currentBrandDNA.secondary_color) {
                     const root = document.documentElement;
-                    root.style.setProperty('--dna-primary', currentBrandDNA.primary_color);
-                    root.style.setProperty('--dna-secondary', currentBrandDNA.secondary_color);
+                    const primary = safeColor(currentBrandDNA.primary_color);
+                    const secondary = safeColor(currentBrandDNA.secondary_color);
 
-                    const primaryRgb = hexToRgb(currentBrandDNA.primary_color);
-                    const secondaryRgb = hexToRgb(currentBrandDNA.secondary_color);
+                    root.style.setProperty('--dna-primary', primary);
+                    root.style.setProperty('--dna-secondary', secondary);
+
+                    const primaryRgb = hexToRgb(primary);
+                    const secondaryRgb = hexToRgb(secondary);
                     root.style.setProperty('--dna-primary-rgb', `${primaryRgb.r}, ${primaryRgb.g}, ${primaryRgb.b}`);
                     root.style.setProperty('--dna-secondary-rgb', `${secondaryRgb.r}, ${secondaryRgb.g}, ${secondaryRgb.b}`);
+
+                    // 🎨 Apply colors to swatches
+                    if (swatchPrimary) swatchPrimary.style.background = primary;
+                    if (swatchSecondary) swatchSecondary.style.background = secondary;
                 }
 
-                // 🏅 Personality Badges
+                // 🏅 Personality Badges (Max 3 - Ferrari Design)
                 if (personalityContainer && currentBrandDNA.brand_personality) {
-                    const personalities = Array.isArray(currentBrandDNA.brand_personality)
-                        ? currentBrandDNA.brand_personality
-                        : currentBrandDNA.brand_personality.split(',').map(p => p.trim());
+                    const personalities = safeArray(currentBrandDNA.brand_personality);
 
                     personalityContainer.innerHTML = personalities.slice(0, 3).map(trait => `
-                        <span class="px-3 py-1 text-xs font-medium rounded-full
-                                     bg-brand-primary/10 text-brand-primary
-                                     border border-brand-primary/30
-                                     animate-fade-in">
-                            ${trait}
-                        </span>
+                        <span>${safeString(trait)}</span>
                     `).join('');
                 }
 
                 // 📊 DNA Confidence Meter (calculate based on data completeness)
-                if (dnaMeter && dnaScore) {
+                if (dnaMeterFill && dnaScore) {
                     let completeness = 0;
                     if (currentBrandDNA.company_name) completeness += 20;
                     if (currentBrandDNA.logo_url || currentBrandDNA.og_image) completeness += 25;
@@ -66,11 +79,11 @@ async function loadBrandDNA() {
                     if (currentBrandDNA.secondary_color) completeness += 15;
                     if (currentBrandDNA.brand_personality) completeness += 20;
 
-                    // Animate meter
+                    // Animate meter (delayed for cinematic reveal)
                     setTimeout(() => {
-                        dnaMeter.style.width = `${completeness}%`;
-                        dnaScore.textContent = `${completeness}% Match`;
-                    }, 300);
+                        dnaMeterFill.style.width = `${completeness}%`;
+                        dnaScore.textContent = `DNA Strength: ${completeness}%`;
+                    }, 600);
                 }
             }
         } else {
@@ -488,5 +501,34 @@ document.addEventListener('keydown', (e) => {
         generateVisuals();
     }
 });
+
+// 🛡️ SAFE STRING UTILITIES (Prevent "Font Bug" Crash)
+// Purpose: Safely convert Brand DNA API fields to strings before rendering
+// Prevents React-style "Objects are not valid as a React child" crashes
+
+function safeString(value, fallback = '') {
+    if (value === null || value === undefined) return fallback;
+    if (typeof value === 'string') return value.trim();
+    if (Array.isArray(value)) return value.map(item => safeString(item, '')).filter(Boolean).join(', ');
+    if (typeof value === 'object') {
+        console.warn('⚠️ safeString: Received object, converting to JSON:', value);
+        return JSON.stringify(value);
+    }
+    return String(value);
+}
+
+function safeArray(value) {
+    if (!value) return [];
+    if (Array.isArray(value)) return value.map(item => safeString(item, '')).filter(Boolean);
+    if (typeof value === 'string') return value.split(',').map(item => item.trim()).filter(Boolean);
+    return [safeString(value, '')];
+}
+
+function safeColor(color, fallback = '#FF6B35') {
+    if (!color || typeof color !== 'string') return fallback;
+    const hex = color.startsWith('#') ? color : `#${color}`;
+    const validHex = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
+    return validHex.test(hex) ? hex : fallback;
+}
 
 console.log('PostGenerator 3.0 loaded ✓');

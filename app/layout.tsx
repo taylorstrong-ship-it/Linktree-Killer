@@ -20,7 +20,7 @@ export default function RootLayout({
                 />
                 <link
                     rel="stylesheet"
-                    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Caveat:wght@400;700&display=swap"
+                    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Caveat:wght@400;700&family=Permanent+Marker&display=swap"
                 />
             </head>
             <body className="font-sans antialiased">

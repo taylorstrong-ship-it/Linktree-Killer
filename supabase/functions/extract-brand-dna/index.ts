@@ -169,7 +169,7 @@ Respond with ONLY a JSON object:
 
         console.log('🤖 AI Analysis:', aiAnalysis);
 
-        // STEP 4: Enhanced Image Extraction with Multi-Tier Fallback
+        // STEP 4: Enhanced Image Extraction with Multi-Tier Fallback + Hero Hunter
         // Helper function to extract images from markdown
         const extractImagesFromMarkdown = (markdown: string): Array<{ url: string, score: number }> => {
             const imageRegex = /!\[.*?\]\((https?:\/\/[^\s)]+)\)/g;
@@ -203,6 +203,97 @@ Respond with ONLY a JSON object:
             return images.sort((a, b) => b.score - a.score);
         };
 
+        // 🎯 HERO HUNTER: Brute-force HTML image extraction
+        const heroHunter = async (targetUrl: string): Promise<string> => {
+            console.log('🎯 HERO HUNTER ACTIVATED - Scanning HTML for images...');
+
+            try {
+                // Fetch raw HTML
+                const htmlResponse = await fetch(targetUrl);
+                const html = await htmlResponse.text();
+                console.log(`  📄 HTML fetched: ${html.length} characters`);
+
+                const foundImages: Array<{ url: string, source: string }> = [];
+
+                // TIER 1: Scan for large <img> tags (width/height > 300)
+                const imgRegex = /<img[^>]*src=["']([^"']+)["'][^>]*>/gi;
+                let imgMatch;
+                let imgCount = 0;
+
+                while ((imgMatch = imgRegex.exec(html)) !== null) {
+                    imgCount++;
+                    const imgTag = imgMatch[0];
+                    const imgSrc = imgMatch[1];
+
+                    // Extract width/height if present
+                    const widthMatch = imgTag.match(/width=["']?(\d+)["']?/i);
+                    const heightMatch = imgTag.match(/height=["']?(\d+)["']?/i);
+
+                    const width = widthMatch ? parseInt(widthMatch[1]) : 0;
+                    const height = heightMatch ? parseInt(heightMatch[1]) : 0;
+
+                    console.log(`  🖼️ Found img tag #${imgCount}: src="${imgSrc.substring(0, 60)}..." width=${width} height=${height}`);
+
+                    // If image is large enough, add to candidates
+                    if (width > 300 || height > 300) {
+                        foundImages.push({ url: imgSrc, source: `img-tag (${width}x${height})` });
+                        console.log(`    ✅ QUALIFIED: Large image (${width}x${height})`);
+                    } else if (width === 0 && height === 0) {
+                        // No dimensions specified - assume it's large (common for hero images)
+                        foundImages.push({ url: imgSrc, source: 'img-tag (no-dimensions)' });
+                        console.log(`    ⚠️ QUALIFIED: No dimensions specified, assuming hero image`);
+                    } else {
+                        console.log(`    ❌ REJECTED: Too small (${width}x${height})`);
+                    }
+                }
+
+                console.log(`  📊 Total img tags found: ${imgCount}, Qualified: ${foundImages.length}`);
+
+                // TIER 2: Scan for background-image styles on body/main divs
+                const bgRegex = /style=["'][^"']*background-image:\s*url\(["']?([^"')]+)["']?\)/gi;
+                let bgMatch;
+                let bgCount = 0;
+
+                while ((bgMatch = bgRegex.exec(html)) !== null) {
+                    bgCount++;
+                    const bgUrl = bgMatch[1];
+                    console.log(`  🎨 Found background-image #${bgCount}: url="${bgUrl.substring(0, 60)}..."`);
+                    foundImages.push({ url: bgUrl, source: 'background-image' });
+                    console.log(`    ✅ QUALIFIED: Background image`);
+                }
+
+                console.log(`  📊 Total background-images found: ${bgCount}`);
+
+                // If we found candidates, pick the first one
+                if (foundImages.length > 0) {
+                    const selectedImage = foundImages[0];
+                    console.log(`  🏆 HERO HUNTER SUCCESS: Selected "${selectedImage.url.substring(0, 60)}..." from ${selectedImage.source}`);
+
+                    // Convert to absolute URL
+                    let absoluteUrl = selectedImage.url;
+                    if (!absoluteUrl.startsWith('http')) {
+                        absoluteUrl = new URL(absoluteUrl, targetUrl).toString();
+                        console.log(`    🔗 Converted to absolute URL: ${absoluteUrl}`);
+                    }
+
+                    // Validate URL
+                    if (!absoluteUrl.startsWith('http')) {
+                        console.log(`    ❌ INVALID: URL doesn't start with http - discarding`);
+                        return '';
+                    }
+
+                    return absoluteUrl;
+                } else {
+                    console.log('  ❌ HERO HUNTER FAILED: No images found');
+                    return '';
+                }
+
+            } catch (error) {
+                console.error('  ❌ HERO HUNTER ERROR:', error);
+                return '';
+            }
+        };
+
         // Construct Complete Brand DNA with Enhanced Image Selection
         // 🚑 HOTFIX: Multi-Tier Brand Image Extraction
         let finalLogo = branding.images?.logo || '';
@@ -214,9 +305,9 @@ Respond with ONLY a JSON object:
         const heroImage = branding.images?.heroImage || branding.images?.hero_image || '';
 
         console.log('📊 Image Extraction Sources:');
-        console.log('  - Branding Logo:', finalLogo || 'none');
-        console.log('  - OG Image:', ogImage || 'none');
-        console.log('  - Hero Image:', heroImage || 'none');
+        console.log('  - Branding Logo:', finalLogo || 'null');
+        console.log('  - OG Image:', ogImage || 'null');
+        console.log('  - Hero Image:', heroImage || 'null');
 
         // TIER 1: If logo is missing OR it looks like a generic favicon...
         if (!finalLogo ||
@@ -251,7 +342,20 @@ Respond with ONLY a JSON object:
                     console.log('⚠️ No suitable images found in markdown');
                 }
             }
-            // TIER 5: Last resort - use favicon if available
+
+            // TIER 5: 🎯 HERO HUNTER - Brute-force HTML parsing
+            if (!finalLogo) {
+                console.log('🔍 ACTIVATING HERO HUNTER (TIER 5)...');
+                const heroUrl = await heroHunter(url);
+                if (heroUrl) {
+                    finalLogo = heroUrl;
+                    console.log('🎯 HERO HUNTER SUCCESS - Using extracted hero image:', heroUrl);
+                } else {
+                    console.log('⚠️ HERO HUNTER FAILED - No images found in HTML');
+                }
+            }
+
+            // TIER 6: Last resort - use favicon if available
             if (!finalLogo && branding.images?.favicon) {
                 finalLogo = branding.images.favicon;
                 console.log('⚠️ Using favicon as absolute last resort:', branding.images.favicon);
@@ -268,6 +372,12 @@ Respond with ONLY a JSON object:
             } catch (e) {
                 console.error('⚠️ Failed to convert to absolute URL:', e);
             }
+        }
+
+        // Final validation - discard if URL doesn't start with http
+        if (finalLogo && !finalLogo.startsWith('http')) {
+            console.error('❌ FINAL VALIDATION FAILED: URL does not start with http - discarding:', finalLogo);
+            finalLogo = '';
         }
 
         console.log('🏆 Final Logo Selected:', finalLogo || 'NONE - Image extraction failed completely');
