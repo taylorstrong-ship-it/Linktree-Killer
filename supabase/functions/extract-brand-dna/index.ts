@@ -91,11 +91,11 @@ serve(async (req) => {
 
         console.log(`🔥 Extracting Brand DNA from: ${url}`);
 
-        // STEP 1: Extract using Firecrawl's native branding + links formats
+        // STEP 1: Extract using Firecrawl's native branding + links + markdown formats
         const firecrawl = new FirecrawlApp({ apiKey: firecrawlKey });
 
         const scrapeResult = await firecrawl.scrapeUrl(url, {
-            formats: ['branding', 'links', 'markdown'],
+            formats: ['branding', 'links', 'markdown'], // Added markdown for image extraction fallback
             onlyMainContent: false,
             waitFor: 2000, // Wait for JS to load
         }) as any;
@@ -169,37 +169,98 @@ Respond with ONLY a JSON object:
 
         console.log('🤖 AI Analysis:', aiAnalysis);
 
-        // STEP 4: Construct Complete Brand DNA
-        // 🚑 HOTFIX: Smart Logo Selection with Fallback for Personal Brands
+        // STEP 4: Enhanced Image Extraction with Multi-Tier Fallback
+        // Helper function to extract images from markdown
+        const extractImagesFromMarkdown = (markdown: string): Array<{ url: string, score: number }> => {
+            const imageRegex = /!\[.*?\]\((https?:\/\/[^\s)]+)\)/g;
+            const images: Array<{ url: string, score: number }> = [];
+            let match;
+
+            while ((match = imageRegex.exec(markdown)) !== null) {
+                const imageUrl = match[1];
+
+                // Score images based on characteristics
+                let score = 0;
+
+                // Larger images get higher scores (look for width/height in URL)
+                if (imageUrl.includes('w_768') || imageUrl.includes('w_854') || imageUrl.includes('w_800')) score += 3;
+                if (imageUrl.includes('w_1366') || imageUrl.includes('w_1200')) score += 5;
+
+                // Avoid tiny images
+                if (imageUrl.includes('w_50') || imageUrl.includes('h_50')) score -= 10;
+                if (imageUrl.includes('w_100') || imageUrl.includes('h_100')) score -= 5;
+
+                // Prefer images from static CDNs (likely brand assets)
+                if (imageUrl.includes('wixstatic.com') || imageUrl.includes('cloudinary') || imageUrl.includes('cdn')) score += 2;
+
+                // Avoid tracking pixels and analytics
+                if (imageUrl.includes('tracking') || imageUrl.includes('pixel') || imageUrl.includes('analytics')) score -= 20;
+
+                images.push({ url: imageUrl, score });
+            }
+
+            // Sort by score descending
+            return images.sort((a, b) => b.score - a.score);
+        };
+
+        // Construct Complete Brand DNA with Enhanced Image Selection
+        // 🚑 HOTFIX: Multi-Tier Brand Image Extraction
         let finalLogo = branding.images?.logo || '';
-        const ogImage = branding.images?.ogImage || branding.images?.og_image || '';
+        const ogImage = branding.images?.ogImage ||
+            branding.images?.og_image ||
+            scrapeResult?.metadata?.ogImage ||
+            scrapeResult?.metadata?.['og:image'] ||
+            scrapeResult?.metadata?.['twitter:image'] || '';
         const heroImage = branding.images?.heroImage || branding.images?.hero_image || '';
 
-        // 1. If logo is missing OR it looks like a generic favicon/globe icon...
+        console.log('📊 Image Extraction Sources:');
+        console.log('  - Branding Logo:', finalLogo || 'none');
+        console.log('  - OG Image:', ogImage || 'none');
+        console.log('  - Hero Image:', heroImage || 'none');
+
+        // TIER 1: If logo is missing OR it looks like a generic favicon...
         if (!finalLogo ||
             finalLogo.includes('favicon') ||
             finalLogo.includes('site_icon') ||
             finalLogo.includes('android-chrome') ||
-            finalLogo.includes('apple-touch-icon')) {
+            finalLogo.includes('apple-touch-icon') ||
+            finalLogo.includes('pfavico.ico')) {
 
-            // 2. Try the Open Graph Image (High quality main photo)
+            console.log('⚠️ Logo missing or generic favicon detected');
+
+            // TIER 2: Try the Open Graph Image (High quality main photo)
             if (ogImage) {
                 finalLogo = ogImage;
                 console.log('🎯 Using OG Image as logo:', ogImage);
             }
-            // 3. Fallback to the Hero Image
+            // TIER 3: Try the Hero Image
             else if (heroImage) {
                 finalLogo = heroImage;
                 console.log('🎯 Using Hero Image as logo:', heroImage);
             }
-            // 4. Last resort: use favicon if available
-            else if (branding.images?.favicon) {
-                finalLogo = branding.images.favicon;
-                console.log('⚠️ Using favicon as fallback:', branding.images.favicon);
+            // TIER 4: Extract largest image from markdown content
+            else if (markdown) {
+                console.log('🔍 Scanning markdown for prominent images...');
+                const markdownImages = extractImagesFromMarkdown(markdown);
+
+                if (markdownImages.length > 0) {
+                    finalLogo = markdownImages[0].url;
+                    console.log(`🎯 Using largest markdown image as logo (score: ${markdownImages[0].score}):`, finalLogo);
+                    console.log(`  📸 Found ${markdownImages.length} total images in markdown`);
+                } else {
+                    console.log('⚠️ No suitable images found in markdown');
+                }
             }
+            // TIER 5: Last resort - use favicon if available
+            if (!finalLogo && branding.images?.favicon) {
+                finalLogo = branding.images.favicon;
+                console.log('⚠️ Using favicon as absolute last resort:', branding.images.favicon);
+            }
+        } else {
+            console.log('✅ Valid logo found:', finalLogo);
         }
 
-        // 5. Ensure absolute URL (Handle relative paths like '/images/me.jpg')
+        // Ensure absolute URL (Handle relative paths like '/images/me.jpg')
         if (finalLogo && !finalLogo.startsWith('http')) {
             try {
                 finalLogo = new URL(finalLogo, url).toString();
@@ -209,13 +270,15 @@ Respond with ONLY a JSON object:
             }
         }
 
+        console.log('🏆 Final Logo Selected:', finalLogo || 'NONE - Image extraction failed completely');
+
         const brandDNA: BrandDNA = {
             // Core Identity
             company_name: branding.companyName || url.replace(/https?:\/\/(www\.)?/, '').split('/')[0],
             business_type: aiAnalysis.business_type || 'general',
             description: aiAnalysis.description || '',
 
-            // Visual Assets (with smart fallback)
+            // Visual Assets (with multi-tier fallback)
             logo_url: finalLogo,
             favicon_url: branding.images?.favicon || '',
 
