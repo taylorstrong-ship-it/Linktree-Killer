@@ -129,3 +129,41 @@ details[open]>summary i.fa-chevron-down {
         padding-bottom: env(safe-area-inset-bottom);
     }
 }
+
+/* Mobile Typography Optimization */
+@media (max-width: 640px) {
+
+    /* Prevent text overflow */
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        hyphens: auto;
+    }
+
+    /* Optimize line height for mobile readability */
+    body {
+        line-height: 1.6;
+    }
+
+    /* Ensure safe padding on iPhone notch */
+    .min-h-screen {
+        padding-top: env(safe-area-inset-top);
+    }
+
+    /* Improve form input readability */
+    input::placeholder {
+        font-size: 14px;
+    }
+}
+
+/* Tablet breakpoint - fluid typography */
+@media (min-width: 640px) and (max-width: 1024px) {
+    h1 {
+        font-size: clamp(2.5rem, 5vw, 4rem);
+    }
+}

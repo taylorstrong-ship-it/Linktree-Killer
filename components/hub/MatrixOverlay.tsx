@@ -23,13 +23,13 @@ interface MatrixOverlayProps {
 }
 
 export default function MatrixOverlay({ isScanning, onComplete, brandColor, logoUrl, logs: externalLogs }: MatrixOverlayProps) {
-    const [terminalColor, setTerminalColor] = useState('#FF5F00'); // Hacker Orange
+    const [terminalColor, setTerminalColor] = useState('#FF6B35'); // Brand Orange
     const [showFlash, setShowFlash] = useState(false);
 
     // Reset on scan start
     useEffect(() => {
         if (!isScanning) {
-            setTerminalColor('#FF5F00'); // Reset to orange
+            setTerminalColor('#FF6B35'); // Reset to Brand Orange
             setShowFlash(false);
         }
     }, [isScanning]);
@@ -101,8 +101,9 @@ export default function MatrixOverlay({ isScanning, onComplete, brandColor, logo
 
                                 {displayLogs.slice().reverse().map((log, i) => {
                                     // Determine color based on log color property
-                                    const logColor = log.color === 'green' ? '#00FF41' : '#FF5F00';
+                                    const logColor = log.color === 'green' ? '#00FF41' : '#FF6B35'; // Brand Orange
                                     const isGreen = log.color === 'green';
+                                    const isLastLog = i === 0; // Last log gets the cursor
 
                                     return (
                                         <motion.div
@@ -126,6 +127,16 @@ export default function MatrixOverlay({ isScanning, onComplete, brandColor, logo
                                                 [{new Date().toLocaleTimeString()}]
                                             </span>
                                             {log.text}
+                                            {isLastLog && (
+                                                <motion.span
+                                                    animate={{ opacity: [1, 0] }}
+                                                    transition={{ duration: 0.8, repeat: Infinity, repeatType: 'reverse' }}
+                                                    className="ml-1"
+                                                    style={{ color: logColor }}
+                                                >
+                                                    █
+                                                </motion.span>
+                                            )}
                                         </motion.div>
                                     );
                                 })}

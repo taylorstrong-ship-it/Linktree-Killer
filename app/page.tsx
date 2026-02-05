@@ -63,26 +63,45 @@ export default function Home() {
 
         setBrandData(null);
         setScanComplete(false);
-        setError(null);
         setIsScanning(true);
+        setScanComplete(false);
         setLogs([]); // Clear previous logs
         setScannedImage(null); // Clear previous image
 
-        // 🎬 PHASE 1: SCANNING (ORANGE) - Playful "Let Him Cook" Vibes
-        const scanningLogs = [
-            '> Initializing Neural Handshake...',
-            '> Yoinking hex codes from the mainframe...',
-            '> Parsing Visual Hierarchy...',
-            '> Let him cook... 🔥'
+        // 🎬 VIBE HEIST SCRIPT - Loop in Brand Orange
+        const vibeHeistScript = [
+            '🔰 Taylored AI Solutions Protocol initiated...',
+            '🏎️ Going 0-100 FAST...',
+            '🕵️♂️ Yoinking hex codes from the mainframe...',
+            '🧬 Stealing Brand DNA (don\'t tell anyone)...',
+            '🎨 Extracting the vibe...',
+            '🍳 Let him cook...'
         ];
 
-        // Display scanning logs sequentially (FIX: Accumulate in local array)
-        const currentLogs: { text: string, color: string }[] = [];
-        for (let i = 0; i < scanningLogs.length; i++) {
-            await new Promise(resolve => setTimeout(resolve, 400));
-            currentLogs.push({ text: scanningLogs[i], color: 'orange' });
-            setLogs([...currentLogs]); // Direct state update, not callback
-        }
+        // Start with first message
+        const currentLogs: { text: string, color: string }[] = [
+            { text: vibeHeistScript[0], color: 'orange' }
+        ];
+        setLogs([...currentLogs]);
+
+        let messageIndex = 1;
+        let loopInterval: NodeJS.Timeout | null = null;
+
+        // Start looping through messages every 600ms
+        loopInterval = setInterval(() => {
+            if (messageIndex < vibeHeistScript.length) {
+                currentLogs.push({ text: vibeHeistScript[messageIndex], color: 'orange' });
+            } else {
+                // Loop back to start (skip first message since it's the protocol init)
+                messageIndex = 1;
+                currentLogs.push({ text: vibeHeistScript[messageIndex], color: 'orange' });
+            }
+            messageIndex++;
+
+            // Keep only last 5 messages for scrolling effect
+            const visibleLogs = currentLogs.slice(-5);
+            setLogs([...visibleLogs]);
+        }, 600);
 
         try {
             console.log('📡 Calling Supabase Edge Function (Direct) - Bypassing Vercel timeout');
@@ -110,6 +129,11 @@ export default function Home() {
 
             if (!result.success) {
                 throw new Error(result.error || 'Brand DNA extraction failed');
+            }
+
+            // Stop the loop!
+            if (loopInterval) {
+                clearInterval(loopInterval);
             }
 
             // Extract Brand DNA from response
@@ -148,47 +172,56 @@ export default function Home() {
             localStorage.setItem('taylored_brand_data', JSON.stringify(transformedData));
             console.log('💾 Saved to localStorage:', transformedData);
 
-            // 🎬 PHASE 2: SUCCESS (GREEN) - FIX: Use direct array updates
+            // 🎯 INJECT REAL DATA IN SUCCESS GREEN
             const greenLogs: { text: string, color: string }[] = [];
 
-            // CRITICAL: First success log is TARGET ACQUIRED
             await new Promise(resolve => setTimeout(resolve, 300));
-            greenLogs.push({ text: `> TARGET ACQUIRED: ${dna.company_name.toUpperCase()}`, color: 'green' });
+            greenLogs.push({ text: `> TARGET_ACQUIRED: ${dna.company_name.toUpperCase()}`, color: 'green' });
             setLogs([...greenLogs]);
 
-            // Wait for impact
-            await new Promise(resolve => setTimeout(resolve, 500));
+            await new Promise(resolve => setTimeout(resolve, 400));
+            greenLogs.push({ text: `> INDUSTRY_MATCH: ${dna.business_type}`, color: 'green' });
+            setLogs([...greenLogs]);
 
-            // Then show the rest
-            const successMessages = [
-                `> INDUSTRY: ${dna.business_type}`,
-                `> SOCIAL SIGNALS: ${Object.keys(dna.social_links || {}).length} Channels`,
-                `> PALETTE: ${dna.primary_color}`
-            ];
+            await new Promise(resolve => setTimeout(resolve, 400));
+            greenLogs.push({
+                text: `> DNA_EXTRACTED: ${dna.brand_colors?.length || transformedData.brand_colors.length} colors found`,
+                color: 'green'
+            });
+            setLogs([...greenLogs]);
 
-            for (let i = 0; i < successMessages.length; i++) {
-                await new Promise(resolve => setTimeout(resolve, 400));
-                greenLogs.push({ text: successMessages[i], color: 'green' });
-                setLogs([...greenLogs]);
-            }
+            await new Promise(resolve => setTimeout(resolve, 400));
+            const ctaTitles = transformedData.links.slice(0, 3).map((l: any) => l.title).join(', ');
+            greenLogs.push({
+                text: `> CTAS_DETECTED: ${transformedData.links.length} (${ctaTitles})`,
+                color: 'green'
+            });
+            setLogs([...greenLogs]);
 
-            // 🎬 PHASE 3: THE REVEAL
+            // 🎬 PHASE 3: THE REVEAL (Optional)
             await new Promise(resolve => setTimeout(resolve, 800));
             const revealImage = dna.og_image || dna.logo_url;
             if (revealImage) {
                 setScannedImage(revealImage);
-                // Show image for 2.5 seconds
                 await new Promise(resolve => setTimeout(resolve, 2500));
-                setScannedImage(null); // Clear image
+                setScannedImage(null);
             }
 
-            // 🎯 SHOW BRAND DASHBOARD (not redirect to /builder)
+            // Pause 1.5s to let user see the captured data
+            await new Promise(resolve => setTimeout(resolve, 1500));
+
+            // 🎯 SHOW BRAND DASHBOARD
             setBrandData(transformedData);
             setIsScanning(false);
             setScanComplete(true);
 
         } catch (err: any) {
             console.error('⚠️ API Failed. Activating Simulation Mode...', err);
+
+            // Stop the loop if it's still running
+            if (loopInterval) {
+                clearInterval(loopInterval);
+            }
 
             // 🎬 SIMULATION MODE: Show same sequence with mock data
             const simulationData = {
@@ -199,41 +232,41 @@ export default function Home() {
                 avatar_url: 'https://api.dicebear.com/7.x/shapes/svg?seed=neuralcoffee&backgroundColor=d4e79e',
                 fonts: ['Playfair Display', 'Inter'],
                 brand_colors: ['#1a1a1a', '#FFAD7A', '#8b7355', '#ffffff'],
-                social_links: [
-                    { platform: 'instagram' as const, url: 'https://instagram.com/neuralcoffee', label: 'Follow on Instagram' },
-                    { platform: 'tiktok' as const, url: 'https://tiktok.com/@neuralcoffee', label: 'TikTok' },
-                    { platform: 'generic' as const, url: 'https://neuralcoffee.com/menu', label: 'View Menu' }
+                links: [
+                    { title: 'Menu', url: 'https://neuralcoffee.com/menu' },
+                    { title: 'Order Online', url: 'https://neuralcoffee.com/order' },
+                    { title: 'Follow Us', url: 'https://instagram.com/neuralcoffee' }
                 ]
             };
 
-            // FIX: Use direct array updates for simulation mode too
+            // Inject mock data in Success Green
             const simLogs: { text: string, color: string }[] = [];
 
-            // CRITICAL: First success log is TARGET ACQUIRED
             await new Promise(resolve => setTimeout(resolve, 300));
-            simLogs.push({ text: `> TARGET ACQUIRED: NEURAL COFFEE CO.`, color: 'green' });
+            simLogs.push({ text: `> TARGET_ACQUIRED: NEURAL COFFEE CO.`, color: 'green' });
             setLogs([...simLogs]);
 
-            await new Promise(resolve => setTimeout(resolve, 500));
+            await new Promise(resolve => setTimeout(resolve, 400));
+            simLogs.push({ text: `> INDUSTRY_MATCH: Coffee & AI`, color: 'green' });
+            setLogs([...simLogs]);
 
-            const successMessages = [
-                `> INDUSTRY: Coffee & AI`,
-                `> SOCIAL SIGNALS: 3 Channels`,
-                `> PALETTE: #1a1a1a`
-            ];
+            await new Promise(resolve => setTimeout(resolve, 400));
+            simLogs.push({ text: `> DNA_EXTRACTED: 4 colors found`, color: 'green' });
+            setLogs([...simLogs]);
 
-            for (let i = 0; i < successMessages.length; i++) {
-                await new Promise(resolve => setTimeout(resolve, 400));
-                simLogs.push({ text: successMessages[i], color: 'green' });
-                setLogs([...simLogs]);
-            }
+            await new Promise(resolve => setTimeout(resolve, 400));
+            simLogs.push({ text: `> CTAS_DETECTED: 3 (Menu, Order Online, Follow Us)`, color: 'green' });
+            setLogs([...simLogs]);
 
             await new Promise(resolve => setTimeout(resolve, 800));
             if (simulationData.avatar_url) {
                 setScannedImage(simulationData.avatar_url);
                 await new Promise(resolve => setTimeout(resolve, 2500));
-                setScannedImage(null); // Clear image
+                setScannedImage(null);
             }
+
+            // Pause to let user see the data
+            await new Promise(resolve => setTimeout(resolve, 1500));
 
             localStorage.setItem('taylored_brand_data', JSON.stringify(simulationData));
             setBrandData(simulationData);
@@ -374,20 +407,20 @@ export default function Home() {
 
                 {/* HERO: INPUT MODE */}
                 {!scanComplete ? (
-                    <div className="min-h-screen flex flex-col items-center justify-center px-6 relative overflow-hidden">
+                    <div className="min-h-screen flex flex-col items-center justify-center px-4 sm:px-6 relative overflow-hidden">
                         {/* Ambient Background */}
                         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-purple-900/10 rounded-full blur-[120px] pointer-events-none" />
 
-                        <div className="relative z-10 text-center space-y-8 max-w-4xl">
-                            <h1 className="text-6xl md:text-8xl font-serif italic tracking-tight text-white/90">
+                        <div className="relative z-10 text-center space-y-6 sm:space-y-8 max-w-4xl w-full">
+                            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-8xl font-serif italic tracking-tight text-white/90 leading-tight px-4">
                                 AI, <span className="italic text-[#FFAD7A]">Taylored</span> to Your Exact Vibe.
                             </h1>
-                            <p className="text-xl text-white/40 font-sans font-light max-w-2xl mx-auto">
+                            <p className="text-base sm:text-lg md:text-xl text-white/40 font-sans font-light max-w-2xl mx-auto leading-relaxed px-6">
                                 Everyone's got access to <span className="text-[#FFAD7A] font-medium">AI</span>. What you need are <span className="text-[#FFAD7A] font-medium">Taylored AI Solutions</span> that don't sound like generic <span className="text-[#FFAD7A] font-medium">AI</span> slop.
                             </p>
 
 
-                            <div className="relative w-full max-w-xl mx-auto mt-12">
+                            <div className="relative w-full max-w-xl mx-auto mt-8 sm:mt-12 px-4">
                                 {/* EXISTING FORM */}
                                 <form onSubmit={handleScan} className="w-full relative group">
                                     <div className="absolute inset-0 bg-[#FFAD7A] rounded-2xl blur-xl opacity-30 group-hover:opacity-60 transition-opacity duration-500" />
@@ -404,16 +437,16 @@ export default function Home() {
                                         <button
                                             type="submit"
                                             disabled={isScanning}
-                                            className="bg-[#FFAD7A] text-[#121212] hover:bg-[#FFAD7A] font-sans font-bold py-3 px-8 rounded-xl transition-all disabled:opacity-50 flex items-center gap-2 shadow-[0_0_20px_rgba(0,255,65,0.5)] hover:shadow-[0_0_30px_rgba(0,255,65,0.8)]"
+                                            className="bg-[#FFAD7A] text-[#121212] hover:bg-[#FFAD7A] font-sans font-bold py-3 px-4 sm:px-8 rounded-xl transition-all disabled:opacity-50 flex items-center gap-2 shadow-[0_0_20px_rgba(0,255,65,0.5)] hover:shadow-[0_0_30px_rgba(0,255,65,0.8)] text-sm sm:text-base whitespace-nowrap"
                                         >
-                                            {isScanning ? 'Stitching...' : 'Stitch My Vibe'}
+                                            {isScanning ? 'Stitching...' : (<><span className="hidden sm:inline">Stitch My Vibe</span><span className="sm:hidden">Stitch Vibe</span></>)}
                                         </button>
                                     </div>
                                 </form>
 
 
                                 {/* 🖍️ FAT NEON ARROW (Centered BELOW the Input) */}
-                                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-8 pointer-events-none z-10">
+                                <div className="hidden sm:flex absolute top-full left-1/2 -translate-x-1/2 mt-8 pointer-events-none z-10">
                                     <div className="flex flex-col items-center">
 
                                         {/* 1. The Arrow (Pointing UP towards the box) */}
