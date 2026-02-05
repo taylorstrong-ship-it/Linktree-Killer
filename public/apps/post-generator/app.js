@@ -15,30 +15,69 @@ async function loadBrandDNA() {
             currentBrandDNA = JSON.parse(localData);
             console.log('✓ Brand DNA loaded:', currentBrandDNA.company_name || 'Guest');
 
-            // 🧬 HYDRATE THE UI - Show Brand Context Bar
+            // 🧬 HYDRATE THE UI - Show Brand Context Card
             const header = document.getElementById('brand-header');
             const logo = document.getElementById('brand-logo');
             const name = document.getElementById('brand-name');
+            const personalityContainer = document.getElementById('brand-personality');
+            const dnaMeter = document.getElementById('dna-meter');
+            const dnaScore = document.getElementById('dna-score');
 
             if (header && logo && name) {
                 header.classList.remove('hidden');
-                logo.src = currentBrandDNA.logo_url || 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48"><rect fill="%23FF6B35" width="48" height="48"/></svg>';
+                logo.src = currentBrandDNA.logo_url || currentBrandDNA.og_image || currentBrandDNA.hero_image ||
+                    'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="96" height="96"%3E%3Crect fill="%23FF6B35" width="96" height="96"/%3E%3C/svg%3E';
                 name.textContent = currentBrandDNA.company_name || 'Your Brand';
 
-                // 🎨 Dynamic Theming - Apply brand color to borders
-                if (currentBrandDNA.primary_color) {
-                    document.documentElement.style.setProperty('--brand-color', currentBrandDNA.primary_color);
-                    logo.style.borderColor = currentBrandDNA.primary_color;
+                // 🎨 Dynamic CSS Variable Injection (Ferrari Theming)
+                if (currentBrandDNA.primary_color && currentBrandDNA.secondary_color) {
+                    const root = document.documentElement;
+                    root.style.setProperty('--dna-primary', currentBrandDNA.primary_color);
+                    root.style.setProperty('--dna-secondary', currentBrandDNA.secondary_color);
 
-                    const rgb = hexToRgb(currentBrandDNA.primary_color);
-                    document.documentElement.style.setProperty('--brand-rgb', `${rgb.r}, ${rgb.g}, ${rgb.b}`);
+                    const primaryRgb = hexToRgb(currentBrandDNA.primary_color);
+                    const secondaryRgb = hexToRgb(currentBrandDNA.secondary_color);
+                    root.style.setProperty('--dna-primary-rgb', `${primaryRgb.r}, ${primaryRgb.g}, ${primaryRgb.b}`);
+                    root.style.setProperty('--dna-secondary-rgb', `${secondaryRgb.r}, ${secondaryRgb.g}, ${secondaryRgb.b}`);
+                }
+
+                // 🏅 Personality Badges
+                if (personalityContainer && currentBrandDNA.brand_personality) {
+                    const personalities = Array.isArray(currentBrandDNA.brand_personality)
+                        ? currentBrandDNA.brand_personality
+                        : currentBrandDNA.brand_personality.split(',').map(p => p.trim());
+
+                    personalityContainer.innerHTML = personalities.slice(0, 3).map(trait => `
+                        <span class="px-3 py-1 text-xs font-medium rounded-full
+                                     bg-brand-primary/10 text-brand-primary
+                                     border border-brand-primary/30
+                                     animate-fade-in">
+                            ${trait}
+                        </span>
+                    `).join('');
+                }
+
+                // 📊 DNA Confidence Meter (calculate based on data completeness)
+                if (dnaMeter && dnaScore) {
+                    let completeness = 0;
+                    if (currentBrandDNA.company_name) completeness += 20;
+                    if (currentBrandDNA.logo_url || currentBrandDNA.og_image) completeness += 25;
+                    if (currentBrandDNA.primary_color) completeness += 20;
+                    if (currentBrandDNA.secondary_color) completeness += 15;
+                    if (currentBrandDNA.brand_personality) completeness += 20;
+
+                    // Animate meter
+                    setTimeout(() => {
+                        dnaMeter.style.width = `${completeness}%`;
+                        dnaScore.textContent = `${completeness}% Match`;
+                    }, 300);
                 }
             }
         } else {
             console.warn('⚠ No Brand DNA in localStorage. Using defaults.');
             // Use default Taylored Orange
-            document.documentElement.style.setProperty('--brand-color', '#FF6B35');
-            document.documentElement.style.setProperty('--brand-rgb', '255, 107, 53');
+            document.documentElement.style.setProperty('--dna-primary', '#FF6B35');
+            document.documentElement.style.setProperty('--dna-primary-rgb', '255, 107, 53');
         }
 
         // 🎯 URL PARAMETER LISTENER - Campaign handoff from Brand Dashboard
