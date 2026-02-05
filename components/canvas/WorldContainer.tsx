@@ -165,91 +165,69 @@ export function WorldContainer({ children }: WorldContainerProps) {
     );
 }
 
-// Navigation HUD Component
+// Navigation HUD Component - Simplified Left/Right Arrows
 interface WorldNavigationProps {
     viewState: ViewState;
     onNavigate: (target: ViewState) => void;
 }
 
 function WorldNavigation({ viewState, onNavigate }: WorldNavigationProps) {
+    // Carousel navigation: About ← HOME → Contact
+    const handleLeftClick = () => {
+        if (viewState === 'home') {
+            onNavigate('about');
+        } else if (viewState === 'contact') {
+            onNavigate('home');
+        }
+        // From 'about': do nothing (already at left boundary)
+    };
+
+    const handleRightClick = () => {
+        if (viewState === 'home') {
+            onNavigate('contact');
+        } else if (viewState === 'about') {
+            onNavigate('home');
+        }
+        // From 'contact': do nothing (already at right boundary)
+    };
+
+    // Show left arrow for HOME and Contact
+    const showLeftArrow = viewState === 'home' || viewState === 'contact';
+    // Show right arrow for HOME and About
+    const showRightArrow = viewState === 'home' || viewState === 'about';
+
     return (
         <>
-            {/* LEFT: WHO WE ARE (hidden on About) */}
-            {viewState !== 'about' && (
+            {/* LEFT ARROW */}
+            {showLeftArrow && (
                 <button
-                    onClick={() => onNavigate('about')}
-                    className="fixed left-4 bottom-8 z-50 flex items-center gap-2 px-4 py-3
+                    onClick={handleLeftClick}
+                    className="fixed left-4 bottom-8 z-50 p-4
                      bg-white/5 backdrop-blur-sm border border-white/10 rounded-full
-                     hover:bg-white/10 transition-all"
+                     hover:bg-white/10 transition-all
+                     active:scale-95"
+                    aria-label="Navigate left"
                 >
-                    <svg width="24" height="24" viewBox="0 0 100 100" className="text-[#FF6B35]">
-                        <path d="M 80 50 L 20 50" stroke="currentColor" strokeWidth="6" strokeLinecap="round" />
-                        <path d="M 35 35 L 20 50 L 35 65" stroke="currentColor" strokeWidth="6" strokeLinecap="round" fill="none" />
-                    </svg>
-                    <span
-                        className="text-sm font-bold"
-                        style={{
-                            fontFamily: "'Permanent Marker', cursive",
-                            color: '#FF6B35',
-                            textShadow: '0 0 10px #FF6B35'
-                        }}
-                    >
-                        WHO WE ARE
-                    </span>
-                </button>
-            )}
-
-            {/* RIGHT: GET IN TOUCH (hidden on Contact) */}
-            {viewState !== 'contact' && (
-                <button
-                    onClick={() => onNavigate('contact')}
-                    className="fixed right-4 bottom-8 z-50 flex items-center gap-2 px-4 py-3
-                     bg-white/5 backdrop-blur-sm border border-white/10 rounded-full
-                     hover:bg-white/10 transition-all"
-                >
-                    <span
-                        className="text-sm font-bold"
-                        style={{
-                            fontFamily: "'Permanent Marker', cursive",
-                            color: '#FF6B35',
-                            textShadow: '0 0 10px #FF6B35'
-                        }}
-                    >
-                        GET IN TOUCH
-                    </span>
-                    <svg width="24" height="24" viewBox="0 0 100 100" className="text-[#FF6B35]">
-                        <path d="M 20 50 L 80 50" stroke="currentColor" strokeWidth="6" strokeLinecap="round" />
-                        <path d="M 65 35 L 80 50 L 65 65" stroke="currentColor" strokeWidth="6" strokeLinecap="round" fill="none" />
+                    <svg width="32" height="32" viewBox="0 0 100 100" className="text-[#FF6B35]">
+                        <path d="M 70 20 L 30 50 L 70 80" stroke="currentColor" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" fill="none" />
                     </svg>
                 </button>
             )}
 
-            {/* BACK HOME (visible on About & Contact) */}
-            {viewState !== 'home' && (
-                <motion.button
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    onClick={() => onNavigate('home')}
-                    className="fixed top-24 left-1/2 -translate-x-1/2 z-50
-                     flex items-center gap-3 px-6 py-3
+            {/* RIGHT ARROW */}
+            {showRightArrow && (
+                <button
+                    onClick={handleRightClick}
+                    className="fixed right-4 bottom-8 z-50 p-4
                      bg-white/5 backdrop-blur-sm border border-white/10 rounded-full
-                     hover:bg-white/10 transition-all"
+                     hover:bg-white/10 transition-all
+                     active:scale-95"
+                    aria-label="Navigate right"
                 >
-                    <svg width="24" height="24" viewBox="0 0 100 100" className="text-[#FF6B35]">
-                        <path d="M 70 50 L 30 50" stroke="currentColor" strokeWidth="8" strokeLinecap="round" />
-                        <path d="M 45 35 L 30 50 L 45 65" stroke="currentColor" strokeWidth="8" strokeLinecap="round" fill="none" />
+                    <svg width="32" height="32" viewBox="0 0 100 100" className="text-[#FF6B35]">
+                        <path d="M 30 20 L 70 50 L 30 80" stroke="currentColor" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" fill="none" />
                     </svg>
-                    <span
-                        className="text-lg font-bold"
-                        style={{
-                            fontFamily: "'Permanent Marker', cursive",
-                            color: '#FF6B35',
-                            textShadow: '0 0 10px #FF6B35'
-                        }}
-                    >
-                        HOME
-                    </span>
-                </motion.button>
+                </button>
             )}
         </>
     );

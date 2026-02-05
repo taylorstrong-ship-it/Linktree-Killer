@@ -448,9 +448,15 @@ export default function Home() {
                                                 <button
                                                     type="submit"
                                                     disabled={isScanning}
-                                                    className="bg-[#FFAD7A] text-[#121212] hover:bg-[#FFAD7A] font-sans font-bold py-3 px-6 sm:px-8 rounded-xl transition-all disabled:opacity-50 flex items-center gap-2 shadow-[0_0_20px_rgba(0,255,65,0.5)] hover:shadow-[0_0_30px_rgba(0,255,65,0.8)] text-sm sm:text-base whitespace-nowrap"
+                                                    className="bg-[#FFAD7A] text-[#121212] hover:bg-[#FFAD7A] font-sans font-bold 
+                                                     py-2 px-3 sm:py-3 sm:px-8 
+                                                     rounded-xl transition-all disabled:opacity-50 
+                                                     flex items-center gap-2 
+                                                     shadow-[0_0_20px_rgba(0,255,65,0.5)] hover:shadow-[0_0_30px_rgba(0,255,65,0.8)] 
+                                                     text-xs sm:text-base 
+                                                     whitespace-nowrap shrink-0"
                                                 >
-                                                    {isScanning ? 'Stitching...' : (<><span className="hidden sm:inline">Stitch My Vibe</span><span className="sm:hidden">Stitch Vibe</span></>)}
+                                                    {isScanning ? 'Stitching...' : (<><span className="hidden sm:inline">Stitch My Vibe</span><span className="sm:hidden">Stitch</span></>)}
                                                 </button>
                                             </div>
                                         </form>
