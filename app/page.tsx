@@ -29,10 +29,6 @@ import AdCampaignGenerator from '@/components/hub/AdCampaignGenerator';
 import BrandDashboard from '@/components/dashboard/BrandDashboard';
 import AuthModal from '@/components/AuthModal';
 import { safeFontString, safeColorString } from '@/lib/type-guards';
-import { WorldContainer } from '@/components/canvas/WorldContainer';
-import { WorldSection } from '@/components/canvas/InfiniteCanvasWorld';
-import { AboutSection } from '@/components/canvas/AboutSection';
-import { ContactSection } from '@/components/canvas/ContactSection';
 
 // --- HYBRID DNA INTERFACE (STORY MODE) ---
 
@@ -407,204 +403,192 @@ export default function Home() {
                 </button>
             </header>
 
-            <main className="w-full">
-                <WorldContainer>
-                    {/* LEFT SECTION: ABOUT (x: 100vw in camera space) */}
-                    <WorldSection className="lava-background">
-                        <AboutSection />
-                    </WorldSection>
+            <main className="w-full min-h-screen">
+                {/* SCANNER HOMEPAGE - Simple scrollable page */}
+                <div className="lava-background min-h-screen">
+                    {/* HERO: INPUT MODE */}
+                    {!scanComplete ? (
+                        <div className="min-h-screen flex flex-col items-center justify-center px-4 sm:px-6 relative overflow-hidden">
+                            {/* Ambient Background */}
+                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-purple-900/10 rounded-full blur-[120px] pointer-events-none" />
 
-                    {/* CENTER SECTION: HOME/SCANNER (x: 0) - Default view */}
-                    <WorldSection className="lava-background">
-                        {/* HERO: INPUT MODE */}
-                        {!scanComplete ? (
-                            <div className="min-h-screen flex flex-col items-center justify-center px-4 sm:px-6 relative overflow-hidden">
-                                {/* Ambient Background */}
-                                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-purple-900/10 rounded-full blur-[120px] pointer-events-none" />
-
-                                <div className="relative z-10 text-center space-y-6 sm:space-y-8 max-w-4xl w-full">
-                                    <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-8xl font-serif italic tracking-tight text-white/90 leading-tight px-4">
-                                        AI, <span className="italic text-[#FFAD7A]">Taylored</span> to Your Exact Vibe.
-                                    </h1>
-                                    <p className="text-base sm:text-lg md:text-xl text-white/40 font-sans font-light max-w-2xl mx-auto leading-relaxed px-6">
-                                        Everyone's got access to <span className="text-[#FFAD7A] font-medium">AI</span>. What you need are <span className="text-[#FFAD7A] font-medium">Taylored AI solutions</span>.
-                                    </p>
+                            <div className="relative z-10 text-center space-y-6 sm:space-y-8 max-w-4xl w-full">
+                                <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-8xl font-serif italic tracking-tight text-white/90 leading-tight px-4">
+                                    AI, <span className="italic text-[#FFAD7A]">Taylored</span> to Your Exact Vibe.
+                                </h1>
+                                <p className="text-base sm:text-lg md:text-xl text-white/40 font-sans font-light max-w-2xl mx-auto leading-relaxed px-6">
+                                    Everyone's got access to <span className="text-[#FFAD7A] font-medium">AI</span>. What you need are <span className="text-[#FFAD7A] font-medium">Taylored AI solutions</span>.
+                                </p>
 
 
-                                    <div className="relative w-full max-w-xl mx-auto mt-8 sm:mt-12 px-4">
-                                        {/* EXISTING FORM */}
-                                        <form onSubmit={handleScan} className="w-full relative group">
-                                            <div className="absolute inset-0 bg-[#FFAD7A] rounded-2xl blur-xl opacity-30 group-hover:opacity-60 transition-opacity duration-500" />
-                                            <div className="relative flex items-center bg-[#1E1E1E] border border-white/10 rounded-2xl p-2 shadow-2xl transition-all animate-pulse-glow">
-                                                <Search className="ml-4 w-5 h-5 text-white/30" />
-                                                <input
-                                                    type="text"
-                                                    placeholder="https://your-portfolio.com"
-                                                    className="flex-1 bg-transparent border-none focus:ring-0 text-white placeholder-white/20 px-4 py-4 outline-none font-sans"
-                                                    value={url}
-                                                    onChange={(e) => setUrl(e.target.value)}
-                                                    required
-                                                />
-                                                <button
-                                                    type="submit"
-                                                    disabled={isScanning}
-                                                    className="bg-[#FFAD7A] text-[#121212] hover:bg-[#FFAD7A] font-sans font-bold 
+                                <div className="relative w-full max-w-xl mx-auto mt-8 sm:mt-12 px-4">
+                                    {/* EXISTING FORM */}
+                                    <form onSubmit={handleScan} className="w-full relative group">
+                                        <div className="absolute inset-0 bg-[#FFAD7A] rounded-2xl blur-xl opacity-30 group-hover:opacity-60 transition-opacity duration-500" />
+                                        <div className="relative flex items-center bg-[#1E1E1E] border border-white/10 rounded-2xl p-2 shadow-2xl transition-all animate-pulse-glow">
+                                            <Search className="ml-4 w-5 h-5 text-white/30" />
+                                            <input
+                                                type="text"
+                                                placeholder="https://your-portfolio.com"
+                                                className="flex-1 bg-transparent border-none focus:ring-0 text-white placeholder-white/20 px-4 py-4 outline-none font-sans"
+                                                value={url}
+                                                onChange={(e) => setUrl(e.target.value)}
+                                                required
+                                            />
+                                            <button
+                                                type="submit"
+                                                disabled={isScanning}
+                                                className="bg-[#FFAD7A] text-[#121212] hover:bg-[#FFAD7A] font-sans font-bold 
                                                      py-2 px-3 sm:py-3 sm:px-8 
                                                      rounded-xl transition-all disabled:opacity-50 
                                                      flex items-center gap-2 
                                                      shadow-[0_0_20px_rgba(0,255,65,0.5)] hover:shadow-[0_0_30px_rgba(0,255,65,0.8)] 
                                                      text-xs sm:text-base 
                                                      whitespace-nowrap shrink-0"
-                                                >
-                                                    {isScanning ? 'Stitching...' : (<><span className="hidden sm:inline">Stitch My Vibe</span><span className="sm:hidden">Stitch</span></>)}
-                                                </button>
-                                            </div>
-                                        </form>
-
-
-                                        {/* 🖍️ FAT NEON ARROW (Centered BELOW the Input) */}
-                                        <div className="hidden sm:flex absolute top-full left-1/2 -translate-x-1/2 mt-8 pointer-events-none z-10">
-                                            <div className="flex flex-col items-center">
-
-                                                {/* 1. The Arrow (Pointing UP towards the box) */}
-                                                <svg width="80" height="80" viewBox="0 0 100 100" fill="none" className="neon-arrow">
-                                                    {/* Curved Line pointing UP */}
-                                                    <path d="M 70 80 Q 50 50, 50 10" stroke="currentColor" strokeWidth="6" strokeLinecap="round" fill="none" />
-                                                    {/* Arrowhead pointing UP */}
-                                                    <path d="M 35 25 L 50 10 L 65 25" stroke="currentColor" strokeWidth="6" strokeLinecap="round" fill="none" />
-                                                </svg>
-
-                                                {/* 2. The Text (Below the arrow) */}
-                                                <span className="liquid-text text-2xl font-bold mt-2 whitespace-nowrap transform -rotate-2">
-                                                    Your Website Here
-                                                </span>
-                                            </div>
+                                            >
+                                                {isScanning ? 'Stitching...' : (<><span className="hidden sm:inline">Stitch My Vibe</span><span className="sm:hidden">Stitch</span></>)}
+                                            </button>
                                         </div>
-                                    </div>
+                                    </form>
 
-                                    {error && <div className="text-red-400 font-sans bg-red-900/20 p-4 rounded-xl inline-block">{error}</div>}
-                                </div>
-                            </div>
-                        ) : (
-                            /* --- STORY MODE: SCROLL LAYOUT --- */
-                            <div className="flex flex-col w-full">
 
-                                {/* SECTION 1: BUSINESS DNA (The Top Fold) */}
-                                <section className="min-h-screen w-full p-6 md:p-12 flex flex-col justify-center relative bg-[#121212] z-10">
+                                    {/* 🖍️ FAT NEON ARROW (Centered BELOW the Input) */}
+                                    <div className="hidden sm:flex absolute top-full left-1/2 -translate-x-1/2 mt-8 pointer-events-none z-10">
+                                        <div className="flex flex-col items-center">
 
-                                    {/* DNA Header */}
-                                    <motion.div
-                                        initial={{ opacity: 0, y: 30 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ duration: 0.8 }}
-                                        className="text-center mb-16"
-                                    >
-                                        <h2 className="text-4xl md:text-5xl font-serif italic text-white/80">Your Business DNA</h2>
-                                        <div className="h-1 w-20 bg-[#FFAD7A] mx-auto mt-6 rounded-full opacity-50"></div>
-                                    </motion.div>
+                                            {/* 1. The Arrow (Pointing UP towards the box) */}
+                                            <svg width="80" height="80" viewBox="0 0 100 100" fill="none" className="neon-arrow">
+                                                {/* Curved Line pointing UP */}
+                                                <path d="M 70 80 Q 50 50, 50 10" stroke="currentColor" strokeWidth="6" strokeLinecap="round" fill="none" />
+                                                {/* Arrowhead pointing UP */}
+                                                <path d="M 35 25 L 50 10 L 65 25" stroke="currentColor" strokeWidth="6" strokeLinecap="round" fill="none" />
+                                            </svg>
 
-                                    {/* THE DNA GRID */}
-                                    <motion.div
-                                        initial={{ opacity: 0, scale: 0.95 }}
-                                        animate={{ opacity: 1, scale: 1 }}
-                                        transition={{ delay: 0.2, duration: 0.8 }}
-                                        className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-7xl mx-auto w-full"
-                                    >
-                                        {/* CARD 1: IDENTITY */}
-                                        <div className="bg-[#1E1E1E] border border-[#333] rounded-2xl p-8 flex flex-col items-center justify-center text-center aspect-square md:aspect-auto">
-                                            <div className="relative">
-                                                <div className="absolute inset-0 bg-[#FFAD7A] blur-2xl opacity-10 rounded-full"></div>
-                                                {brandData?.avatar_url ? (
-                                                    <img src={brandData.avatar_url} alt="Logo" className="w-24 h-24 rounded-full border-2 border-[#FFAD7A]/20 relative z-10 object-cover" />
-                                                ) : (
-                                                    <div className="w-24 h-24 rounded-full bg-white/5 border border-white/10 flex items-center justify-center relative z-10">
-                                                        <Fingerprint className="w-10 h-10 text-white/30" />
-                                                    </div>
-                                                )}
-                                            </div>
-                                            <h3 className="text-2xl font-bold mt-6 font-sans text-white">{brandData?.title || 'Brand Identity'}</h3>
-                                            <span className="mt-3 px-3 py-1 bg-[#FFAD7A]/10 text-[#FFAD7A] text-xs font-sans uppercase tracking-widest rounded-full border border-[#FFAD7A]/20">
-                                                Identity Confirmed
+                                            {/* 2. The Text (Below the arrow) */}
+                                            <span className="liquid-text text-2xl font-bold mt-2 whitespace-nowrap transform -rotate-2">
+                                                Your Website Here
                                             </span>
                                         </div>
+                                    </div>
+                                </div>
 
-                                        {/* CARD 2: TYPOGRAPHY */}
-                                        <div className="bg-[#1E1E1E] border border-[#333] rounded-2xl p-8 flex flex-col items-center justify-center relative overflow-hidden aspect-square md:aspect-auto">
-                                            <div className="absolute top-4 left-4 text-[#FFAD7A]/20">
-                                                <Type className="w-6 h-6" />
-                                            </div>
-                                            <h1 className="text-9xl font-serif text-[#FFAD7A] opacity-90">Aa</h1>
-                                            <p className="mt-4 text-white/40 font-sans text-sm uppercase tracking-widest">
-                                                {(() => {
-                                                    const font = brandData?.fonts?.[0];
-                                                    return typeof font === 'string' ? font : (font?.family || 'Modern Sans');
-                                                })()}
-                                            </p>
-                                        </div>
-
-                                        {/* CARD 3: PALETTE */}
-                                        <div className="bg-[#1E1E1E] border border-[#333] rounded-2xl p-8 flex flex-col items-center justify-center relative aspect-square md:aspect-auto">
-                                            <div className="absolute top-4 right-4 text-[#FFAD7A]/20">
-                                                <Palette className="w-6 h-6" />
-                                            </div>
-                                            <div className="flex -space-x-4">
-                                                {(() => {
-                                                    // STABILITY FIX C1: Type guard for brand_colors (prevents Font Bug-type errors)
-                                                    const colors = Array.isArray(brandData?.brand_colors)
-                                                        ? brandData.brand_colors.map((c: any) =>
-                                                            typeof c === 'string' ? c : (c?.hex || c?.value || '#333')
-                                                        )
-                                                        : ['#333', '#555', '#777'];
-                                                    return colors.slice(0, 3).map((color: string, i: number) => (
-                                                        <div
-                                                            key={i}
-                                                            className="w-20 h-20 rounded-full border-4 border-[#1E1E1E] shadow-xl relative group cursor-pointer"
-                                                            style={{ backgroundColor: color }}
-                                                        >
-                                                            <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-black text-white text-[10px] px-2 py-1 rounded font-mono">
-                                                                {color}
-                                                            </div>
-                                                        </div>
-                                                    ));
-                                                })()}
-                                            </div>
-                                            <p className="mt-8 text-white/40 font-sans text-sm uppercase tracking-widest">Color Physics</p>
-                                        </div>
-
-                                        {/* BOTTOM CARD: THE HOOK */}
-                                        <div className="md:col-span-3 bg-[#1E1E1E] border border-[#333] rounded-2xl p-10 text-center relative overflow-hidden group">
-                                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#FFAD7A]/5 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
-                                            <p className="text-2xl md:text-3xl font-serif text-white/90 italic leading-relaxed">
-                                                "{brandData?.bio || 'No slogan detected. The brand remains mysterious.'}"
-                                            </p>
-                                        </div>
-
-                                    </motion.div>
-
-                                    <motion.div
-                                        initial={{ opacity: 0 }}
-                                        animate={{ opacity: 1 }}
-                                        transition={{ delay: 1, duration: 1 }}
-                                        className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center animate-bounce"
-                                    >
-                                        <span className="text-[#FFAD7A] text-xs uppercase tracking-widest mb-2 font-sans">Deploy</span>
-                                        <ChevronDown className="text-white/50" />
-                                    </motion.div>
-                                </section>
-
-                                {/* SECTION 2: BRAND DASHBOARD (The Dashboard) */}
-                                <BrandDashboard brandData={brandData} />
-
+                                {error && <div className="text-red-400 font-sans bg-red-900/20 p-4 rounded-xl inline-block">{error}</div>}
                             </div>
-                        )
-                        }
-                    </WorldSection>
+                        </div>
+                    ) : (
+                        /* --- STORY MODE: SCROLL LAYOUT --- */
+                        <div className="flex flex-col w-full">
 
-                    {/* RIGHT SECTION: CONTACT (x: -100vw in camera space) */}
-                    <WorldSection className="lava-background">
-                        <ContactSection />
-                    </WorldSection>
-                </WorldContainer>
+                            {/* SECTION 1: BUSINESS DNA (The Top Fold) */}
+                            <section className="min-h-screen w-full p-6 md:p-12 flex flex-col justify-center relative bg-[#121212] z-10">
+
+                                {/* DNA Header */}
+                                <motion.div
+                                    initial={{ opacity: 0, y: 30 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ duration: 0.8 }}
+                                    className="text-center mb-16"
+                                >
+                                    <h2 className="text-4xl md:text-5xl font-serif italic text-white/80">Your Business DNA</h2>
+                                    <div className="h-1 w-20 bg-[#FFAD7A] mx-auto mt-6 rounded-full opacity-50"></div>
+                                </motion.div>
+
+                                {/* THE DNA GRID */}
+                                <motion.div
+                                    initial={{ opacity: 0, scale: 0.95 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    transition={{ delay: 0.2, duration: 0.8 }}
+                                    className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-7xl mx-auto w-full"
+                                >
+                                    {/* CARD 1: IDENTITY */}
+                                    <div className="bg-[#1E1E1E] border border-[#333] rounded-2xl p-8 flex flex-col items-center justify-center text-center aspect-square md:aspect-auto">
+                                        <div className="relative">
+                                            <div className="absolute inset-0 bg-[#FFAD7A] blur-2xl opacity-10 rounded-full"></div>
+                                            {brandData?.avatar_url ? (
+                                                <img src={brandData.avatar_url} alt="Logo" className="w-24 h-24 rounded-full border-2 border-[#FFAD7A]/20 relative z-10 object-cover" />
+                                            ) : (
+                                                <div className="w-24 h-24 rounded-full bg-white/5 border border-white/10 flex items-center justify-center relative z-10">
+                                                    <Fingerprint className="w-10 h-10 text-white/30" />
+                                                </div>
+                                            )}
+                                        </div>
+                                        <h3 className="text-2xl font-bold mt-6 font-sans text-white">{brandData?.title || 'Brand Identity'}</h3>
+                                        <span className="mt-3 px-3 py-1 bg-[#FFAD7A]/10 text-[#FFAD7A] text-xs font-sans uppercase tracking-widest rounded-full border border-[#FFAD7A]/20">
+                                            Identity Confirmed
+                                        </span>
+                                    </div>
+
+                                    {/* CARD 2: TYPOGRAPHY */}
+                                    <div className="bg-[#1E1E1E] border border-[#333] rounded-2xl p-8 flex flex-col items-center justify-center relative overflow-hidden aspect-square md:aspect-auto">
+                                        <div className="absolute top-4 left-4 text-[#FFAD7A]/20">
+                                            <Type className="w-6 h-6" />
+                                        </div>
+                                        <h1 className="text-9xl font-serif text-[#FFAD7A] opacity-90">Aa</h1>
+                                        <p className="mt-4 text-white/40 font-sans text-sm uppercase tracking-widest">
+                                            {(() => {
+                                                const font = brandData?.fonts?.[0];
+                                                return typeof font === 'string' ? font : (font?.family || 'Modern Sans');
+                                            })()}
+                                        </p>
+                                    </div>
+
+                                    {/* CARD 3: PALETTE */}
+                                    <div className="bg-[#1E1E1E] border border-[#333] rounded-2xl p-8 flex flex-col items-center justify-center relative aspect-square md:aspect-auto">
+                                        <div className="absolute top-4 right-4 text-[#FFAD7A]/20">
+                                            <Palette className="w-6 h-6" />
+                                        </div>
+                                        <div className="flex -space-x-4">
+                                            {(() => {
+                                                // STABILITY FIX C1: Type guard for brand_colors (prevents Font Bug-type errors)
+                                                const colors = Array.isArray(brandData?.brand_colors)
+                                                    ? brandData.brand_colors.map((c: any) =>
+                                                        typeof c === 'string' ? c : (c?.hex || c?.value || '#333')
+                                                    )
+                                                    : ['#333', '#555', '#777'];
+                                                return colors.slice(0, 3).map((color: string, i: number) => (
+                                                    <div
+                                                        key={i}
+                                                        className="w-20 h-20 rounded-full border-4 border-[#1E1E1E] shadow-xl relative group cursor-pointer"
+                                                        style={{ backgroundColor: color }}
+                                                    >
+                                                        <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-black text-white text-[10px] px-2 py-1 rounded font-mono">
+                                                            {color}
+                                                        </div>
+                                                    </div>
+                                                ));
+                                            })()}
+                                        </div>
+                                        <p className="mt-8 text-white/40 font-sans text-sm uppercase tracking-widest">Color Physics</p>
+                                    </div>
+
+                                    {/* BOTTOM CARD: THE HOOK */}
+                                    <div className="md:col-span-3 bg-[#1E1E1E] border border-[#333] rounded-2xl p-10 text-center relative overflow-hidden group">
+                                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#FFAD7A]/5 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
+                                        <p className="text-2xl md:text-3xl font-serif text-white/90 italic leading-relaxed">
+                                            "{brandData?.bio || 'No slogan detected. The brand remains mysterious.'}"
+                                        </p>
+                                    </div>
+
+                                </motion.div>
+
+                                <motion.div
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    transition={{ delay: 1, duration: 1 }}
+                                    className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center animate-bounce"
+                                >
+                                    <span className="text-[#FFAD7A] text-xs uppercase tracking-widest mb-2 font-sans">Deploy</span>
+                                    <ChevronDown className="text-white/50" />
+                                </motion.div>
+                            </section>
+
+                            {/* SECTION 2: BRAND DASHBOARD (The Dashboard) */}
+                            <BrandDashboard brandData={brandData} />
+
+                        </div>
+                    )
+                    }
+                </div>
             </main >
         </div >
     );
