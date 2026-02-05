@@ -16,11 +16,20 @@ export const metadata: Metadata = {
         description: "High-performance AI software solutions built for indie hackers and modern teams.",
         type: "website",
         locale: "en_US",
+        images: [
+            {
+                url: "/og-image.png",
+                width: 1200,
+                height: 630,
+                alt: "Taylored AI Solutions - AI, Taylored to Your Exact Vibe",
+            },
+        ],
     },
     twitter: {
         card: "summary_large_image",
         title: "Taylored AI Solutions | High-Performance AI Software",
         description: "High-performance AI software solutions built for indie hackers and modern teams.",
+        images: ["/og-image.png"],
     },
 };
 
