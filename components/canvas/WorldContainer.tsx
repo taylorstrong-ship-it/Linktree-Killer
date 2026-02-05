@@ -24,18 +24,16 @@ export function WorldContainer({ children }: WorldContainerProps) {
         contact: '-200vw'  // Camera at -200vw shows third child (Contact)
     };
 
-    // "Tease" animation on mount - hint that UI is swipeable
-    useEffect(() => {
-        const teaseSequence = async () => {
-            await controls.start({ x: -20, transition: { duration: 0.3, ease: 'easeOut' } });
-            await controls.start({ x: 20, transition: { duration: 0.4, ease: 'easeInOut' } });
-            await controls.start({ x: 0, transition: { duration: 0.3, ease: 'easeOut' } });
-        };
-
-        // Run tease after brief delay
-        const timeout = setTimeout(teaseSequence, 1000);
-        return () => clearTimeout(timeout);
-    }, [controls]);
+    // DISABLED: Tease animation was causing unwanted auto-panning
+    // useEffect(() => {
+    //     const teaseSequence = async () => {
+    //         await controls.start({ x: -20, transition: { duration: 0.3, ease: 'easeOut' } });
+    //         await controls.start({ x: 20, transition: { duration: 0.4, ease: 'easeInOut' } });
+    //         await controls.start({ x: 0, transition: { duration: 0.3, ease: 'easeOut' } });
+    //     };
+    //     const timeout = setTimeout(teaseSequence, 1000);
+    //     return () => clearTimeout(timeout);
+    // }, [controls]);
 
     // Sync viewState with hash-based routing (browser back button support)
     useEffect(() => {
@@ -152,12 +150,8 @@ export function WorldContainer({ children }: WorldContainerProps) {
                 transition={{ type: 'spring', stiffness: 250, damping: 35 }}
             />
 
-            {/* Draggable world container */}
+            {/* World container - drag disabled, button navigation only */}
             <motion.div
-                drag="x"
-                dragConstraints={{ left: 0, right: 0 }} // Rubber-band effect
-                dragElastic={0.2}
-                onDragEnd={handleDragEnd}
                 animate={controls}
                 className="flex flex-nowrap min-h-screen relative z-10"
                 style={{ width: '300vw' }} // 3 sections wide
