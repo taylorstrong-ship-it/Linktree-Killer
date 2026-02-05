@@ -16,10 +16,12 @@ export function WorldContainer({ children }: WorldContainerProps) {
     const router = useRouter();
 
     // Camera position mapping
+    // Physical DOM order: [About, Home/Scanner, Contact]
+    // To show middle child (Scanner) at #home, camera translates LEFT (-100vw)
     const positions = {
-        home: 0,
-        about: '100vw',    // Push world RIGHT to reveal About (left)
-        contact: '-100vw'  // Push world LEFT to reveal Contact (right)
+        about: 0,          // Camera at 0 shows first child (About)
+        home: '-100vw',    // Camera at -100vw shows middle child (Scanner) 
+        contact: '-200vw'  // Camera at -200vw shows third child (Contact)
     };
 
     // "Tease" animation on mount - hint that UI is swipeable
