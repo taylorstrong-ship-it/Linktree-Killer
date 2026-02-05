@@ -409,12 +409,12 @@ export default function Home() {
 
             <main className="w-full">
                 <WorldContainer>
-                    {/* LEFT SECTION: ABOUT (x: -100vw) */}
+                    {/* LEFT SECTION: CONTACT (x: -100vw) - Revealed when panning RIGHT */}
                     <WorldSection className="lava-background">
-                        <AboutSection />
+                        <ContactSection />
                     </WorldSection>
 
-                    {/* CENTER SECTION: HOME/SCANNER (x: 0) */}
+                    {/* CENTER SECTION: HOME/SCANNER (x: 0) - Default view */}
                     <WorldSection className="lava-background">
                         {/* HERO: INPUT MODE */}
                         {!scanComplete ? (
@@ -594,9 +594,9 @@ export default function Home() {
                         }
                     </WorldSection>
 
-                    {/* RIGHT SECTION: CONTACT (x: 100vw) */}
+                    {/* RIGHT SECTION: ABOUT (x: 100vw) - Revealed when panning LEFT */}
                     <WorldSection className="lava-background">
-                        <ContactSection />
+                        <AboutSection />
                     </WorldSection>
                 </WorldContainer>
             </main >
