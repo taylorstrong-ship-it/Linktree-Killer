@@ -34,8 +34,9 @@ export default function SocialPreviewWidget({
     brandData,
     handleEditPage,
 }: SocialPreviewWidgetProps) {
-    const [state, setState] = useState<GenerationState>('loading');
+    const [state, setState] = useState<GenerationState>('success'); // ✨ OPTIMISTIC: Start as 'success' to show image immediately
     const [generatedImage, setGeneratedImage] = useState<string | null>(null);
+    const [isUpgrading, setIsUpgrading] = useState(false); // 🎯 NEW: Background AI enhancement flag
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [vibe, setVibe] = useState<string>('Modern');
     const [campaign, setCampaign] = useState<string>('Get Started Today');
@@ -47,24 +48,32 @@ export default function SocialPreviewWidget({
 
     useEffect(() => {
         // 🛡️ GUARD CLAUSE: Wait for real brandData to arrive from database
-        // This prevents the race condition where auto-generation fires before data loads
         if (!brandData || Object.keys(brandData).length === 0) {
-            console.log('⏸️ [AI Design] Waiting for brandData to arrive...');
+            console.log('⏸️ [Optimistic UI] Waiting for brandData to arrive...');
             return;
         }
 
-        console.log('✅ [AI Design] BrandData received, starting auto-generation...');
+        console.log('✅ [Optimistic UI] BrandData received, showing heroImage immediately...');
 
+        // 🎯 STEP 1: IMMEDIATE RENDER - Show heroImage right away
+        const heroImage = brandData.hero_image || brandData.logo_url;
+        if (heroImage) {
+            setGeneratedImage(heroImage);
+            setState('success');
+            console.log('🖼️ [Optimistic UI] Displaying heroImage instantly:', heroImage.substring(0, 60) + '...');
+        }
+
+        // 🎯 STEP 2: BACKGROUND UPGRADE - Start AI enhancement after initial render
         const generatePreview = async () => {
             try {
-                setState('loading');
+                setIsUpgrading(true); // Show "✨ Enhancing..." badge
 
                 // Smart image selection: prioritize hero_image over logo
                 const imageSource = brandData.hero_image || brandData.logo_url;
 
                 if (!imageSource) {
-                    console.warn('⚠️ [AI Design] No image source available');
-                    setState('idle');
+                    console.warn('⚠️ [Optimistic UI] No image source available');
+                    setIsUpgrading(false);
                     return;
                 }
 
@@ -242,6 +251,7 @@ REQUIREMENTS:
                     });
 
                     setGeneratedImage(imageToDisplay);
+                    setIsUpgrading(false); // \u2728 OPTIMISTIC: Hide "Enhancing..." badge
                     setState('success');
                 } else {
                     throw new Error(data.error || 'Failed to generate image');
@@ -255,6 +265,7 @@ REQUIREMENTS:
                 if (fallbackImage) {
                     console.log('🖼️ [Fallback] Using raw brand hero image as safety net:', fallbackImage.substring(0, 60) + '...');
                     setGeneratedImage(fallbackImage);
+                    setIsUpgrading(false); // ✨ OPTIMISTIC: Hide "Enhancing..." badge, keep original
                     setState('success'); // Show it as if generation succeeded
                 } else {
                     // Last resort: show error if truly no image available
@@ -365,6 +376,24 @@ function InstagramPostUI({
 
             {/* Instagram Post Image */}
             <div className="relative w-full aspect-square bg-zinc-100 dark:bg-zinc-900">
+                {/* \u2728 OPTIMISTIC UI: "Enhancing..." Badge */}
+                <AnimatePresence>
+                    {isUpgrading && (
+                        <motion.div
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                            transition={{ duration: 0.3 }}
+                            className="absolute top-3 right-3 z-10 px-3 py-1.5 bg-black/70 backdrop-blur-sm border border-white/20 rounded-full"
+                        >
+                            <p className="text-xs text-white font-medium flex items-center gap-1.5">
+                                <span className="animate-pulse">\u2728</span>
+                                Enhancing with AI...
+                            </p>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
                 <AnimatePresence mode="wait">
                     {state === 'loading' && (
                         <motion.div
