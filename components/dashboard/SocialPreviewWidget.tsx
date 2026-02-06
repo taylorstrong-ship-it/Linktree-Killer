@@ -70,7 +70,25 @@ export default function SocialPreviewWidget({
                 // Determine if this is a URL or already base64
                 const isUrl = imageSource.startsWith('http://') || imageSource.startsWith('https://');
 
-                // Smart default campaigns based on vibe
+                // 🎨 DYNAMIC VIBE SELECTION: Choose vibe based on industry
+                let smartVibe = brandData.vibe;
+
+                if (!smartVibe) {
+                    // Intelligent default based on industry
+                    const industry = (brandData.industry || '').toLowerCase();
+
+                    if (industry.includes('beauty') ||
+                        industry.includes('fashion') ||
+                        industry.includes('food') ||
+                        industry.includes('art') ||
+                        industry.includes('hair') ||
+                        industry.includes('salon')) {
+                        smartVibe = 'Elegant';  // Creative industries get sophisticated vibe
+                    } else {
+                        smartVibe = 'Energetic';  // Others get dynamic, high-energy vibe
+                    }
+                }
+
                 const campaignMap: Record<string, string> = {
                     'Luxury': 'Exclusive Collection',
                     'Professional': 'Expert Solutions',
@@ -80,19 +98,22 @@ export default function SocialPreviewWidget({
                     'Modern': 'Now Available',
                     'Elegant': 'Limited Edition',
                     'Energetic': 'Fresh Deals',
+                    'Creative': 'Creative Showcase',
                 };
 
-                const vibe = brandData.vibe || 'Modern';
-                const campaign = campaignMap[vibe] || 'Get Started Today';
+                const campaign = campaignMap[smartVibe] || 'Get Started Today';
 
                 // Store for generator bridge
-                setVibe(vibe);
+                setVibe(smartVibe);
                 setCampaign(campaign);
 
-                // 🚀 MISSION CRITICAL: Call Supabase Edge Function (No Timeout Limits!)
+                // 🎯 ENRICHED PROMPT: Add visual instructions for quality
+                const enrichedCampaign = `${campaign}. Create a high-impact, photorealistic image specifically showcasing ${brandData.industry || 'products or services'}. Do NOT use generic office stock photos. Focus on the actual industry and create authentic, relevant imagery.`;
+
                 console.log('🎨 [AI Design] Starting generation via Supabase Edge Function...');
                 console.log('   Image source:', imageSource?.substring(0, 50) + '...');
-                console.log('   Vibe:', vibe, '| Industry:', brandData.industry);
+                console.log('   Smart Vibe:', smartVibe, '| Industry:', brandData.industry);
+                console.log('   Enriched Campaign:', enrichedCampaign);
 
                 const { data, error } = await supabase.functions.invoke('generate-campaign-asset', {
                     body: {
@@ -101,10 +122,10 @@ export default function SocialPreviewWidget({
                         brandDNA: {
                             name: brandData.businessName,
                             primaryColor: brandData.primaryColor || '#FF6B35',
-                            vibe: brandData.vibe || 'Professional',
+                            vibe: smartVibe,
                             industry: brandData.industry || 'Business',
                         },
-                        campaign,
+                        campaign: enrichedCampaign,
                     },
                 });
 
