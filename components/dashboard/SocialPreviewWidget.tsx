@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Heart, MessageCircle, Send, Bookmark, MoreHorizontal } from 'lucide-react';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase/client';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -39,6 +39,7 @@ export default function SocialPreviewWidget({
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [vibe, setVibe] = useState<string>('Modern');
     const [campaign, setCampaign] = useState<string>('Get Started Today');
+    const router = useRouter();
 
     // ─────────────────────────────────────────────────────────────────────────
     // AUTO-GENERATE ON MOUNT (WITH RACE CONDITION FIX)
@@ -400,37 +401,41 @@ function InstagramPostUI({
                 {/* Time */}
                 <p className="text-xs text-zinc-400 uppercase">2 hours ago</p>
 
-                {/* Remix Button (Floating) */}
+                {/* Open Studio Button */}
                 <AnimatePresence>
                     {state === 'success' && generatedImage && (
-                        <Link
-                            href={{
-                                pathname: '/generator',
-                                query: {
-                                    remix: 'true',
+                        <motion.button
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: 10 }}
+                            transition={{ delay: 0.6 }}
+                            onClick={() => {
+                                // 🎯 CLEAN HANDOFF: Use localStorage instead of URL params to avoid URI_TOO_LONG
+                                const campaignData = {
                                     image: generatedImage,
+                                    brand: brandData,
                                     prompt: campaign,
                                     vibe: vibe,
-                                },
+                                    timestamp: Date.now(),
+                                };
+
+                                localStorage.setItem('cva_pending_campaign', JSON.stringify(campaignData));
+                                console.log('✅ [Clean Handoff] Campaign data saved to localStorage');
+
+                                // Navigate cleanly without query params
+                                router.push('/generator');
                             }}
-                            className="block w-full mt-2"
-                        >
-                            <motion.button
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: 10 }}
-                                transition={{ delay: 0.6 }}
-                                className="w-full py-2 rounded-lg
+                            className="w-full py-2 rounded-lg mt-2
                           bg-gradient-to-r from-[#FF6B35] to-[#FF8C42]
                           hover:from-[#FF8C42] hover:to-[#FF6B35]
                           text-white font-semibold text-sm
-                          transition-all duration-300"
-                                whileHover={{ scale: 1.02 }}
-                                whileTap={{ scale: 0.98 }}
-                            >
-                                Open Studio
-                            </motion.button>
-                        </Link>
+                          transition-all duration-300
+                          cursor-pointer"
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                        >
+                            Open Studio
+                        </motion.button>
                     )}
                 </AnimatePresence>
             </div>

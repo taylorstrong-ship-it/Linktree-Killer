@@ -90,26 +90,47 @@ function GeneratorPageContent() {
         loadBrandDNA()
     }, [])
 
-    // Load Remix data if coming from SocialPreviewWidget
+    // 🎯 CLEAN HANDOFF: Receive pending campaign data from SocialPreviewWidget
     useEffect(() => {
-        const searchParams = new URLSearchParams(window.location.search)
-        const isRemix = searchParams.get('remix') === 'true'
+        try {
+            const pendingData = localStorage.getItem('cva_pending_campaign');
 
-        if (isRemix) {
-            console.log('🎨 Remix mode activated - loading saved preview data...')
+            if (pendingData) {
+                console.log('📥 [Clean Handoff] Pending campaign data detected');
 
-            // Load the saved social preview image from localStorage
-            const savedImage = localStorage.getItem('social_preview_draft')
-            if (savedImage) {
-                setGeneratedImageUrl(savedImage)
-                console.log('✅ Loaded remix image from localStorage')
+                const campaignData = JSON.parse(pendingData);
+
+                // Load the generated image and prompt
+                if (campaignData.image) {
+                    setGeneratedImageUrl(campaignData.image);
+                    console.log('✅ [Clean Handoff] Loaded generated image');
+                }
+
+                if (campaignData.prompt) {
+                    setPrompt(campaignData.prompt);
+                    console.log('✅ [Clean Handoff] Loaded campaign prompt:', campaignData.prompt);
+                }
+
+                if (campaignData.vibe) {
+                    const normalizedVibe = campaignData.vibe.toLowerCase() as 'professional' | 'energetic' | 'minimal';
+                    setVibe(normalizedVibe);
+                    console.log('✅ [Clean Handoff] Loaded vibe:', normalizedVibe);
+                }
+
+                // If brand data came with it, use it (fallback to existing brandDNA)
+                if (campaignData.brand && !brandDNA) {
+                    setBrandDNA(campaignData.brand);
+                    console.log('✅ [Clean Handoff] Loaded brand data from campaign');
+                }
+
+                // Clear the pending data so it doesn't reload on refresh
+                localStorage.removeItem('cva_pending_campaign');
+                console.log('🧹 [Clean Handoff] Cleared pending campaign data');
             }
-
-            // Set a default prompt for remix
-            const brandName = brandDNA?.company_name || brandDNA?.business_name || 'Your Brand'
-            setPrompt(`Remix this design for ${brandName}`)
+        } catch (err) {
+            console.error('❌ [Clean Handoff] Error loading pending campaign:', err);
         }
-    }, [brandDNA])
+    }, [brandDNA]);
 
     async function handleGenerate() {
         if (!prompt.trim()) {
