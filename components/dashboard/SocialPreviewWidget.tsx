@@ -178,6 +178,14 @@ REQUIREMENTS:
                 console.log('   Smart Vibe:', smartVibe, '| Industry:', brandData.industry);
                 console.log('   Enriched Campaign:', enrichedCampaign);
 
+                // 🖼️ BEAUTIFIER MODE: Check for real brand image from hero extraction
+                const heroImage = (brandData as any).heroImage || (brandData as any).hero_image;
+                if (heroImage) {
+                    console.log('🎯 [BEAUTIFIER MODE] Using real brand image:', heroImage.substring(0, 60) + '...');
+                } else {
+                    console.log('📝 [STANDARD MODE] No hero image found, using text-to-image generation');
+                }
+
                 const { data, error } = await supabase.functions.invoke('generate-campaign-asset', {
                     body: {
                         image: imageSource,
@@ -189,6 +197,7 @@ REQUIREMENTS:
                             industry: brandData.industry || 'Business',
                         },
                         campaign: enrichedCampaign,
+                        sourceImageUrl: heroImage || undefined, // 🎨 Enable beautifier if heroImage exists
                     },
                 });
 

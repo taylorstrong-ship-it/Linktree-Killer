@@ -218,6 +218,28 @@ Respond with ONLY a JSON object:
 
                 const foundImages: Array<{ url: string, source: string }> = [];
 
+                // TIER 0: 🎯 EXPLICIT OG:IMAGE META TAG (Highest priority)
+                const ogImageRegex = /<meta\s+property=["']og:image["']\s+content=["']([^"']+)["']/gi;
+                const ogImageMatch = ogImageRegex.exec(html);
+
+                if (ogImageMatch) {
+                    const ogImageUrl = ogImageMatch[1];
+                    console.log(`  🎯 Found og:image meta tag: "${ogImageUrl.substring(0, 60)}..."`);
+
+                    // Validate it's an absolute URL
+                    if (ogImageUrl.startsWith('http')) {
+                        console.log(`    ✅ TIER 0 SUCCESS: Using og:image meta tag`);
+                        return ogImageUrl;
+                    } else {
+                        // Convert to absolute URL
+                        const absoluteOgImage = new URL(ogImageUrl, targetUrl).toString();
+                        console.log(`    🔗 Converted relative og:image to absolute: ${absoluteOgImage}`);
+                        return absoluteOgImage;
+                    }
+                }
+
+                console.log('  ⚠️ No og:image meta tag found, falling back to other methods...');
+
                 // TIER 1: Scan for large <img> tags (width/height > 300)
                 const imgRegex = /<img[^>]*src=["']([^"']+)["'][^>]*>/gi;
                 let imgMatch;

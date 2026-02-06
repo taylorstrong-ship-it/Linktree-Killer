@@ -90,14 +90,18 @@ serve(async (req) => {
         // ROBUST LOGGING: See exactly what the frontend sent
         console.log('📦 PAYLOAD RECEIVED:', JSON.stringify(body, null, 2));
 
-        const { image, isUrl, brandDNA, campaign } = body;
+        const { image, isUrl, brandDNA, campaign, sourceImageUrl } = body;
+
+        // 🎨 MULTIMODAL MODE DETECTION
+        const isBeautifierMode = !!sourceImageUrl;
+        console.log(`🎨 MODE: ${isBeautifierMode ? 'Image Enhancement (Beautifier)' : 'Standard Generation'}`);
 
         // VALIDATION: Ensure required data exists
         if (!brandDNA || !brandDNA.name) {
             throw new Error('Brand DNA with name is required for generation');
         }
 
-        if (!campaign) {
+        if (!campaign && !isBeautifierMode) {
             throw new Error('Campaign text is required for generation');
         }
 
@@ -105,13 +109,33 @@ serve(async (req) => {
             name: brandDNA.name,
             vibe: brandDNA.vibe,
             industry: brandDNA.industry,
-            hasImage: !!image
+            hasImage: !!image,
+            hasSourceImage: !!sourceImageUrl,
+            mode: isBeautifierMode ? 'BEAUTIFIER' : 'GENERATOR'
         });
 
         // STEP 3: Process Image (Server-side fetch if URL)
         let imagePart = null;
 
-        if (image && isUrl && image.startsWith('http')) {
+        // 🎨 BEAUTIFIER MODE: Fetch source image from heroImage
+        if (isBeautifierMode && sourceImageUrl) {
+            console.log('🖼️ BEAUTIFIER MODE: Fetching source image from heroImage...');
+            const imageData = await fetchImageAsBase64(sourceImageUrl);
+
+            if (imageData) {
+                imagePart = {
+                    inlineData: {
+                        data: imageData.base64,
+                        mimeType: imageData.mimeType
+                    }
+                };
+                console.log('✅ Source image loaded for enhancement');
+            } else {
+                console.warn('⚠️ Source image fetch failed, falling back to text-only generation');
+            }
+        }
+        // STANDARD MODE: Use provided reference image
+        else if (image && isUrl && image.startsWith('http')) {
             console.log('🌐 Server-side image fetch...');
             const imageData = await fetchImageAsBase64(image);
 
@@ -139,27 +163,83 @@ serve(async (req) => {
             }
         }
 
-        // STEP 4: Build Mega-Prompt (Creative Director Level)
+        // STEP 4: Build Industry-Specific Enhancement Prompts
 
-        // 1. Define the Role
-        const role = "You are a world-class creative director for high-end food and lifestyle brands on Instagram.";
+        const industry = (brandDNA?.industry || 'Business').toLowerCase();
+        const brandName = brandDNA?.name || 'this brand';
+        const vibe = brandDNA?.vibe || 'Premium';
+        const primaryColor = brandDNA?.primaryColor || '#FF6B35';
 
-        // 2. Define the Context based on inputs
-        const industry = brandDNA?.industry || "Business";
-        const vibe = brandDNA?.vibe || "Premium";
-        const primaryColor = brandDNA?.primaryColor || "#FF6B35";
-        const brandName = brandDNA?.name || "this brand";
+        let systemRole = '';
+        let enhancementInstructions = '';
+        let overlayInstructions = '';
 
-        const brandContext = `BRAND: ${brandName}. VIBE: ${vibe}. PRIMARY COLORS: ${primaryColor}. INDUSTRY: ${industry}.`;
-        const campaignContext = `CAMPAIGN GOAL: ${campaign}.`;
-        const visualReference = imagePart
-            ? `REFERENCE IMAGE STYLE: Capture the mood, lighting, and subject matter style of the attached image.`
-            : "";
+        // 🎨 BEAUTIFIER MODE: Industry-specific enhancement + Canva overlays
+        if (isBeautifierMode && imagePart) {
+            systemRole = "You are an expert AI Food Photographer and Graphic Designer. Your task is to take the provided source image, professionally enhance its quality to a high-end commercial standard, and then overlay professional marketing graphics and text onto it.";
 
-        // 3. The Core Instruction (The "Mega-Prompt")
-        const prompt = `
-${role}
+            // Industry-specific enhancement
+            if (industry.match(/food|restaurant|pizza|cafe|dining|bistro|italian|kitchen|bar|grill|eatery|deli|bakery|cuisine|culinary|chef/i)) {
+                enhancementInstructions = `
+BEAUTIFICATION FOR FOOD BRAND:
+- Enhance lighting to be WARM and APPETIZING (golden hour style)
+- Add subtle STEAM effects rising from hot food (if applicable)
+- Apply professional DEPTH OF FIELD (shallow focus on main dish)
+- Make colors more VIBRANT and saturated (especially reds, greens, yellows)
+- Refine textures to look mouth-watering
+- Maintain the original subject perfectly - DO NOT change the food item itself
+`;
+            } else if (industry.match(/beauty|hair|salon|spa|fashion|clothing|apparel|boutique|style/i)) {
+                enhancementInstructions = `
+BEAUTIFICATION FOR BEAUTY/FASHION BRAND:
+- Apply HIGH-END EDITORIAL LIGHTING (clean, professional)
+- SMOOTH TEXTURES and refine skin tones (if people present)
+- Add subtle BACKGROUND BLUR for focus
+- Enhance product details and clarity
+- Create a LUXURIOUS, premium feel
+- Maintain the original subject perfectly
+`;
+            } else {
+                enhancementInstructions = `
+PROFESSIONAL ENHANCEMENT:
+- Upgrade to HIGH-BUDGET COMMERCIAL photography quality
+- Improve lighting to be professional and balanced
+- Refine colors and contrast
+- Add depth and dimension
+- Make it look like a premium brand asset
+- Maintain the original subject perfectly
+`;
+            }
 
+            // Canva-style graphic overlays
+            const hook = industry.match(/food/i) ? 'Taste the Magic' :
+                industry.match(/beauty|fashion/i) ? 'Elevate Your Style' :
+                    'Discover More';
+            const cta = industry.match(/food/i) ? 'Order Now' :
+                industry.match(/beauty|fashion/i) ? 'Shop Now' :
+                    'Learn More';
+
+            overlayInstructions = `
+CANVA-STYLE GRAPHIC OVERLAY:
+- Apply a SUBTLE DARK GRADIENT overlay to the bottom third of the image (for text readability)
+- Render bold, modern HEADLINE TEXT: "${hook || campaign}" in white, positioned in the lower third
+- Create a BUTTON-STYLE GRAPHIC with rounded corners containing the text: "${cta}"
+- Use the brand's primary color (${primaryColor}) for the CTA button background
+- Ensure text is clearly legible and professionally integrated into the design
+- The final output must be a single, polished marketing graphic ready for Instagram
+`;
+        }
+        // 🎯 STANDARD MODE: Creative director prompt
+        else {
+            systemRole = "You are a world-class creative director for high-end food and lifestyle brands on Instagram.";
+
+            const brandContext = `BRAND: ${brandName}. VIBE: ${vibe}. PRIMARY COLORS: ${primaryColor}. INDUSTRY: ${industry}.`;
+            const campaignContext = `CAMPAIGN GOAL: ${campaign}.`;
+            const visualReference = imagePart
+                ? `REFERENCE IMAGE STYLE: Capture the mood, lighting, and subject matter style of the attached image.`
+                : "";
+
+            enhancementInstructions = `
 TASK: Create a visually stunning, scroll-stopping Instagram feed image for the brand described below.
 
 ${brandContext}
@@ -174,7 +254,10 @@ REQUIREMENTS:
 - Use professional lighting (studio quality or natural light that enhances the subject).
 - Maintain Instagram-optimized square (1:1) composition with visual balance.
 - Ensure the image commands attention and stops the scroll.
-`.trim();
+`;
+        }
+
+        const prompt = `${systemRole}\n\n${enhancementInstructions}\n${overlayInstructions}`.trim();
 
         console.log(`🤖 Generating with Gemini 3 Pro Image Preview...`);
         console.log(`   Strategy: ${imagePart ? "Image-to-Image Remix" : "Text-to-Image Generation"}`);
