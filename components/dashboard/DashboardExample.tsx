@@ -11,7 +11,7 @@ import { useState, useEffect } from 'react';
 import SocialPreviewWidget from '@/components/dashboard/SocialPreviewWidget';
 
 export default function DashboardExample() {
-    const [brandData, setBrandData] = useState(null);
+    const [brandData, setBrandData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
 
     // Fetch brand data on mount (replace with your actual data source)
