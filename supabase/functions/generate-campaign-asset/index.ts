@@ -202,46 +202,69 @@ serve(async (req) => {
 
         // ✨ PATH A: We have a source image - ENHANCE IT
         if (hasSourceImage) {
-            userPrompt = `I am providing a raw photo from the client's website.
+            userPrompt = `You are a Graphic Designer creating a luxury social media ad.
 
-1. **ENHANCE:** Keep the subject EXACTLY as is (do not hallucinate a new dish/product). Fix the lighting, color grading, and visual appeal to make it look high-end and professional.
+**TASK:** Polish the provided image and add professional overlay text.
 
-2. **DESIGN:** Overlay the headline "${brandDNA?.adHook || campaign || 'Special Offer'}" in modern white typography and a button with "${brandDNA?.cta || 'Learn More'}".
+**VISUAL INSTRUCTIONS (DO NOT WRITE THIS TEXT ON THE IMAGE):**
+- Keep the subject EXACTLY as is (do not hallucinate new objects)
+- Fix lighting, color grading, and visual appeal
+- Make it look high-end and professional
+- DO NOT change the product/subject itself
 
-3. **CONSTRAINT:** Do not change the food/product/subject itself. Just polish it to look premium.
+**TEXT OVERLAY INSTRUCTIONS (ONLY WRITE THIS TEXT):**
+- HEADLINE: "${brandDNA?.adHook || campaign || 'Special Offer'}" (Render in large, modern white typography)
+- BUTTON: "${brandDNA?.cta || 'Learn More'}" (Render inside a pill-shaped button)
 
-BRAND CONTEXT:
+**BRAND CONTEXT:**
 - Name: ${brandName}
 - Industry: ${industry}
 - Vibe: ${vibe}
 - Primary Color: ${primaryColor}
 
+**CRITICAL NEGATIVE CONSTRAINT:**
+- DO NOT write "VISUAL INSTRUCTIONS" on the image
+- DO NOT write "Keep the subject EXACTLY as is" on the image
+- DO NOT write "Fix lighting" on the image
+- ONLY render the HEADLINE and BUTTON text specified above
+
 OUTPUT: A polished, professional ad graphic ready for Instagram.`;
         }
         // 🔥 PATH B: No source image - GENERATE FROM BRAND DNA
         else {
-            userPrompt = `I do not have a source photo. You must hallucinate the perfect asset based on this Brand DNA:
+            userPrompt = `You are a Graphic Designer creating a luxury social media ad from scratch.
 
-BRAND: ${brandName}
-INDUSTRY: ${industry}
-DESCRIPTION: ${description}
-VIBE: ${vibe}
+**TASK:** Create a photorealistic image for this brand: ${brandName}.
 
-1. **VISUALIZE:** Generate a photorealistic image of the brand's core offering:
-   - If Italian Restaurant → Draw perfect Lasagna or Pasta
-   - If Plumber → Draw a modern, luxurious bathroom
-   - If Tech Startup → Draw a glowing dashboard on a premium laptop
-   - If Landscaping → Draw lush green gardens, outdoor transformation
-   - If Salon/Beauty → Draw a happy client with fresh hairstyle in modern salon
-   - Otherwise: Deduce from the industry what the brand's core visual should be
+**VISUAL INSTRUCTIONS (DO NOT WRITE THIS TEXT ON THE IMAGE):**
+- Subject: Based on ${industry}
+  * If Salon/Beauty → Beautiful hair, happy client in modern salon
+  * If Food/Restaurant → Delicious plated dish, professional food photography
+  * If Tech/SaaS → Glowing dashboard on premium laptop
+  * If Landscaping → Lush green gardens, outdoor transformation
+  * If Plumber → Modern, luxurious bathroom
+  * Otherwise → Deduce from industry what the brand's core visual should be
+- Style: Photorealistic, High-End, Professional Lighting
+- NO PEOPLE IN SUITS (unless Law Firm, Consulting, or Corporate Business)
+- NO generic office supplies or stock photos
+- Focus on the actual product/service
 
-2. **DESIGN:** Overlay the headline "${brandDNA?.adHook || campaign || 'Get Started Today'}" in modern white typography and a button with "${brandDNA?.cta || 'Book Now'}".
+**TEXT OVERLAY INSTRUCTIONS (ONLY WRITE THIS TEXT):**
+- HEADLINE: "${brandDNA?.adHook || campaign || 'Get Started Today'}" (Render in large, elegant typography)
+- BUTTON: "${brandDNA?.cta || 'Book Now'}" (Render inside a pill-shaped button)
 
-3. **NEGATIVE CONSTRAINT:** 
-   - NO PEOPLE IN SUITS unless this is explicitly a Law Firm, Consulting Agency, or Corporate Business
-   - NO generic office supplies or conference rooms
-   - Focus on the actual product/service the brand offers
-   - Use photorealistic quality, not cartoon or clipart
+**BRAND CONTEXT:**
+- Name: ${brandName}
+- Industry: ${industry}
+- Description: ${description}
+- Vibe: ${vibe}
+
+**CRITICAL NEGATIVE CONSTRAINT:**
+- DO NOT write "A high-quality lifestyle shot" on the image
+- DO NOT write "Photorealistic image" on the image
+- DO NOT write "Based on ${industry}" on the image
+- DO NOT write the visual description as text
+- ONLY render the HEADLINE and BUTTON text specified above
 
 OUTPUT: A scroll-stopping Instagram ad that looks like a professional agency created it.`;
         }
