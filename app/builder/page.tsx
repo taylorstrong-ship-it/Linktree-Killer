@@ -25,7 +25,7 @@
 // @ts-nocheck
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase/client'
 import ImageUpload from '@/components/upload/ImageUpload'
@@ -80,7 +80,7 @@ interface ProfileData {
     gallery_images: string[]
 }
 
-export default function BuilderPage() {
+function BuilderPageContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const [isAuthenticated, setIsAuthenticated] = useState(false) // Default to guest mode
@@ -1791,5 +1791,24 @@ export default function BuilderPage() {
                 href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
             />
         </>
+    )
+}
+
+// Wrap in Suspense to satisfy Next.js useSearchParams() requirement
+export default function BuilderPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center bg-slate-950">
+                <div className="text-center">
+                    <div className="relative w-16 h-16 mx-auto mb-6">
+                        <div className="absolute inset-0 border-4 border-[#DC0000]/20 rounded-full"></div>
+                        <div className="absolute inset-0 border-4 border-transparent border-t-[#DC0000] rounded-full animate-spin"></div>
+                    </div>
+                    <p className="text-gray-400 font-sans">Loading builder...</p>
+                </div>
+            </div>
+        }>
+            <BuilderPageContent />
+        </Suspense>
     )
 }
