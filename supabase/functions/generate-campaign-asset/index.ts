@@ -163,101 +163,121 @@ serve(async (req) => {
             }
         }
 
-        // STEP 4: Build Industry-Specific Enhancement Prompts
+        // STEP 4: Build Universal Art Director Prompt
 
-        const industry = (brandDNA?.industry || 'Business').toLowerCase();
         const brandName = brandDNA?.name || 'this brand';
+        const industry = brandDNA?.industry || 'Business';
+        const description = brandDNA?.description || brandDNA?.tagline || '';
         const vibe = brandDNA?.vibe || 'Premium';
         const primaryColor = brandDNA?.primaryColor || '#FF6B35';
 
         let systemRole = '';
-        let enhancementInstructions = '';
-        let overlayInstructions = '';
+        let artDirectorPrompt = '';
 
-        // 🎨 BEAUTIFIER MODE: Industry-specific enhancement + Canva overlays
+        // 🎨 BEAUTIFIER MODE: Universal enhancement + Canva overlays
         if (isBeautifierMode && imagePart) {
-            systemRole = "You are an expert AI Food Photographer and Graphic Designer. Your task is to take the provided source image, professionally enhance its quality to a high-end commercial standard, and then overlay professional marketing graphics and text onto it.";
+            systemRole = "You are an elite Art Director with expertise in food photography, product photography, and commercial branding. Your mission is to take any brand's source image and transform it into a scroll-stopping marketing asset.";
 
-            // Industry-specific enhancement
-            if (industry.match(/food|restaurant|pizza|cafe|dining|bistro|italian|kitchen|bar|grill|eatery|deli|bakery|cuisine|culinary|chef/i)) {
-                enhancementInstructions = `
-BEAUTIFICATION FOR FOOD BRAND:
-- Enhance lighting to be WARM and APPETIZING (golden hour style)
-- Add subtle STEAM effects rising from hot food (if applicable)
-- Apply professional DEPTH OF FIELD (shallow focus on main dish)
-- Make colors more VIBRANT and saturated (especially reds, greens, yellows)
-- Refine textures to look mouth-watering
-- Maintain the original subject perfectly - DO NOT change the food item itself
-`;
-            } else if (industry.match(/beauty|hair|salon|spa|fashion|clothing|apparel|boutique|style/i)) {
-                enhancementInstructions = `
-BEAUTIFICATION FOR BEAUTY/FASHION BRAND:
-- Apply HIGH-END EDITORIAL LIGHTING (clean, professional)
-- SMOOTH TEXTURES and refine skin tones (if people present)
-- Add subtle BACKGROUND BLUR for focus
-- Enhance product details and clarity
-- Create a LUXURIOUS, premium feel
-- Maintain the original subject perfectly
-`;
-            } else {
-                enhancementInstructions = `
-PROFESSIONAL ENHANCEMENT:
-- Upgrade to HIGH-BUDGET COMMERCIAL photography quality
-- Improve lighting to be professional and balanced
-- Refine colors and contrast
-- Add depth and dimension
-- Make it look like a premium brand asset
-- Maintain the original subject perfectly
-`;
-            }
+            // Universal enhancement instructions (analyzes brand context dynamically)
+            artDirectorPrompt = `
+BRAND CONTEXT:
+- Name: ${brandName}
+- Industry: ${industry}
+- Description: ${description}
+- Vibe: ${vibe}
 
-            // Canva-style graphic overlays
-            const hook = industry.match(/food/i) ? 'Taste the Magic' :
-                industry.match(/beauty|fashion/i) ? 'Elevate Your Style' :
-                    'Discover More';
-            const cta = industry.match(/food/i) ? 'Order Now' :
-                industry.match(/beauty|fashion/i) ? 'Shop Now' :
-                    'Learn More';
+TASK: Analyze the provided source image and the brand context above. Professionally enhance the image to match the brand's vibe and industry, following these rules:
 
-            overlayInstructions = `
-CANVA-STYLE GRAPHIC OVERLAY:
-- Apply a SUBTLE DARK GRADIENT overlay to the bottom third of the image (for text readability)
-- Render bold, modern HEADLINE TEXT: "${hook || campaign}" in white, positioned in the lower third
-- Create a BUTTON-STYLE GRAPHIC with rounded corners containing the text: "${cta}"
-- Use the brand's primary color (${primaryColor}) for the CTA button background
-- Ensure text is clearly legible and professionally integrated into the design
-- The final output must be a single, polished marketing graphic ready for Instagram
+1. **QUALITY ENHANCEMENT:**
+   - Upgrade lighting to be professional and ${vibe.toLowerCase()} (e.g., warm golden hour for food, clean editorial for beauty, modern cyberpunk for tech)
+   - Enhance colors, contrast, and textures to look premium
+   - Apply appropriate depth of field based on subject matter
+   - Add atmospheric effects if relevant (steam for food, subtle bokeh for fashion, etc.)
+   - Maintain the original subject perfectly - DO NOT change what the image depicts
+
+2. **INDUSTRY-SPECIFIC REFINEMENT:**
+   - Deduce from the industry what enhancement style fits best
+   - If food/restaurant: warm appetizing lighting, vibrant colors, steam effects
+   - If beauty/fashion/salon: editorial lighting, smooth textures, luxurious feel
+   - If tech/software: modern clean aesthetic, vibrant screens, futuristic vibe
+   - If landscaping/outdoor: lush natural colors, golden hour lighting
+   - If fitness/wellness: energetic dynamic feel, vibrant athletic aesthetic
+   - Otherwise: high-budget commercial photography standard
+
+3. **AVOID GENERIC BUSINESS IMAGERY:**
+   - Do NOT add suits, ties, or generic office scenes unless the brand is literally corporate consulting or law
+   - Do NOT turn this into a conference room meeting
+   - Focus on the actual product or service the brand offers
+
+4. **CANVA-STYLE GRAPHIC OVERLAY:**
+   - Apply a SUBTLE DARK GRADIENT overlay to the bottom third of the image (for text readability)
+   - Render bold, modern HEADLINE TEXT in white, positioned in the lower third
+   - Use a contextually relevant headline based on industry (e.g., "Taste the Magic" for food, "Elevate Your Style" for fashion, "Transform Your Space" for design, "Level Up" for fitness)
+   - Create a BUTTON-STYLE GRAPHIC with rounded corners containing a relevant CTA
+   - Use the brand's primary color (${primaryColor}) for the CTA button background
+   - Ensure text is clearly legible and professionally integrated into the design
+
+5. **FINAL OUTPUT:**
+   - The result must be a single, polished marketing graphic ready for Instagram
+   - It should look like a professional ad agency created it
+   - It must stop the scroll and command attention
 `;
         }
-        // 🎯 STANDARD MODE: Creative director prompt
+        // 🎯 STANDARD MODE: Universal creative director for text-to-image
         else {
-            systemRole = "You are a world-class creative director for high-end food and lifestyle brands on Instagram.";
+            systemRole = "You are a world-class creative director and Art Director. Your specialty is translating brand DNA into stunning, scroll-stopping visual content.";
 
-            const brandContext = `BRAND: ${brandName}. VIBE: ${vibe}. PRIMARY COLORS: ${primaryColor}. INDUSTRY: ${industry}.`;
-            const campaignContext = `CAMPAIGN GOAL: ${campaign}.`;
-            const visualReference = imagePart
-                ? `REFERENCE IMAGE STYLE: Capture the mood, lighting, and subject matter style of the attached image.`
-                : "";
+            artDirectorPrompt = `
+BRAND CONTEXT:
+- Name: ${brandName}
+- Industry: ${industry}
+- Description: ${description}
+- Vibe: ${vibe}
+- Primary Color: ${primaryColor}
+- Campaign Goal: ${campaign}
 
-            enhancementInstructions = `
-TASK: Create a visually stunning, scroll-stopping Instagram feed image for the brand described below.
+TASK: Create a photorealistic, Instagram-optimized image for this brand's social media ad. Follow this strict recipe:
 
-${brandContext}
-${campaignContext}
-${visualReference}
+1. **ANALYZE THE BRAND:**
+   - What is the core product or service?
+   - What visual scenes would represent this brand authentically?
+   - What should we absolutely AVOID? (e.g., generic suits for non-corporate brands)
 
-REQUIREMENTS:
-- The image must perfectly embody the brand's vibe and color palette.
-- The composition should be editorial and professional, not like a cheap stock photo.
-- If text is included in the image, it must be naturally integrated into the scene (e.g., a neon sign on a wall, handwritten on a menu, part of the environment) and NOT overlaid as generic digital text.
-- Focus on appetizing, high-quality visuals related to the ${industry} industry.
-- Use professional lighting (studio quality or natural light that enhances the subject).
-- Maintain Instagram-optimized square (1:1) composition with visual balance.
-- Ensure the image commands attention and stops the scroll.
+2. **DEDUCE THE SUBJECT:**
+   - If food/restaurant: Show delicious plated dishes, close-up food photography, appetizing presentation
+   - If beauty/salon/spa: Editorial beauty shots, product displays, luxurious spa environments
+   - If tech/software: Futuristic dashboards, modern workspace with screens, innovative technology in action
+   - If landscaping/outdoor: Lush gardens, outdoor transformations, nature in vivid detail
+   - If fitness/wellness: Dynamic athletic scenes, vibrant gym environments, people in motion
+   - If retail/ecommerce: Product displays, storefront vibes, shopping experiences
+   - If consulting/corporate: ONLY for these: professional office scenes are acceptable
+   - Otherwise: Deduce from the business name and description what visual best represents their service
+
+3. **LIGHTING & MOOD:**
+   - Match the ${vibe} vibe with appropriate lighting
+   - Use professional photography techniques (golden hour, studio lighting, natural light, etc.)
+   - Create depth and dimension with shadows and highlights
+
+4. **COMPOSITION:**
+   - Instagram-optimized square (1:1) format
+   - Visual balance with clear focal point
+   - Professional framing that commands attention
+
+5. **CONSTRAINTS:**
+   - Do NOT add generic text overlays or cheesy stock photo text
+   - Do NOT default to "people in suits" unless explicitly a corporate law/consulting firm
+   - Do NOT use clipart or cartoon styles
+   - Focus on photorealism and editorial quality
+   - If text appears naturally in the scene (signage, menus, etc.), that's acceptable
+
+6. **FINAL OUTPUT:**
+   - The image must embody the brand's industry and vibe perfectly
+   - It should look like a high-end professional photoshoot
+   - It must stop the scroll on Instagram
 `;
         }
 
-        const prompt = `${systemRole}\n\n${enhancementInstructions}\n${overlayInstructions}`.trim();
+        const prompt = `${systemRole}\n\n${artDirectorPrompt}`.trim();
 
         console.log(`🤖 Generating with Gemini 3 Pro Image Preview...`);
         console.log(`   Strategy: ${imagePart ? "Image-to-Image Remix" : "Text-to-Image Generation"}`);
