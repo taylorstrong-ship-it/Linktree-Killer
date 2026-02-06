@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase/client'
 import InstagramPreview from '@/components/generator/InstagramPreview'
@@ -17,7 +17,7 @@ interface BrandDNA {
     brand_personality?: string[]
 }
 
-export default function GeneratorPage() {
+function GeneratorPageContent() {
     const searchParams = useSearchParams()
 
     const [brandDNA, setBrandDNA] = useState<BrandDNA | null>(null)
@@ -344,5 +344,18 @@ export default function GeneratorPage() {
                 </div>
             </div>
         </div>
+    )
+}
+
+// Wrap in Suspense to satisfy Next.js useSearchParams() requirement
+export default function GeneratorPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen bg-black flex items-center justify-center">
+                <div className="text-zinc-500">Loading generator...</div>
+            </div>
+        }>
+            <GeneratorPageContent />
+        </Suspense>
     )
 }
