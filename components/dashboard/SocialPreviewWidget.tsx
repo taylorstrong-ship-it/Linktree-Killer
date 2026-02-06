@@ -108,25 +108,51 @@ export default function SocialPreviewWidget({
                 setVibe(smartVibe);
                 setCampaign(campaign);
 
+
                 // 🎬 SMART SCENE ROUTER: Industry-specific visual templates
                 const industry = (brandData.industry || '').toLowerCase();
                 const brandName = brandData.businessName || 'Brand';
-                let scenePrompt = '';
 
-                // Industry-specific scene templates
-                if (industry.includes('beauty') || industry.includes('salon') || industry.includes('hair')) {
-                    scenePrompt = `A stunning, photorealistic lifestyle shot inside a modern ${smartVibe.toLowerCase()} salon. Soft ring-light focus. A happy client showing off a fresh hairstyle, looking confident. In the background, a mirror or elegant neon sign clearly displays the text '${brandName}'. Professional salon atmosphere with premium products visible. Natural lighting. Instagram aesthetic.`;
-                } else if (industry.includes('food') || industry.includes('restaurant') || industry.includes('cafe')) {
-                    scenePrompt = `A mouth-watering, high-angle food photography shot of delicious ${industry} dishes beautifully plated on a rustic wooden table. Steam gently rising. Warm, appetizing lighting. A small elegant card next to the plate displays 'Order Now' or 'Book a Table'. Professional food styling. Instagram foodie aesthetic.`;
-                } else if (industry.includes('tech') || industry.includes('saas') || industry.includes('software') || industry.includes('app')) {
+                // 🔍 FUZZY KEYWORD DETECTION: Regex patterns for flexible matching
+                let scenePrompt = '';
+                let noSuitsRule = '';
+
+
+                // Determine if this is a corporate industry (allowed to have office scenes)
+                const isCorporate = industry.match(/finance|law|consulting|agency|tech|software|saas|b2b|enterprise/i);
+
+                // 🍕 FOOD & RESTAURANT - Fuzzy match for all food-related keywords
+                if (industry.match(/food|restaurant|pizza|cafe|dining|bistro|italian|kitchen|bar|grill|eatery|deli|bakery|cuisine|culinary|chef/i)) {
+                    scenePrompt = `A mouth-watering, CLOSE-UP food photography shot of delicious ${brandName} dishes beautifully plated. MACRO SHOT with shallow depth of field. Steam gently rising. Warm, appetizing lighting (golden hour style). A small elegant card displays 'Order Now'. Professional food styling. Food photography style, appetizing, rustic wooden table or marble surface. Instagram foodie aesthetic.`;
+                    noSuitsRule = 'Do NOT show people in suits. Do NOT show meetings. Do NOT show generic office supplies.';
+
+                    // 💇 BEAUTY & SALON - Fuzzy match for beauty-related keywords
+                } else if (industry.match(/beauty|hair|salon|spa|lash|aesthetic|skin|makeup|nails|barber|stylist/i)) {
+                    scenePrompt = `A stunning, photorealistic lifestyle shot inside a modern ${smartVibe.toLowerCase()} salon. Soft ring-light focus. A happy client showing off a fresh hairstyle, looking confident. In the background, a mirror or elegant neon sign clearly displays '${brandName}'. Professional salon atmosphere with premium products visible. Natural lighting. Instagram aesthetic.`;
+                    noSuitsRule = 'Do NOT show people in suits. Do NOT show meetings. Do NOT show generic office supplies.';
+
+                    // 💼 TECH & SaaS - Corporate allowed
+                } else if (industry.match(/tech|saas|software|app|startup|developer|digital|platform|cloud/i)) {
                     scenePrompt = `A sleek, futuristic workspace featuring a premium laptop screen prominently displaying the ${brandName} logo glowing. ${smartVibe === 'Minimalist' ? 'Clean white lighting with minimal distractions' : 'Cyberpunk-inspired lighting with subtle neon accents'}. Modern tech setup. Professional developer/designer workspace. High-end aesthetic.`;
-                } else if (industry.includes('fashion') || industry.includes('clothing') || industry.includes('apparel')) {
-                    scenePrompt = `A high-fashion lifestyle shot featuring a confident model wearing stylish ${industry} pieces. Urban or studio setting. Professional fashion photography lighting. A subtle sign or tag displays '${brandName}' or 'Shop Now'. Magazine-quality aesthetic. Influencer-style content.`;
-                } else if (industry.includes('fitness') || industry.includes('gym') || industry.includes('wellness')) {
-                    scenePrompt = `An energetic, motivational fitness scene showing an athlete in action at a premium ${industry} facility. Dynamic lighting. The ${brandName} logo visible on equipment or apparel. Inspiring atmosphere. Professional sports photography quality. Instagram fitness aesthetic.`;
+
+                    // 👗 FASHION - Fuzzy match
+                } else if (industry.match(/fashion|clothing|apparel|boutique|style|wear|accessories|jewelry/i)) {
+                    scenePrompt = `A high-fashion lifestyle shot featuring a confident model wearing stylish ${brandName} pieces. Urban or studio setting. Professional fashion photography lighting. A subtle sign or tag displays '${brandName}' or 'Shop Now'. Magazine-quality aesthetic. Influencer-style content.`;
+                    noSuitsRule = 'Do NOT show people in suits. Do NOT show meetings. Do NOT show generic office supplies.';
+
+                    // 💪 FITNESS - Fuzzy match
+                } else if (industry.match(/fitness|gym|wellness|yoga|personal training|health|workout|athletic/i)) {
+                    scenePrompt = `An energetic, motivational fitness scene showing an athlete in action at a premium facility. Dynamic lighting. The ${brandName} logo visible on equipment or apparel. Inspiring atmosphere. Professional sports photography quality. Instagram fitness aesthetic.`;
+                    noSuitsRule = 'Do NOT show people in suits. Do NOT show meetings. Do NOT show generic office supplies.';
+
+                    // ⚖️ CORPORATE (Finance, Law, Consulting) - Office scenes allowed
+                } else if (industry.match(/finance|law|consulting|legal|accounting|advisory|insurance/i)) {
+                    scenePrompt = `A professional, modern office environment. ${smartVibe} aesthetic. The ${brandName} logo prominently displayed. Clean, corporate atmosphere. High-end business aesthetic.`;
+
                 } else {
-                    // Default: High-quality lifestyle product shot
+                    // Default: High-quality lifestyle product shot (NO suits by default)
                     scenePrompt = `A high-quality lifestyle product shot featuring ${brandName} branding in a real-world, professional setting. Natural lighting. Premium aesthetic. People interacting with the product/service. Authentic, candid moment. Influencer-quality content.`;
+                    noSuitsRule = 'Do NOT show people in suits. Do NOT show meetings. Do NOT show generic office supplies.';
                 }
 
                 // 🎯 ENRICHED CAMPAIGN PROMPT with Anti-Bore Filter & Embedded CTA
@@ -134,7 +160,7 @@ export default function SocialPreviewWidget({
 
 EMBEDDED CTA REQUIREMENT: Naturally render the text 'Link in Bio' or 'Book Now' or '${brandName}' somewhere visible in the scene (on a sign, card, screen, or branded element).
 
-ANTI-BORE FILTER - Do NOT generate:
+${noSuitsRule ? noSuitsRule + '\n\n' : ''}ANTI-BORE FILTER - Do NOT generate:
 - Generic notebooks, journals, or diaries
 - Flat lays with office supplies
 - Generic stock photos of books or papers
