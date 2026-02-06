@@ -163,8 +163,9 @@ serve(async (req) => {
             }
         }
 
-        // STEP 4: Build Universal Art Director Prompt
+        // 🧠 THE "BRAIN": Two-Path Intelligent Prompt Construction
 
+        // Extract brand variables
         const brandName = brandDNA?.name || 'this brand';
         const industry = brandDNA?.industry || 'Business';
         const description = brandDNA?.description || brandDNA?.tagline || '';
@@ -172,115 +173,71 @@ serve(async (req) => {
         const primaryColor = brandDNA?.primaryColor || '#FF6B35';
 
         let systemRole = '';
-        let artDirectorPrompt = '';
+        let userPrompt = '';
 
-        // 🎨 BEAUTIFIER MODE: Universal enhancement + Canva overlays
-        if (isBeautifierMode && imagePart) {
-            systemRole = "You are an elite Art Director with expertise in food photography, product photography, and commercial branding. Your mission is to take any brand's source image and transform it into a scroll-stopping marketing asset.";
 
-            // Universal enhancement instructions (analyzes brand context dynamically)
-            artDirectorPrompt = `
+        // 👁️ STEP A: Determine if we have a source image
+        const hasSourceImage = !!imagePart;
+        console.log(`🎯 Decision: ${hasSourceImage ? 'PATH A - Enhance Existing Image' : 'PATH B - Generate From Scratch'}`);
+
+        // 🎨 System Instruction (Same for both paths)
+        systemRole = "You are an elite Creative Director and Graphic Designer. Your goal is to produce a production-ready social media ad.";
+
+        // ✨ PATH A: We have a source image - ENHANCE IT
+        if (hasSourceImage) {
+            userPrompt = `I am providing a raw photo from the client's website.
+
+1. **ENHANCE:** Keep the subject EXACTLY as is (do not hallucinate a new dish/product). Fix the lighting, color grading, and visual appeal to make it look high-end and professional.
+
+2. **DESIGN:** Overlay the headline "${brandDNA?.adHook || campaign || 'Special Offer'}" in modern white typography and a button with "${brandDNA?.cta || 'Learn More'}".
+
+3. **CONSTRAINT:** Do not change the food/product/subject itself. Just polish it to look premium.
+
 BRAND CONTEXT:
 - Name: ${brandName}
 - Industry: ${industry}
-- Description: ${description}
-- Vibe: ${vibe}
-
-TASK: Analyze the provided source image and the brand context above. Professionally enhance the image to match the brand's vibe and industry, following these rules:
-
-1. **QUALITY ENHANCEMENT:**
-   - Upgrade lighting to be professional and ${vibe.toLowerCase()} (e.g., warm golden hour for food, clean editorial for beauty, modern cyberpunk for tech)
-   - Enhance colors, contrast, and textures to look premium
-   - Apply appropriate depth of field based on subject matter
-   - Add atmospheric effects if relevant (steam for food, subtle bokeh for fashion, etc.)
-   - Maintain the original subject perfectly - DO NOT change what the image depicts
-
-2. **INDUSTRY-SPECIFIC REFINEMENT:**
-   - Deduce from the industry what enhancement style fits best
-   - If food/restaurant: warm appetizing lighting, vibrant colors, steam effects
-   - If beauty/fashion/salon: editorial lighting, smooth textures, luxurious feel
-   - If tech/software: modern clean aesthetic, vibrant screens, futuristic vibe
-   - If landscaping/outdoor: lush natural colors, golden hour lighting
-   - If fitness/wellness: energetic dynamic feel, vibrant athletic aesthetic
-   - Otherwise: high-budget commercial photography standard
-
-3. **AVOID GENERIC BUSINESS IMAGERY:**
-   - Do NOT add suits, ties, or generic office scenes unless the brand is literally corporate consulting or law
-   - Do NOT turn this into a conference room meeting
-   - Focus on the actual product or service the brand offers
-
-4. **CANVA-STYLE GRAPHIC OVERLAY:**
-   - Apply a SUBTLE DARK GRADIENT overlay to the bottom third of the image (for text readability)
-   - Render bold, modern HEADLINE TEXT in white, positioned in the lower third
-   - Use a contextually relevant headline based on industry (e.g., "Taste the Magic" for food, "Elevate Your Style" for fashion, "Transform Your Space" for design, "Level Up" for fitness)
-   - Create a BUTTON-STYLE GRAPHIC with rounded corners containing a relevant CTA
-   - Use the brand's primary color (${primaryColor}) for the CTA button background
-   - Ensure text is clearly legible and professionally integrated into the design
-
-5. **FINAL OUTPUT:**
-   - The result must be a single, polished marketing graphic ready for Instagram
-   - It should look like a professional ad agency created it
-   - It must stop the scroll and command attention
-`;
-        }
-        // 🎯 STANDARD MODE: Universal creative director for text-to-image
-        else {
-            systemRole = "You are a world-class creative director and Art Director. Your specialty is translating brand DNA into stunning, scroll-stopping visual content.";
-
-            artDirectorPrompt = `
-BRAND CONTEXT:
-- Name: ${brandName}
-- Industry: ${industry}
-- Description: ${description}
 - Vibe: ${vibe}
 - Primary Color: ${primaryColor}
-- Campaign Goal: ${campaign}
 
-TASK: Create a photorealistic, Instagram-optimized image for this brand's social media ad. Follow this strict recipe:
+OUTPUT: A polished, professional ad graphic ready for Instagram.`;
+        }
+        // 🔥 PATH B: No source image - GENERATE FROM BRAND DNA
+        else {
+            userPrompt = `I do not have a source photo. You must hallucinate the perfect asset based on this Brand DNA:
 
-1. **ANALYZE THE BRAND:**
-   - What is the core product or service?
-   - What visual scenes would represent this brand authentically?
-   - What should we absolutely AVOID? (e.g., generic suits for non-corporate brands)
+BRAND: ${brandName}
+INDUSTRY: ${industry}
+DESCRIPTION: ${description}
+VIBE: ${vibe}
 
-2. **DEDUCE THE SUBJECT:**
-   - If food/restaurant: Show delicious plated dishes, close-up food photography, appetizing presentation
-   - If beauty/salon/spa: Editorial beauty shots, product displays, luxurious spa environments
-   - If tech/software: Futuristic dashboards, modern workspace with screens, innovative technology in action
-   - If landscaping/outdoor: Lush gardens, outdoor transformations, nature in vivid detail
-   - If fitness/wellness: Dynamic athletic scenes, vibrant gym environments, people in motion
-   - If retail/ecommerce: Product displays, storefront vibes, shopping experiences
-   - If consulting/corporate: ONLY for these: professional office scenes are acceptable
-   - Otherwise: Deduce from the business name and description what visual best represents their service
+1. **VISUALIZE:** Generate a photorealistic image of the brand's core offering:
+   - If Italian Restaurant → Draw perfect Lasagna or Pasta
+   - If Plumber → Draw a modern, luxurious bathroom
+   - If Tech Startup → Draw a glowing dashboard on a premium laptop
+   - If Landscaping → Draw lush green gardens, outdoor transformation
+   - If Salon/Beauty → Draw a happy client with fresh hairstyle in modern salon
+   - Otherwise: Deduce from the industry what the brand's core visual should be
 
-3. **LIGHTING & MOOD:**
-   - Match the ${vibe} vibe with appropriate lighting
-   - Use professional photography techniques (golden hour, studio lighting, natural light, etc.)
-   - Create depth and dimension with shadows and highlights
+2. **DESIGN:** Overlay the headline "${brandDNA?.adHook || campaign || 'Get Started Today'}" in modern white typography and a button with "${brandDNA?.cta || 'Book Now'}".
 
-4. **COMPOSITION:**
-   - Instagram-optimized square (1:1) format
-   - Visual balance with clear focal point
-   - Professional framing that commands attention
+3. **NEGATIVE CONSTRAINT:** 
+   - NO PEOPLE IN SUITS unless this is explicitly a Law Firm, Consulting Agency, or Corporate Business
+   - NO generic office supplies or conference rooms
+   - Focus on the actual product/service the brand offers
+   - Use photorealistic quality, not cartoon or clipart
 
-5. **CONSTRAINTS:**
-   - Do NOT add generic text overlays or cheesy stock photo text
-   - Do NOT default to "people in suits" unless explicitly a corporate law/consulting firm
-   - Do NOT use clipart or cartoon styles
-   - Focus on photorealism and editorial quality
-   - If text appears naturally in the scene (signage, menus, etc.), that's acceptable
-
-6. **FINAL OUTPUT:**
-   - The image must embody the brand's industry and vibe perfectly
-   - It should look like a high-end professional photoshoot
-   - It must stop the scroll on Instagram
-`;
+OUTPUT: A scroll-stopping Instagram ad that looks like a professional agency created it.`;
         }
 
-        const prompt = `${systemRole}\n\n${artDirectorPrompt}`.trim();
+        const prompt = `${systemRole}\n\n${userPrompt}`.trim();
 
-        console.log(`🤖 Generating with Gemini 3 Pro Image Preview...`);
-        console.log(`   Strategy: ${imagePart ? "Image-to-Image Remix" : "Text-to-Image Generation"}`);
+        console.log(`🤖 Gemini 3 Prompt Strategy:`);
+        console.log(`   Path: ${hasSourceImage ? 'IMAGE ENHANCEMENT' : 'TEXT-TO-IMAGE GENERATION'}`);
+        console.log(`   Model: ${MODEL_NAME}`);
+        console.log(`   Timeout: 60s`);
+        console.log(`   Brand: ${brandName} (${industry})`);
+        console.log(`   CTA: ${brandDNA?.cta || 'Learn More'}`);
+        console.log(`   Headline: ${brandDNA?.adHook || campaign}`);
 
         // STEP 5: Call Gemini 3 API with 15-second timeout controller
         const parts: any[] = [{ text: prompt }];
@@ -289,8 +246,9 @@ TASK: Create a photorealistic, Instagram-optimized image for this brand's social
         const geminiStartTime = Date.now();
 
         // 🛡️ TIMEOUT CONTROLLER: Prevent function from hanging
+        // Set to 60 seconds for high-fidelity rendering
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s limit
+        const timeoutId = setTimeout(() => controller.abort(), 60000); // 60s limit for high-quality generation
 
         let response;
         let result;

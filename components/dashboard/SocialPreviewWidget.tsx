@@ -34,10 +34,11 @@ export default function SocialPreviewWidget({
     brandData,
     handleEditPage,
 }: SocialPreviewWidgetProps) {
-    const [state, setState] = useState<GenerationState>('success'); // ✨ OPTIMISTIC: Start as 'success' to show image immediately
+    const [state, setState] = useState<GenerationState>('success'); // ✨ IRONCLAD: Always start successful
     const [generatedImage, setGeneratedImage] = useState<string | null>(null);
-    const [isUpgrading, setIsUpgrading] = useState(false); // 🎯 NEW: Background AI enhancement flag
-    const [errorMessage, setErrorMessage] = useState<string | null>(null);
+    const [isUpgrading, setIsUpgrading] = useState(false); // 🎯 Background AI enhancement flag
+    const [enhancementSucceeded, setEnhancementSucceeded] = useState(false); // 🟢 Green dot indicator
+    const [errorMessage, setErrorMessage] = useState<string | null>(null); // Kept for backwards compat, never displayed
     const [vibe, setVibe] = useState<string>('Modern');
     const [campaign, setCampaign] = useState<string>('Get Started Today');
     const router = useRouter();
@@ -53,15 +54,13 @@ export default function SocialPreviewWidget({
             return;
         }
 
-        console.log('✅ [Optimistic UI] BrandData received, showing heroImage immediately...');
+        console.log('✅ [Ironclad UI] BrandData received, showing heroImage immediately...');
 
-        // 🎯 STEP 1: IMMEDIATE RENDER - Show heroImage right away
-        const heroImage = brandData.hero_image || brandData.logo_url;
-        if (heroImage) {
-            setGeneratedImage(heroImage);
-            setState('success');
-            console.log('🖼️ [Optimistic UI] Displaying heroImage instantly:', heroImage.substring(0, 60) + '...');
-        }
+        // 🎯 STEP 1: NEVER FAIL INITIAL STATE - Always have an image
+        const heroImage = brandData.hero_image || brandData.logo_url || '/images/placeholder.jpg';
+        setGeneratedImage(heroImage); // NEVER null or undefined
+        setState('success');
+        console.log('🖼️ [Ironclad UI] Displaying heroImage instantly:', heroImage?.substring(0, 60) + '...');
 
         // 🎯 STEP 2: BACKGROUND UPGRADE - Start AI enhancement after initial render
         const generatePreview = async () => {
@@ -72,7 +71,8 @@ export default function SocialPreviewWidget({
                 const imageSource = brandData.hero_image || brandData.logo_url;
 
                 if (!imageSource) {
-                    console.warn('⚠️ [Optimistic UI] No image source available');
+                    console.warn('⚠️ [Ironclad UI] No image source available, using placeholder');
+                    setGeneratedImage('/images/placeholder.jpg'); // Fallback to placeholder
                     setIsUpgrading(false);
                     return;
                 }
@@ -251,22 +251,23 @@ REQUIREMENTS:
                     });
 
                     setGeneratedImage(imageToDisplay);
-                    setIsUpgrading(false); // \u2728 OPTIMISTIC: Hide "Enhancing..." badge
+                    setIsUpgrading(false); // ✨ Hide "Enhancing..." badge
+                    setEnhancementSucceeded(true); // 🟢 Show green dot
                     setState('success');
+
+                    // Hide green dot after 2 seconds
+                    setTimeout(() => setEnhancementSucceeded(false), 2000);
                 } else {
                     throw new Error(data.error || 'Failed to generate image');
                 }
             } catch (error) {
-                // 🤫 SILENT FAILURE: Never show errors to user
-                console.warn('🤫 [Silent Fail] AI Generation failed, keeping original heroImage visible:', error);
+                // 🤫 IRONCLAD: Silence errors, keep original image visible
+                console.log('Generation delayed:', error); // For us, not the user
+                setIsUpgrading(false); // Stop the sparkle
 
-                // Simply hide the "Enhancing..." badge and keep the heroImage that's already showing
-                setIsUpgrading(false);
-
-                // DO NOT set error state
-                // DO NOT clear generatedImage  
-                // DO NOT show error messages
-                // The heroImage is already visible from the initial render (line 59)
+                // DO NOT set error message (it's never displayed anyway)
+                // DO NOT clear generatedImage (keep the heroImage showing)
+                // DO NOT change state (stay on 'success')
             }
 
             generatePreview();
@@ -399,23 +400,19 @@ function InstagramPostUI({
                             />
                         </motion.div>
                     )}
+                </AnimatePresence>
 
-                    {state === 'error' && (
+                {/* 🟢 Green Dot: Success Indicator (Your Secret Signal) */}
+                <AnimatePresence>
+                    {enhancementSucceeded && (
                         <motion.div
-                            key="error"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            className="absolute inset-0 flex items-center justify-center p-6 bg-zinc-50 dark:bg-zinc-900"
-                        >
-                            <div className="text-center space-y-2">
-                                <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                                    Preview unavailable
-                                </p>
-                                <p className="text-xs text-zinc-400 dark:text-zinc-600">
-                                    {errorMessage}
-                                </p>
-                            </div>
-                        </motion.div>
+                            initial={{ scale: 0, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0, opacity: 0 }}
+                            transition={{ duration: 0.3 }}
+                            className="absolute bottom-2 right-2 w-1.5 h-1.5 bg-green-500 rounded-full shadow-lg"
+                            aria-label="Enhancement successful"
+                        />
                     )}
                 </AnimatePresence>
             </div>
