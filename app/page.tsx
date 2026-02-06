@@ -210,10 +210,11 @@ export default function Home() {
             // Pause 1.5s to let user see the captured data
             await new Promise(resolve => setTimeout(resolve, 1500));
 
-            // 🎯 SHOW BRAND DASHBOARD
+            // ANONYMOUS TRY-FIRST FLOW: Redirect to public preview
             setBrandData(transformedData);
             setIsScanning(false);
             setScanComplete(true);
+            router.push('/preview');
 
         } catch (err: any) {
             console.error('⚠️ API Failed. Activating Simulation Mode...', err);
@@ -272,6 +273,7 @@ export default function Home() {
             setBrandData(simulationData);
             setIsScanning(false);
             setScanComplete(true);
+            router.push('/preview');
         }
     };
 

@@ -61,6 +61,7 @@ export async function middleware(request: NextRequest) {
         '/generator',
         '/studio',
         '/builder',
+        '/preview',  // PUBLIC: Anonymous preview page
         '/auth',
         '/api',
     ];
