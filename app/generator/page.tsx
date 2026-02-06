@@ -32,7 +32,7 @@ export default function GeneratorPage() {
     const [platform, setPlatform] = useState<'instagram' | 'tiktok' | 'linkedin'>('instagram')
 
     // Generated content state - Pre-load from dashboard if remixing
-    const [generatedImageUrl, setGeneratedImageUrl] = useState<string>(searchParams.get('image') || undefined)
+    const [generatedImageUrl, setGeneratedImageUrl] = useState<string>(searchParams.get('image') || '')
     const [generatedCaption, setGeneratedCaption] = useState('')
 
     // Load Brand DNA on mount (Smart Fallback: localStorage → Supabase)
