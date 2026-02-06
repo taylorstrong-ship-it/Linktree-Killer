@@ -118,7 +118,25 @@ export default function SocialPreviewWidget({
 
                 if (data.success && data.image) {
                     console.log(`✅ [AI Design] Generation successful! (${data.metadata?.duration}s)`);
-                    setGeneratedImage(data.image);
+
+                    // 🔧 FRONTEND FIX: Ensure Base64 strings are formatted as Data URIs
+                    let imageToDisplay = data.image;
+
+                    // If it's a raw Base64 string (doesn't start with 'http' or 'data:'), format it
+                    if (!imageToDisplay.startsWith('http') && !imageToDisplay.startsWith('data:')) {
+                        console.log('🔧 [Image Fix] Converting raw Base64 to data URI...');
+                        imageToDisplay = `data:image/png;base64,${imageToDisplay}`;
+                    }
+
+                    // Debug logging
+                    console.log('🖼️ [Image Preview]', {
+                        originalLength: data.image.length,
+                        formattedPrefix: imageToDisplay.substring(0, 50),
+                        isDataUri: imageToDisplay.startsWith('data:'),
+                        isUrl: imageToDisplay.startsWith('http')
+                    });
+
+                    setGeneratedImage(imageToDisplay);
                     setState('success');
                 } else {
                     throw new Error(data.error || 'Failed to generate image');
