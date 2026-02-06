@@ -27,18 +27,6 @@ interface SocialPreviewWidgetProps {
 type GenerationState = 'idle' | 'loading' | 'success' | 'error';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// DEMO BRAND DATA (Fallback for when brandData is missing)
-// ─────────────────────────────────────────────────────────────────────────────
-const DEMO_BRAND = {
-    businessName: 'Taylored Pizza',
-    logo_url: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400',
-    hero_image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400',
-    vibe: 'Bold',
-    primaryColor: '#FF6B35',
-    industry: 'Restaurant',
-};
-
-// ─────────────────────────────────────────────────────────────────────────────
 // COMPONENT
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -46,37 +34,35 @@ export default function SocialPreviewWidget({
     brandData,
     handleEditPage,
 }: SocialPreviewWidgetProps) {
-    const [state, setState] = useState<GenerationState>('idle');
+    const [state, setState] = useState<GenerationState>('loading');
     const [generatedImage, setGeneratedImage] = useState<string | null>(null);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [vibe, setVibe] = useState<string>('Modern');
     const [campaign, setCampaign] = useState<string>('Get Started Today');
 
     // ─────────────────────────────────────────────────────────────────────────
-    // AUTO-GENERATE ON MOUNT (WITH SAFETY MEASURES)
+    // AUTO-GENERATE ON MOUNT (WITH RACE CONDITION FIX)
     // ─────────────────────────────────────────────────────────────────────────
 
     useEffect(() => {
+        // 🛡️ GUARD CLAUSE: Wait for real brandData to arrive from database
+        // This prevents the race condition where auto-generation fires before data loads
+        if (!brandData || Object.keys(brandData).length === 0) {
+            console.log('⏸️ [AI Design] Waiting for brandData to arrive...');
+            return;
+        }
+
+        console.log('✅ [AI Design] BrandData received, starting auto-generation...');
+
         const generatePreview = async () => {
             try {
                 setState('loading');
 
-                // 🛡️ SAFETY: Use demo brand if brandData is missing or invalid
-                const safeBrandData = (brandData?.businessName && brandData?.logo_url)
-                    ? brandData
-                    : DEMO_BRAND;
-
-                console.log('🎨 [AI Design] Using brand data:', {
-                    name: safeBrandData.businessName,
-                    isDemo: safeBrandData === DEMO_BRAND,
-                    hasImage: !!(safeBrandData.hero_image || safeBrandData.logo_url)
-                });
-
                 // Smart image selection: prioritize hero_image over logo
-                const imageSource = safeBrandData.hero_image || safeBrandData.logo_url;
+                const imageSource = brandData.hero_image || brandData.logo_url;
 
                 if (!imageSource) {
-                    console.warn('⚠️ [AI Design] No image source, falling back to idle state');
+                    console.warn('⚠️ [AI Design] No image source available');
                     setState('idle');
                     return;
                 }
@@ -96,7 +82,7 @@ export default function SocialPreviewWidget({
                     'Energetic': 'Fresh Deals',
                 };
 
-                const vibe = safeBrandData.vibe || 'Modern';
+                const vibe = brandData.vibe || 'Modern';
                 const campaign = campaignMap[vibe] || 'Get Started Today';
 
                 // Store for generator bridge
@@ -106,17 +92,17 @@ export default function SocialPreviewWidget({
                 // 🚀 MISSION CRITICAL: Call Supabase Edge Function (No Timeout Limits!)
                 console.log('🎨 [AI Design] Starting generation via Supabase Edge Function...');
                 console.log('   Image source:', imageSource?.substring(0, 50) + '...');
-                console.log('   Vibe:', vibe, '| Industry:', safeBrandData.industry);
+                console.log('   Vibe:', vibe, '| Industry:', brandData.industry);
 
                 const { data, error } = await supabase.functions.invoke('generate-campaign-asset', {
                     body: {
                         image: imageSource,
                         isUrl: isUrl,
                         brandDNA: {
-                            name: safeBrandData.businessName,
-                            primaryColor: safeBrandData.primaryColor || '#FF6B35',
-                            vibe: safeBrandData.vibe || 'Professional',
-                            industry: safeBrandData.industry || 'Business',
+                            name: brandData.businessName,
+                            primaryColor: brandData.primaryColor || '#FF6B35',
+                            vibe: brandData.vibe || 'Professional',
+                            industry: brandData.industry || 'Business',
                         },
                         campaign,
                     },
@@ -170,11 +156,25 @@ export default function SocialPreviewWidget({
             } catch (error) {
                 console.error('❌ [AI Design] Generation failed:', error);
 
-                // 🛡️ SAFETY: Silently fallback to idle state instead of showing error
-                // This prevents the landing page from showing errors on load
-                console.warn('⚠️ [AI Design] Falling back to idle state');
-                setState('idle');
-                setErrorMessage(null);
+                // Show error state with message
+                let userMessage = 'Generation failed';
+
+                if (error instanceof Error) {
+                    if (error.message.includes('timeout') || error.message.includes('504')) {
+                        userMessage = 'Generation timed out. Please try again.';
+                    } else if (error.message.includes('API Error 403')) {
+                        userMessage = 'Unauthorized. Please check your API configuration.';
+                    } else if (error.message.includes('API Error 429')) {
+                        userMessage = 'Rate limit exceeded. Please wait a moment.';
+                    } else if (error.message.includes('API Error 500')) {
+                        userMessage = 'Server error. Please try again.';
+                    } else {
+                        userMessage = error.message;
+                    }
+                }
+
+                setErrorMessage(userMessage);
+                setState('error');
             }
         };
 
