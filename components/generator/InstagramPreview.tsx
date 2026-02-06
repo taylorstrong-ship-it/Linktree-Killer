@@ -55,8 +55,8 @@ export default function InstagramPreview({
                         key={tab}
                         onClick={() => setActiveTab(tab)}
                         className={`flex-1 py-2 px-4 rounded-lg font-medium text-sm transition-all ${activeTab === tab
-                                ? 'bg-[#FF6B35] text-white'
-                                : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white border border-white/10'
+                            ? 'bg-[#FF6B35] text-white'
+                            : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white border border-white/10'
                             }`}
                     >
                         {tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -136,7 +136,7 @@ export default function InstagramPreview({
                                         }}
                                     />
                                     <div className="absolute inset-0 flex items-center justify-center">
-                                        <div className="text-gray-500 text-sm">Generating...</div>
+                                        <div className="text-gray-500 text-sm">Tayloring...</div>
                                     </div>
                                 </div>
                             ) : generatedImageUrl ? (
@@ -167,7 +167,7 @@ export default function InstagramPreview({
                                             </svg>
                                         </div>
                                         <p className="text-gray-500 text-sm">
-                                            Click Generate to create your {activeTab}
+                                            Click Taylor to create your {activeTab}
                                         </p>
                                     </div>
                                 </div>

@@ -610,7 +610,7 @@ function SkeletonShimmer() {
             {/* Static skeleton structure */}
             <div className="absolute inset-0 flex items-center justify-center">
                 <div className="text-zinc-400 dark:text-zinc-600 text-sm font-medium animate-pulse">
-                    Generating...
+                    Tayloring...
                 </div>
             </div>
         </div>

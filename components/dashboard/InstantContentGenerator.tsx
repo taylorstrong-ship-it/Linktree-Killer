@@ -154,7 +154,7 @@ export default function InstantContentGenerator({
                                     {isGenerating ? (
                                         <>
                                             <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse" />
-                                            <span className="text-orange-400 text-sm font-medium">Generating...</span>
+                                            <span className="text-orange-400 text-sm font-medium">Tayloring...</span>
                                         </>
                                     ) : (
                                         <>
@@ -181,7 +181,7 @@ export default function InstantContentGenerator({
                         postData={{
                             brandName,
                             avatarUrl: undefined, // Will show initial
-                            caption: displayedCaption || 'Generating your perfect post...',
+                            caption: displayedCaption || 'Tayloring your perfect post...',
                             timestamp: 'Just now',
                             mediaPlaceholderType: isGenerating ? 'shimmer' : 'static',
                         }}

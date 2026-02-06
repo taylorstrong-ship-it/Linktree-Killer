@@ -446,7 +446,7 @@ export default function Home() {
                                                      text-xs sm:text-base 
                                                      whitespace-nowrap shrink-0"
                                             >
-                                                {isScanning ? 'Stitching...' : (<><span className="hidden sm:inline">Stitch My Vibe</span><span className="sm:hidden">Stitch</span></>)}
+                                                {isScanning ? 'Tayloring...' : (<><span className="hidden sm:inline">Taylor My Vibe</span><span className="sm:hidden">Taylor</span></>)}
                                             </button>
                                         </div>
                                     </form>

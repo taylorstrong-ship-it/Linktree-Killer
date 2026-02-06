@@ -3,16 +3,16 @@
  * Used by all apps in the Taylored Solutions monorepo
  */
 
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'
+import { createClient } from '@supabase/supabase-js'
 
 // Supabase configuration
-const SUPABASE_URL = import.meta.env?.VITE_SUPABASE_URL ||
-    window.ENV?.SUPABASE_URL ||
-    'https://your-project.supabase.co'
+const SUPABASE_URL = typeof window !== 'undefined'
+    ? (import.meta.env?.VITE_SUPABASE_URL || window.ENV?.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://your-project.supabase.co')
+    : (process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://your-project.supabase.co')
 
-const SUPABASE_ANON_KEY = import.meta.env?.VITE_SUPABASE_ANON_KEY ||
-    window.ENV?.SUPABASE_ANON_KEY ||
-    'your-anon-key'
+const SUPABASE_ANON_KEY = typeof window !== 'undefined'
+    ? (import.meta.env?.VITE_SUPABASE_ANON_KEY || window.ENV?.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'your-anon-key')
+    : (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'your-anon-key')
 
 /**
  * Create a new Supabase client instance
@@ -24,7 +24,7 @@ export function createSupabaseClient() {
             persistSession: true,
             autoRefreshToken: true,
             detectSessionInUrl: true,
-            storage: window.localStorage
+            storage: typeof window !== 'undefined' ? window.localStorage : undefined
         }
     })
 }

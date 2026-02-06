@@ -22,7 +22,7 @@ export default function AdCampaignGenerator() {
                 <div className="w-16 h-16 bg-slate-800/50 rounded-full flex items-center justify-center mb-2 animate-pulse">
                     <Sparkles className="w-8 h-8 text-indigo-400" />
                 </div>
-                <h4 className="text-white font-medium text-lg">Generate High-Convert Creatives</h4>
+                <h4 className="text-white font-medium text-lg">Taylor High-Convert Creatives</h4>
                 <p className="text-slate-400 text-sm max-w-xs">
                     Uses your Brand DNA to instantly create Facebook & Instagram ads that match your vibe.
                 </p>
@@ -34,7 +34,7 @@ export default function AdCampaignGenerator() {
                     <span>Conversion Optimized</span>
                 </div>
                 <button className="w-full bg-white text-indigo-950 font-bold py-3 px-4 rounded-xl hover:bg-indigo-50 transition-all shadow-lg shadow-indigo-900/20 active:scale-95">
-                    Generate Creatives
+                    Taylor Creatives
                 </button>
             </div>
         </div>

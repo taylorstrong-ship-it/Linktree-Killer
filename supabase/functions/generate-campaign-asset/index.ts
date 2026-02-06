@@ -90,16 +90,40 @@ serve(async (req) => {
 
     try {
         console.log('🎨 ============ CAMPAIGN ASSET GENERATOR ============');
+        console.log('📊 DIAGNOSTICS: Function invoked at', new Date().toISOString());
         const startTime = Date.now();
 
-        // STEP 1: Get Gemini API Key
+        // ====================================================================
+        // 🔬 STEP 1: ENVIRONMENT HEALTH CHECK (CRITICAL)
+        // ====================================================================
         const apiKey = Deno.env.get('GEMINI_API_KEY') ||
             Deno.env.get('GOOGLE_API_KEY') ||
             Deno.env.get('GOOGLE_AI_API_KEY');
 
+        console.log('🔑 API Key Check:', {
+            GEMINI_API_KEY_exists: !!Deno.env.get('GEMINI_API_KEY'),
+            GOOGLE_API_KEY_exists: !!Deno.env.get('GOOGLE_API_KEY'),
+            GOOGLE_AI_API_KEY_exists: !!Deno.env.get('GOOGLE_AI_API_KEY'),
+            resolved_key_length: apiKey?.length || 0
+        });
+
         if (!apiKey) {
-            throw new Error('Gemini API key not configured');
+            console.error('❌ CRITICAL ERROR: GEMINI_API_KEY is missing from environment variables.');
+            console.error('📋 Available env vars:', Object.keys(Deno.env.toObject()).join(', '));
+            return new Response(
+                JSON.stringify({
+                    error: 'CONFIGURATION ERROR',
+                    message: 'GEMINI_API_KEY is missing. Please add it to Supabase Edge Function Secrets.',
+                    hint: 'Run: supabase secrets set GEMINI_API_KEY=your_key_here'
+                }),
+                {
+                    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                    status: 200 // Return 200 so frontend can read the JSON error
+                }
+            );
         }
+
+        console.log(`✅ API Key validated (Length: ${apiKey.length} characters)`);
 
         // STEP 2: Parse Request
         const body = await req.json();
@@ -107,7 +131,7 @@ serve(async (req) => {
         // ROBUST LOGGING: See exactly what the frontend sent
         console.log('📦 PAYLOAD RECEIVED:', JSON.stringify(body, null, 2));
 
-        const { image, isUrl, brandDNA, campaign, sourceImageUrl } = body;
+        const { image, isUrl, brandDNA, campaign, sourceImageUrl, userInstructions } = body;
 
         // 🎨 MULTIMODAL MODE DETECTION
         const isBeautifierMode = !!sourceImageUrl;
@@ -118,8 +142,8 @@ serve(async (req) => {
             throw new Error('Brand DNA with name is required for generation');
         }
 
-        if (!campaign && !isBeautifierMode) {
-            throw new Error('Campaign text is required for generation');
+        if (!campaign && !isBeautifierMode && !userInstructions) {
+            throw new Error('Campaign text or user instructions required for generation');
         }
 
         console.log('✅ Request validated:', {
@@ -128,6 +152,7 @@ serve(async (req) => {
             industry: brandDNA.industry,
             hasImage: !!image,
             hasSourceImage: !!sourceImageUrl,
+            hasUserInstructions: !!userInstructions,
             mode: isBeautifierMode ? 'BEAUTIFIER' : 'GENERATOR'
         });
 
@@ -202,19 +227,41 @@ serve(async (req) => {
 
         // ✨ PATH A: We have a source image - ENHANCE IT
         if (hasSourceImage) {
+            // Determine the headline text (prioritize userInstructions)
+            const headlineText = userInstructions || brandDNA?.adHook || campaign || 'Special Offer';
+            const ctaText = brandDNA?.cta || 'Learn More';
+
+            // Add design guidance based on user instructions
+            let designGuidance = '';
+            if (userInstructions) {
+                const lowerInstructions = userInstructions.toLowerCase();
+                if (lowerInstructions.match(/sale|deal|discount|off|limited|special|promo/i)) {
+                    designGuidance = '\n- DESIGN STYLE: Bold, urgent, attention-grabbing (this is a LIMITED TIME OFFER)';
+                } else if (lowerInstructions.match(/new|arrival|launch|introducing|meet/i)) {
+                    designGuidance = '\n- DESIGN STYLE: Fresh, exciting, modern (this is a NEW ANNOUNCEMENT)';
+                } else if (lowerInstructions.match(/event|save the date|join|rsvp/i)) {
+                    designGuidance = '\n- DESIGN STYLE: Elegant, inviting, clear date/time placement';
+                } else if (lowerInstructions.match(/team|meet|about|we are/i)) {
+                    designGuidance = '\n- DESIGN STYLE: Warm, friendly, approachable (this is ABOUT PEOPLE)';
+                }
+            }
+
             userPrompt = `You are a Graphic Designer creating a luxury social media ad.
 
 **TASK:** Polish the provided image and add professional overlay text.
+
+**USER'S CONTEXT/MESSAGE:**
+"${headlineText}"
 
 **VISUAL INSTRUCTIONS (DO NOT WRITE THIS TEXT ON THE IMAGE):**
 - Keep the subject EXACTLY as is (do not hallucinate new objects)
 - Fix lighting, color grading, and visual appeal
 - Make it look high-end and professional
-- DO NOT change the product/subject itself
+- DO NOT change the product/subject itself${designGuidance}
 
 **TEXT OVERLAY INSTRUCTIONS (ONLY WRITE THIS TEXT):**
-- HEADLINE: "${brandDNA?.adHook || campaign || 'Special Offer'}" (Render in large, modern white typography)
-- BUTTON: "${brandDNA?.cta || 'Learn More'}" (Render inside a pill-shaped button)
+- HEADLINE: "${headlineText}" (Render in large, modern white typography)
+- BUTTON: "${ctaText}" (Render inside a pill-shaped button)
 
 **BRAND CONTEXT:**
 - Name: ${brandName}
@@ -295,6 +342,7 @@ OUTPUT: A scroll-stopping Instagram ad that looks like a professional agency cre
         let timedOut = false;
 
         try {
+            console.log('🚀 Initiating Gemini API call...');
             response = await fetch(
                 `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${apiKey}`,
                 {
@@ -305,33 +353,78 @@ OUTPUT: A scroll-stopping Instagram ad that looks like a professional agency cre
                     body: JSON.stringify({
                         contents: [{
                             role: 'user',
-                            parts: parts
+                            parts: parts,
                         }],
                         generationConfig: {
                             responseModalities: ["IMAGE"]
                         }
                     }),
-                    signal: controller.signal
+                    signal: controller.signal,
                 }
             );
 
             clearTimeout(timeoutId);
             const geminiDuration = ((Date.now() - geminiStartTime) / 1000).toFixed(2);
-            console.log(`✅ Gemini response received in ${geminiDuration}s`);
+            console.log(`✅ Gemini response received in ${geminiDuration}s (Status: ${response.status})`);
 
+            // ====================================================================
+            // 🚨 GEMINI API ERROR HANDLING WITH DETAILED DIAGNOSTICS
+            // ====================================================================
             if (!response.ok) {
                 const errorText = await response.text();
-                console.error('❌ Gemini API error:', response.status, errorText);
-                throw new Error(`Gemini API error: ${response.status}`);
+                let errorDetails;
+                try {
+                    errorDetails = JSON.parse(errorText);
+                } catch {
+                    errorDetails = { message: errorText };
+                }
+
+                console.error('❌ GEMINI API ERROR DETAILS:', {
+                    status: response.status,
+                    statusText: response.statusText,
+                    errorBody: errorDetails
+                });
+
+                // Return specific error messages to frontend
+                let userMessage = 'AI generation failed. ';
+                if (response.status === 401) {
+                    userMessage = 'AUTHENTICATION ERROR: Invalid or expired Gemini API key. Please check your Supabase secrets.';
+                } else if (response.status === 403) {
+                    userMessage = 'PERMISSION ERROR: API key does not have access to Gemini 3.0. Check your Google Cloud project permissions.';
+                } else if (response.status === 400) {
+                    userMessage = `BAD REQUEST: ${errorDetails.error?.message || errorText}`;
+                } else if (response.status === 429) {
+                    userMessage = 'RATE LIMIT ERROR: Too many requests to Gemini API. Please try again in a few moments.';
+                } else if (response.status === 500 || response.status === 503) {
+                    userMessage = 'GEMINI SERVICE ERROR: Google AI service is temporarily unavailable. Please try again.';
+                } else {
+                    userMessage = `Gemini API error (${response.status}): ${errorDetails.error?.message || 'Unknown error'}`;
+                }
+
+                return new Response(
+                    JSON.stringify({
+                        error: 'GEMINI_API_ERROR',
+                        message: userMessage,
+                        status_code: response.status,
+                        details: errorDetails
+                    }),
+                    {
+                        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                        status: 200 // Return 200 so frontend can parse the error
+                    }
+                );
             }
 
             result = await response.json();
+            console.log('📦 Gemini response parsed successfully');
         } catch (error: any) {
             clearTimeout(timeoutId);
 
+            // ====================================================================
             // 🚨 TIMEOUT DETECTED: Return safe fallback
+            // ====================================================================
             if (error.name === 'AbortError') {
-                console.warn('⏱️ Gemini API timed out after 15s. Returning Unsplash fallback...');
+                console.warn('⏱️ Gemini API timed out after 60s. Returning Unsplash fallback...');
                 timedOut = true;
 
                 // Generate industry-specific Unsplash fallback
@@ -365,8 +458,26 @@ OUTPUT: A scroll-stopping Instagram ad that looks like a professional agency cre
                 );
             }
 
-            // Other errors: throw to be caught by outer try/catch
-            throw error;
+            // ====================================================================
+            // 🚨 NETWORK OR OTHER ERRORS
+            // ====================================================================
+            console.error('❌ Gemini API call failed:', {
+                errorName: error.name,
+                errorMessage: error.message,
+                errorStack: error.stack
+            });
+
+            return new Response(
+                JSON.stringify({
+                    error: 'NETWORK_ERROR',
+                    message: `Failed to connect to Gemini API: ${error.message}`,
+                    error_type: error.name
+                }),
+                {
+                    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                    status: 200
+                }
+            );
         }
 
         // STEP 6: Extract Generated Image (Gemini 3 format)
@@ -413,12 +524,19 @@ OUTPUT: A scroll-stopping Instagram ad that looks like a professional agency cre
         );
 
     } catch (error: any) {
+        // ====================================================================
+        // 🔬 RAW ERROR EXPOSURE FOR DEBUGGING
+        // ====================================================================
         console.error('❌ Generation failed:', error);
+        console.error('📦 Full Error Object:', {
+            name: error.name,
+            message: error.message,
+            stack: error.stack,
+            raw: error
+        });
+        console.error('🔥 SERIALIZED ERROR:', JSON.stringify(error, Object.getOwnPropertyNames(error), 2));
 
-        // 🛡️ IRONCLAD BACKEND: Return graceful fallback instead of 500 error
-        // This prevents the frontend from showing "Preview Unavailable" errors
-
-        // Determine error type for logging
+        // Determine error type for categorization
         let errorType = 'UNKNOWN_ERROR';
 
         if (error.message?.includes('API key')) {
@@ -435,20 +553,27 @@ OUTPUT: A scroll-stopping Instagram ad that looks like a professional agency cre
             errorType = 'OUT_OF_MEMORY';
         }
 
-        console.log(`🤫 Returning graceful fallback (ErrorType: ${errorType})`);
+        console.log(`🚨 RETURNING RAW ERROR (Type: ${errorType})`);
 
-        // 🎯 ALWAYS RETURN 200 OK with image: null
-        // The frontend will keep showing the original hero image
+        // ====================================================================
+        // 🔥 EXPOSE RAW ERROR DETAILS - NO MASKING
+        // ====================================================================
         return new Response(
             JSON.stringify({
-                success: false,
-                image: null,
                 error: errorType,
-                message: 'AI generation unavailable - using original image'
+                message: error.message || 'Unknown error occurred',
+                error_name: error.name,
+                error_stack: error.stack,
+                raw_error: String(error),
+                hint: errorType === 'API_KEY_ERROR'
+                    ? 'Check GEMINI_API_KEY in Supabase Edge Function Secrets'
+                    : errorType === 'TIMEOUT'
+                        ? 'The AI model took too long to respond. Try again.'
+                        : 'Check Supabase function logs for details'
             }),
             {
                 headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-                status: 200, // ✅ CRITICAL: Return 200, not 500
+                status: 200, // Return 200 so frontend can read the JSON error
             }
         );
     }
