@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase/client'
 import InstagramPreview from '@/components/generator/InstagramPreview'
 import { Sparkles, Zap, TrendingUp } from 'lucide-react'
@@ -17,17 +18,21 @@ interface BrandDNA {
 }
 
 export default function GeneratorPage() {
+    const searchParams = useSearchParams()
+
     const [brandDNA, setBrandDNA] = useState<BrandDNA | null>(null)
     const [loading, setLoading] = useState(true)
     const [generating, setGenerating] = useState(false)
 
-    // Form state
-    const [prompt, setPrompt] = useState('')
-    const [vibe, setVibe] = useState<'professional' | 'energetic' | 'minimal'>('professional')
+    // Form state - Initialize from URL params if bridge from dashboard
+    const [prompt, setPrompt] = useState(searchParams.get('prompt') || '')
+    const [vibe, setVibe] = useState<'professional' | 'energetic' | 'minimal'>(
+        (searchParams.get('vibe')?.toLowerCase() as 'professional' | 'energetic' | 'minimal') || 'professional'
+    )
     const [platform, setPlatform] = useState<'instagram' | 'tiktok' | 'linkedin'>('instagram')
 
-    // Generated content state
-    const [generatedImageUrl, setGeneratedImageUrl] = useState<string>()
+    // Generated content state - Pre-load from dashboard if remixing
+    const [generatedImageUrl, setGeneratedImageUrl] = useState<string>(searchParams.get('image') || undefined)
     const [generatedCaption, setGeneratedCaption] = useState('')
 
     // Load Brand DNA on mount (Smart Fallback: localStorage → Supabase)
@@ -84,6 +89,27 @@ export default function GeneratorPage() {
 
         loadBrandDNA()
     }, [])
+
+    // Load Remix data if coming from SocialPreviewWidget
+    useEffect(() => {
+        const searchParams = new URLSearchParams(window.location.search)
+        const isRemix = searchParams.get('remix') === 'true'
+
+        if (isRemix) {
+            console.log('🎨 Remix mode activated - loading saved preview data...')
+
+            // Load the saved social preview image from localStorage
+            const savedImage = localStorage.getItem('social_preview_draft')
+            if (savedImage) {
+                setGeneratedImageUrl(savedImage)
+                console.log('✅ Loaded remix image from localStorage')
+            }
+
+            // Set a default prompt for remix
+            const brandName = brandDNA?.company_name || brandDNA?.business_name || 'Your Brand'
+            setPrompt(`Remix this design for ${brandName}`)
+        }
+    }, [brandDNA])
 
     async function handleGenerate() {
         if (!prompt.trim()) {
@@ -251,8 +277,8 @@ export default function GeneratorPage() {
                                         key={v}
                                         onClick={() => setVibe(v)}
                                         className={`py-3 px-4 rounded-xl font-medium text-sm transition-all ${vibe === v
-                                                ? 'bg-[#FF6B35] text-white'
-                                                : 'bg-white/5 text-gray-400 hover:bg-white/10 border border-white/10'
+                                            ? 'bg-[#FF6B35] text-white'
+                                            : 'bg-white/5 text-gray-400 hover:bg-white/10 border border-white/10'
                                             }`}
                                     >
                                         {v.charAt(0).toUpperCase() + v.slice(1)}
@@ -270,8 +296,8 @@ export default function GeneratorPage() {
                                         key={p}
                                         onClick={() => setPlatform(p)}
                                         className={`py-3 px-4 rounded-xl font-medium text-sm transition-all ${platform === p
-                                                ? 'bg-[#FF6B35] text-white'
-                                                : 'bg-white/5 text-gray-400 hover:bg-white/10 border border-white/10'
+                                            ? 'bg-[#FF6B35] text-white'
+                                            : 'bg-white/5 text-gray-400 hover:bg-white/10 border border-white/10'
                                             }`}
                                     >
                                         {p.charAt(0).toUpperCase() + p.slice(1)}

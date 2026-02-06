@@ -30,11 +30,14 @@ interface BrandDNA {
     // Core Identity
     company_name: string;
     business_type: string;
+    industry: string;
     description: string;
 
     // Visual Assets
     logo_url: string;
     favicon_url: string;
+    hero_image: string;
+    og_image: string;
 
     // Colors
     primary_color: string;
@@ -386,11 +389,14 @@ Respond with ONLY a JSON object:
             // Core Identity
             company_name: branding.companyName || url.replace(/https?:\/\/(www\.)?/, '').split('/')[0],
             business_type: aiAnalysis.business_type || 'general',
+            industry: aiAnalysis.business_type || 'general',
             description: aiAnalysis.description || '',
 
             // Visual Assets (with multi-tier fallback)
             logo_url: finalLogo,
             favicon_url: branding.images?.favicon || '',
+            hero_image: heroImage || ogImage || '',
+            og_image: ogImage || '',
 
             // Colors (with fallbacks)
             primary_color: branding.colors?.primary || '#3B82F6',

@@ -26,6 +26,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase/client'
 import ImageUpload from '@/components/upload/ImageUpload'
 import { MagicImporter } from '@/components/magic-importer'
@@ -80,6 +81,8 @@ interface ProfileData {
 }
 
 export default function BuilderPage() {
+    const router = useRouter();
+    const searchParams = useSearchParams();
     const [isAuthenticated, setIsAuthenticated] = useState(false) // Default to guest mode
     const [loading, setLoading] = useState(true)
     const [authChecking, setAuthChecking] = useState(true) // STABILITY PATCH: Track auth check separately
@@ -128,6 +131,79 @@ export default function BuilderPage() {
     useEffect(() => {
         async function initializeProfile() {
             try {
+                // 🚀 FORCE HANDOFF: Check for fresh session flag
+                const isNewSession = searchParams?.get('session') === 'new';
+
+                if (isNewSession) {
+                    console.log('🚨 FORCE HANDOFF DETECTED: Loading fresh data from localStorage...');
+
+                    // Clear query param immediately to prevent loops
+                    router.replace('/builder');
+
+                    // Force load from localStorage (bypass all other checks)
+                    const savedData = localStorage.getItem('taylored_brand_data');
+                    if (savedData) {
+                        try {
+                            const parsed = JSON.parse(savedData);
+                            console.log('📦 FORCE HANDOFF: Fresh Golden Record loaded:', parsed);
+
+                            // Apply comprehensive Brand DNA mapping
+                            const brandDNAProfile = {
+                                ...profile,
+                                title: parsed.title || profile.title,
+                                description: parsed.bio || parsed.description || profile.description,
+                                avatar_url: parsed.logo_url || parsed.avatar_url || profile.avatar_url,
+                                theme_color: parsed.brand_colors?.[0] || parsed.primary_color || profile.theme_color,
+                                accent_color: parsed.brand_colors?.[1] || parsed.accent_color || profile.accent_color,
+                                font_style: (() => {
+                                    const font = parsed.fonts?.[0];
+                                    const fontString = typeof font === 'string' ? font : (font?.family || '');
+                                    if (fontString.toLowerCase().includes('serif')) return 'elegant';
+                                    if (fontString.toLowerCase().includes('mono')) return 'brutal';
+                                    return 'modern';
+                                })(),
+                                socials: {
+                                    instagram: parsed.social_links?.find((s: any) => s.platform === 'instagram')?.url || '',
+                                    tiktok: parsed.social_links?.find((s: any) => s.platform === 'tiktok')?.url || '',
+                                    facebook: parsed.social_links?.find((s: any) => s.platform === 'facebook')?.url || '',
+                                    email: parsed.social_links?.find((s: any) => s.platform === 'email')?.url?.replace('mailto:', '') || '',
+                                },
+                                links: parsed.suggested_ctas && parsed.suggested_ctas.length > 0
+                                    ? parsed.suggested_ctas.map((cta: any, idx: number) => ({
+                                        title: cta.label || cta.title,
+                                        url: cta.url,
+                                        position: idx
+                                    }))
+                                    : (parsed.links && Array.isArray(parsed.links) && parsed.links.length > 0)
+                                        ? parsed.links.map((link: any, idx: number) => ({
+                                            title: link.title || link.label,
+                                            url: link.url,
+                                            position: idx
+                                        }))
+                                        : profile.links
+                            };
+
+                            setProfile(brandDNAProfile);
+
+                            if (parsed.title) {
+                                const generated = parsed.title.toLowerCase().replace(/\s+/g, '');
+                                setUsername(generated);
+                            }
+
+                            setIsAuthenticated(true); // Enable builder UI
+                            setAuthChecking(false);
+                            setLoading(false);
+
+                            console.log('✅ FORCE HANDOFF COMPLETE: Fresh data loaded');
+                            return; // Exit early, skip normal flow
+                        } catch (e) {
+                            console.error('❌ FORCE HANDOFF FAILED: Data corruption', e);
+                        }
+                    } else {
+                        console.warn('⚠️ FORCE HANDOFF: No localStorage data found');
+                    }
+                }
+
                 console.log('🔒 GATEKEEPER: Checking authentication...');
                 setAuthChecking(true);
 

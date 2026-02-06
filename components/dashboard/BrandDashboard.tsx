@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion';
 import { Sparkles, Zap, Heart, TrendingUp, Edit3 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import SocialPreviewWidget from './SocialPreviewWidget';
 
 interface BrandData {
     company_name?: string;
@@ -92,7 +93,44 @@ export default function BrandDashboard({ brandData }: BrandDashboardProps) {
     const breathingDuration = personality.toLowerCase().includes('energy') || personality.toLowerCase().includes('bold') ? 2 : 4;
 
     const handleEditPage = () => {
-        router.push('/builder');
+        console.log('🚀 FORCE HANDOFF: Preparing Golden Record...');
+
+        // Construct Golden Record from current brandData prop
+        const goldenRecord = {
+            username: brandData.company_name?.toLowerCase().replace(/\s+/g, '') || 'guest',
+            title: brandData.company_name || brandData.title || 'My Brand',
+            bio: brandData.description || '',
+            theme_color: brandData.brand_colors?.[0] || brandData.primary_color || brandData.theme_color || '#000000',
+            brand_colors: brandData.brand_colors || [brandData.primary_color, brandData.secondary_color].filter(Boolean) || [],
+            fonts: (brandData as any).fonts || [],
+            avatar_url: brandData.logo_url || brandData.avatar_url || '',
+            logo_url: brandData.logo_url || brandData.avatar_url || '',
+            primary_color: brandData.primary_color || brandData.brand_colors?.[0] || '#000000',
+            secondary_color: brandData.secondary_color || brandData.brand_colors?.[1] || '',
+            brand_personality: brandData.brand_personality || '',
+            description: brandData.description || '',
+            suggested_ctas: brandData.suggested_ctas || [],
+            links: (brandData.suggested_ctas || brandData.links || []).map((btn: any) => ({
+                title: btn.title || btn.label || '',
+                url: btn.url || ''
+            })),
+            social_links: (brandData as any).social_links || [],
+            dna: brandData // Store full raw DNA for reference
+        };
+
+        console.log('📦 Golden Record constructed:', goldenRecord);
+
+        // Save to localStorage (overwrite any stale data)
+        try {
+            localStorage.setItem('taylored_brand_data', JSON.stringify(goldenRecord));
+            console.log('✅ Golden Record saved to localStorage');
+        } catch (error) {
+            console.error('❌ Failed to save Golden Record:', error);
+        }
+
+        // Navigate with session=new flag to force fresh load
+        console.log('🔀 Navigating to /builder?session=new');
+        router.push('/builder?session=new');
     };
 
     const handleCampaignClick = (prompt: string) => {
@@ -103,7 +141,87 @@ export default function BrandDashboard({ brandData }: BrandDashboardProps) {
     return (
         <div className="min-h-screen w-full bg-[#0a0a0a] py-24 px-6">
             <div className="max-w-7xl mx-auto">
-                {/* Header */}
+                {/* SECTION 1: YOUR BUSINESS DNA */}
+                <motion.div
+                    initial={{ opacity: 0, y: 30 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.8 }}
+                    className="mb-16"
+                >
+                    <h2 className="text-center text-3xl md:text-4xl font-serif italic text-white mb-12">
+                        Your Business DNA
+                    </h2>
+
+                    {/* 3-Column Grid: Logo, Typography, Color Palette */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                        {/* Logo Card */}
+                        <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-8 flex flex-col items-center justify-center min-h-[240px]">
+                            {logoUrl ? (
+                                <img
+                                    src={logoUrl}
+                                    alt={brandName}
+                                    className="w-24 h-24 rounded-full object-cover mb-4"
+                                />
+                            ) : (
+                                <div
+                                    className="w-24 h-24 rounded-full flex items-center justify-center text-white text-3xl font-bold mb-4"
+                                    style={{ background: primaryColor }}
+                                >
+                                    {brandName.charAt(0)}
+                                </div>
+                            )}
+                            <p className="text-white font-medium">{brandName}</p>
+                            <p className="text-white/40 text-xs uppercase tracking-widest mt-2">Identity Confirmed</p>
+                        </div>
+
+                        {/* Typography Card */}
+                        <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-8 flex flex-col items-center justify-center min-h-[240px]">
+                            <div className="text-8xl font-serif italic mb-4" style={{ color: primaryColor }}>
+                                Aa
+                            </div>
+                            <p className="text-white/40 text-xs uppercase tracking-widest">
+                                {personality || 'Professional'}
+                            </p>
+                        </div>
+
+                        {/* Color Palette Card */}
+                        <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-8 flex flex-col items-center justify-center min-h-[240px]">
+                            <div className="flex gap-4 mb-4">
+                                <div
+                                    className="w-16 h-16 rounded-full"
+                                    style={{ background: primaryColor }}
+                                />
+                                <div
+                                    className="w-16 h-16 rounded-full"
+                                    style={{ background: secondaryColor || '#666' }}
+                                />
+                                <div
+                                    className="w-16 h-16 rounded-full bg-white/20"
+                                />
+                            </div>
+                            <p className="text-white/40 text-xs uppercase tracking-widest">Color Physics</p>
+                        </div>
+                    </div>
+
+                    {/* Description Bar */}
+                    <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 text-center">
+                        <p className="text-white/70 italic text-sm md:text-base">
+                            "{brandData.description || `${brandName} offers a variety of services and products for clients.`}"
+                        </p>
+                    </div>
+
+                    {/* Deploy Divider */}
+                    <div className="flex items-center justify-center my-12">
+                        <button className="flex flex-col items-center gap-2 text-white/40 hover:text-white/70 transition-colors">
+                            <span className="text-xs uppercase tracking-widest">Deploy</span>
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </button>
+                    </div>
+                </motion.div>
+
+                {/* SECTION 2: READY TO LAUNCH HEADER */}
                 <motion.div
                     initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -118,7 +236,7 @@ export default function BrandDashboard({ brandData }: BrandDashboardProps) {
                     </p>
                 </motion.div>
 
-                {/* Two Column Layout */}
+                {/* SECTION 3: Two Column Layout */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-start">
 
                     {/* LEFT COLUMN: Bio Link Preview */}
@@ -129,8 +247,8 @@ export default function BrandDashboard({ brandData }: BrandDashboardProps) {
                         className="lg:sticky lg:top-32"
                     >
                         <div className="text-center mb-8">
-                            <h3 className="text-2xl font-bold text-white mb-2">Taylored Link in Bio</h3>
-                            <p className="text-white/40 text-sm">Your instant brand hub</p>
+                            <h2 className="text-xl font-bold text-white mb-2">Taylored Link in Bio</h2>
+                            <p className="text-white/60 text-sm">Your live bio link. Click to edit.</p>
                         </div>
 
                         <div className="relative group cursor-pointer" onClick={handleEditPage}>
@@ -222,54 +340,34 @@ export default function BrandDashboard({ brandData }: BrandDashboardProps) {
                         </button>
                     </motion.div>
 
-                    {/* RIGHT COLUMN: Campaign Cards */}
+                    {/* RIGHT COLUMN: Social Preview Widget */}
                     <motion.div
                         initial={{ opacity: 0, x: 30 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: 0.4, duration: 0.8 }}
                         className="space-y-8"
                     >
-                        <div className="text-center lg:text-left mb-8">
-                            <h3 className="text-2xl font-bold text-white mb-2">Taylored Content Creator</h3>
-                            <p className="text-white/40 text-sm">Ready-to-run campaign strategies</p>
+                        <div className="text-center mb-8">
+                            <h2 className="text-xl font-bold text-white mb-2">Taylored Content Creator</h2>
+                            <p className="text-white/60 text-sm">Ready-to-run campaign strategies</p>
                         </div>
 
-                        <div className="space-y-6">
-                            {campaignCards.map((card, index) => {
-                                const Icon = card.icon;
-                                return (
-                                    <motion.div
-                                        key={card.id}
-                                        initial={{ opacity: 0, y: 20 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ delay: 0.5 + index * 0.1, duration: 0.5 }}
-                                        onClick={() => handleCampaignClick(card.prompt)}
-                                        className={`bg-gradient-to-br ${card.gradient} border ${card.borderColor} rounded-2xl p-6 cursor-pointer transition-all hover:scale-[1.02] hover:shadow-2xl group relative overflow-hidden`}
-                                    >
-                                        {/* Hover Glow */}
-                                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
-
-                                        <div className="relative flex items-start gap-4">
-                                            <div className={`p-3 rounded-xl bg-black/20 ${card.iconColor}`}>
-                                                <Icon className="w-6 h-6" />
-                                            </div>
-                                            <div className="flex-1">
-                                                <h4 className="text-white font-bold text-lg mb-1">{card.title}</h4>
-                                                <p className="text-white/50 text-sm mb-4">{card.description}</p>
-                                                <div className="flex items-center gap-2 text-white/70 text-xs font-medium">
-                                                    <Sparkles className="w-4 h-4" />
-                                                    <span>AI-Powered • Ready to Launch</span>
-                                                </div>
-                                            </div>
-                                            <div className={`${card.iconColor} opacity-0 group-hover:opacity-100 transition-opacity`}>
-                                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                                </svg>
-                                            </div>
-                                        </div>
-                                    </motion.div>
-                                );
-                            })}
+                        {/* Social Preview Widget */}
+                        <div className="flex justify-center">
+                            <SocialPreviewWidget
+                                brandData={{
+                                    businessName: brandName,
+                                    logo_url: logoUrl,
+                                    hero_image: (brandData as any).hero_image || (brandData as any).og_image || logoUrl,
+                                    vibe: personality,
+                                    primaryColor: primaryColor,
+                                    industry: (brandData as any).industry || `${personality} Services`
+                                }}
+                                handleEditPage={() => {
+                                    console.log('🎨 Navigating to generator from preview widget...');
+                                    router.push('/generator?remix=true');
+                                }}
+                            />
                         </div>
 
                         {/* Footer */}
