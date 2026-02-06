@@ -27,6 +27,18 @@ interface SocialPreviewWidgetProps {
 type GenerationState = 'idle' | 'loading' | 'success' | 'error';
 
 // ─────────────────────────────────────────────────────────────────────────────
+// DEMO BRAND DATA (Fallback for when brandData is missing)
+// ─────────────────────────────────────────────────────────────────────────────
+const DEMO_BRAND = {
+    businessName: 'Taylored Pizza',
+    logo_url: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400',
+    hero_image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400',
+    vibe: 'Bold',
+    primaryColor: '#FF6B35',
+    industry: 'Restaurant',
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
 // COMPONENT
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -41,22 +53,32 @@ export default function SocialPreviewWidget({
     const [campaign, setCampaign] = useState<string>('Get Started Today');
 
     // ─────────────────────────────────────────────────────────────────────────
-    // AUTO-GENERATE ON MOUNT - DISABLED TO PREVENT CRASHES ON LANDING PAGE
+    // AUTO-GENERATE ON MOUNT (WITH SAFETY MEASURES)
     // ─────────────────────────────────────────────────────────────────────────
-    // NOTE: Auto-generation disabled because DashboardExample loads without valid brand data
-    // Widget now shows "Ready to Launch" state instead of auto-triggering generation
 
-    /* DISABLED: Auto-generation causing Non-2xx crashes on page load
     useEffect(() => {
         const generatePreview = async () => {
             try {
                 setState('loading');
 
+                // 🛡️ SAFETY: Use demo brand if brandData is missing or invalid
+                const safeBrandData = (brandData?.businessName && brandData?.logo_url)
+                    ? brandData
+                    : DEMO_BRAND;
+
+                console.log('🎨 [AI Design] Using brand data:', {
+                    name: safeBrandData.businessName,
+                    isDemo: safeBrandData === DEMO_BRAND,
+                    hasImage: !!(safeBrandData.hero_image || safeBrandData.logo_url)
+                });
+
                 // Smart image selection: prioritize hero_image over logo
-                const imageSource = brandData.hero_image || brandData.logo_url;
+                const imageSource = safeBrandData.hero_image || safeBrandData.logo_url;
 
                 if (!imageSource) {
-                    throw new Error('No brand image available');
+                    console.warn('⚠️ [AI Design] No image source, falling back to idle state');
+                    setState('idle');
+                    return;
                 }
 
                 // Determine if this is a URL or already base64
@@ -74,7 +96,7 @@ export default function SocialPreviewWidget({
                     'Energetic': 'Fresh Deals',
                 };
 
-                const vibe = brandData.vibe || 'Modern';
+                const vibe = safeBrandData.vibe || 'Modern';
                 const campaign = campaignMap[vibe] || 'Get Started Today';
 
                 // Store for generator bridge
@@ -84,16 +106,17 @@ export default function SocialPreviewWidget({
                 // 🚀 MISSION CRITICAL: Call Supabase Edge Function (No Timeout Limits!)
                 console.log('🎨 [AI Design] Starting generation via Supabase Edge Function...');
                 console.log('   Image source:', imageSource?.substring(0, 50) + '...');
-                console.log('   Vibe:', vibe, '| Industry:', brandData.industry);
+                console.log('   Vibe:', vibe, '| Industry:', safeBrandData.industry);
 
                 const { data, error } = await supabase.functions.invoke('generate-campaign-asset', {
                     body: {
                         image: imageSource,
                         isUrl: isUrl,
                         brandDNA: {
-                            primaryColor: brandData.primaryColor || '#FF6B35',
-                            vibe: brandData.vibe || 'Professional',
-                            industry: brandData.industry || 'Business',
+                            name: safeBrandData.businessName,
+                            primaryColor: safeBrandData.primaryColor || '#FF6B35',
+                            vibe: safeBrandData.vibe || 'Professional',
+                            industry: safeBrandData.industry || 'Business',
                         },
                         campaign,
                     },
@@ -147,34 +170,18 @@ export default function SocialPreviewWidget({
             } catch (error) {
                 console.error('❌ [AI Design] Generation failed:', error);
 
-                // Detailed error messages for common issues
-                let userMessage = 'Generation failed';
-
-                if (error instanceof Error) {
-                    if (error.message.includes('timeout') || error.message.includes('504')) {
-                        userMessage = 'Generation timed out. Please try again with a simpler prompt.';
-                    } else if (error.message.includes('API Error 403')) {
-                        userMessage = 'Unauthorized. Please check your API configuration.';
-                    } else if (error.message.includes('API Error 429')) {
-                        userMessage = 'Rate limit exceeded. Please wait a moment and try again.';
-                    } else if (error.message.includes('API Error 500')) {
-                        userMessage = 'Server error. Please try again.';
-                    } else {
-                        userMessage = error.message;
-                    }
-                }
-
-                console.log('💬 [AI Design] User message:', userMessage);
-                setErrorMessage(userMessage);
-                setState('error');
+                // 🛡️ SAFETY: Silently fallback to idle state instead of showing error
+                // This prevents the landing page from showing errors on load
+                console.warn('⚠️ [AI Design] Falling back to idle state');
+                setState('idle');
+                setErrorMessage(null);
             }
         };
 
-        // Trigger generation after mount
+        // Trigger generation after mount (with slight delay for smooth UX)
         const timer = setTimeout(generatePreview, 800);
         return () => clearTimeout(timer);
     }, [brandData]);
-    */
 
     return (
         <div className="relative w-full max-w-md mx-auto">
