@@ -123,6 +123,15 @@ export default function PostGenerator() {
         loadBrandProfile();
     }, [router]);
 
+    // 🎯 AUTO-START: Generate on mount if brand DNA exists
+    useEffect(() => {
+        if (!loadingBrand && brandDNA && !generatedContent && !isGenerating) {
+            // Auto-trigger generation for "magic trick" UX
+            handleTaylorThis();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [loadingBrand, brandDNA]);
+
     // Cycle loading messages every 3 seconds
     useEffect(() => {
         if (!isGenerating) return;
@@ -183,6 +192,57 @@ export default function PostGenerator() {
         setUserInstructions((prev) => (prev ? `${prev}, ${cleanText}` : cleanText));
         triggerHaptic();
     };
+
+    // 🎨 CANVAS IMAGE GENERATION (Fixed Text Rendering)
+    const generateImage = useCallback(async (brandName: string, primaryColor?: string) => {
+        return new Promise<string>((resolve) => {
+            const canvas = document.createElement('canvas');
+            canvas.width = 1080;
+            canvas.height = 1080;
+            const ctx = canvas.getContext('2d');
+
+            if (!ctx) {
+                resolve('');
+                return;
+            }
+
+            // Background Gradient
+            const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+            gradient.addColorStop(0, primaryColor || '#FF6B35');
+            gradient.addColorStop(1, '#000000');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // 🔧 FIXED TEXT RENDERING
+            ctx.fillStyle = '#FFFFFF';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
+            // Brand Name - Smaller font with proper padding
+            let fontSize = 48; // Start with 48px instead of huge
+            ctx.font = `bold ${fontSize}px Inter, system-ui, sans-serif`;
+
+            // Measure text width and scale down if needed
+            const maxWidth = canvas.width - 80; // 40px padding on each side
+            let textWidth = ctx.measureText(brandName).width;
+
+            // Scale down font if text is too wide
+            while (textWidth > maxWidth && fontSize > 24) {
+                fontSize -= 2;
+                ctx.font = `bold ${fontSize}px Inter, system-ui, sans-serif`;
+                textWidth = ctx.measureText(brandName).width;
+            }
+
+            // Draw centered text
+            const x = canvas.width / 2;
+            const y = canvas.height / 2;
+            ctx.fillText(brandName, x, y);
+
+            // Convert to base64
+            const base64 = canvas.toDataURL('image/png');
+            resolve(base64);
+        });
+    }, []);
 
     // Generate content (call Edge Function)
     const handleTaylorThis = async () => {
