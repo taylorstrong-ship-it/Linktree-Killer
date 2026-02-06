@@ -107,8 +107,44 @@ export default function SocialPreviewWidget({
                 setVibe(smartVibe);
                 setCampaign(campaign);
 
-                // 🎯 ENRICHED PROMPT: Add visual instructions for quality
-                const enrichedCampaign = `${campaign}. Create a high-impact, photorealistic image specifically showcasing ${brandData.industry || 'products or services'}. Do NOT use generic office stock photos. Focus on the actual industry and create authentic, relevant imagery.`;
+                // 🎬 SMART SCENE ROUTER: Industry-specific visual templates
+                const industry = (brandData.industry || '').toLowerCase();
+                const brandName = brandData.businessName || 'Brand';
+                let scenePrompt = '';
+
+                // Industry-specific scene templates
+                if (industry.includes('beauty') || industry.includes('salon') || industry.includes('hair')) {
+                    scenePrompt = `A stunning, photorealistic lifestyle shot inside a modern ${smartVibe.toLowerCase()} salon. Soft ring-light focus. A happy client showing off a fresh hairstyle, looking confident. In the background, a mirror or elegant neon sign clearly displays the text '${brandName}'. Professional salon atmosphere with premium products visible. Natural lighting. Instagram aesthetic.`;
+                } else if (industry.includes('food') || industry.includes('restaurant') || industry.includes('cafe')) {
+                    scenePrompt = `A mouth-watering, high-angle food photography shot of delicious ${industry} dishes beautifully plated on a rustic wooden table. Steam gently rising. Warm, appetizing lighting. A small elegant card next to the plate displays 'Order Now' or 'Book a Table'. Professional food styling. Instagram foodie aesthetic.`;
+                } else if (industry.includes('tech') || industry.includes('saas') || industry.includes('software') || industry.includes('app')) {
+                    scenePrompt = `A sleek, futuristic workspace featuring a premium laptop screen prominently displaying the ${brandName} logo glowing. ${smartVibe === 'Minimalist' ? 'Clean white lighting with minimal distractions' : 'Cyberpunk-inspired lighting with subtle neon accents'}. Modern tech setup. Professional developer/designer workspace. High-end aesthetic.`;
+                } else if (industry.includes('fashion') || industry.includes('clothing') || industry.includes('apparel')) {
+                    scenePrompt = `A high-fashion lifestyle shot featuring a confident model wearing stylish ${industry} pieces. Urban or studio setting. Professional fashion photography lighting. A subtle sign or tag displays '${brandName}' or 'Shop Now'. Magazine-quality aesthetic. Influencer-style content.`;
+                } else if (industry.includes('fitness') || industry.includes('gym') || industry.includes('wellness')) {
+                    scenePrompt = `An energetic, motivational fitness scene showing an athlete in action at a premium ${industry} facility. Dynamic lighting. The ${brandName} logo visible on equipment or apparel. Inspiring atmosphere. Professional sports photography quality. Instagram fitness aesthetic.`;
+                } else {
+                    // Default: High-quality lifestyle product shot
+                    scenePrompt = `A high-quality lifestyle product shot featuring ${brandName} branding in a real-world, professional setting. Natural lighting. Premium aesthetic. People interacting with the product/service. Authentic, candid moment. Influencer-quality content.`;
+                }
+
+                // 🎯 ENRICHED CAMPAIGN PROMPT with Anti-Bore Filter & Embedded CTA
+                const enrichedCampaign = `${campaign}. ${scenePrompt}
+
+EMBEDDED CTA REQUIREMENT: Naturally render the text 'Link in Bio' or 'Book Now' or '${brandName}' somewhere visible in the scene (on a sign, card, screen, or branded element).
+
+ANTI-BORE FILTER - Do NOT generate:
+- Generic notebooks, journals, or diaries
+- Flat lays with office supplies
+- Generic stock photos of books or papers
+- Boring desk setups
+
+REQUIREMENTS:
+- The image MUST look like a candid, high-budget influencer photo
+- Focus on REAL people or REAL products in action
+- Professional photography quality
+- Scroll-stopping visual impact
+- Instagram-worthy aesthetic`;
 
                 console.log('🎨 [AI Design] Starting generation via Supabase Edge Function...');
                 console.log('   Image source:', imageSource?.substring(0, 50) + '...');
