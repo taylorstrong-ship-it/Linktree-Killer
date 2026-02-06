@@ -34,16 +34,19 @@ export default function SocialPreviewWidget({
     brandData,
     handleEditPage,
 }: SocialPreviewWidgetProps) {
-    const [state, setState] = useState<GenerationState>('loading');
+    const [state, setState] = useState<GenerationState>('idle');
     const [generatedImage, setGeneratedImage] = useState<string | null>(null);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [vibe, setVibe] = useState<string>('Modern');
     const [campaign, setCampaign] = useState<string>('Get Started Today');
 
     // ─────────────────────────────────────────────────────────────────────────
-    // AUTO-GENERATE ON MOUNT
+    // AUTO-GENERATE ON MOUNT - DISABLED TO PREVENT CRASHES ON LANDING PAGE
     // ─────────────────────────────────────────────────────────────────────────
+    // NOTE: Auto-generation disabled because DashboardExample loads without valid brand data
+    // Widget now shows "Ready to Launch" state instead of auto-triggering generation
 
+    /* DISABLED: Auto-generation causing Non-2xx crashes on page load
     useEffect(() => {
         const generatePreview = async () => {
             try {
@@ -171,6 +174,7 @@ export default function SocialPreviewWidget({
         const timer = setTimeout(generatePreview, 800);
         return () => clearTimeout(timer);
     }, [brandData]);
+    */
 
     return (
         <div className="relative w-full max-w-md mx-auto">
