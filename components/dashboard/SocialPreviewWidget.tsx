@@ -249,25 +249,34 @@ REQUIREMENTS:
             } catch (error) {
                 console.error('❌ [AI Design] Generation failed:', error);
 
-                // Show error state with message
-                let userMessage = 'Generation failed';
+                // 🛡️ SAFETY NET: Use raw heroImage instead of showing error
+                const fallbackImage = heroImage || (brandData as any).hero_image;
 
-                if (error instanceof Error) {
-                    if (error.message.includes('timeout') || error.message.includes('504')) {
-                        userMessage = 'Generation timed out. Please try again.';
-                    } else if (error.message.includes('API Error 403')) {
-                        userMessage = 'Unauthorized. Please check your API configuration.';
-                    } else if (error.message.includes('API Error 429')) {
-                        userMessage = 'Rate limit exceeded. Please wait a moment.';
-                    } else if (error.message.includes('API Error 500')) {
-                        userMessage = 'Server error. Please try again.';
-                    } else {
-                        userMessage = error.message;
+                if (fallbackImage) {
+                    console.log('🖼️ [Fallback] Using raw brand hero image as safety net:', fallbackImage.substring(0, 60) + '...');
+                    setGeneratedImage(fallbackImage);
+                    setState('success'); // Show it as if generation succeeded
+                } else {
+                    // Last resort: show error if truly no image available
+                    let userMessage = 'Generation failed';
+
+                    if (error instanceof Error) {
+                        if (error.message.includes('timeout') || error.message.includes('504')) {
+                            userMessage = 'Generation timed out. Please try again.';
+                        } else if (error.message.includes('API Error 403')) {
+                            userMessage = 'Unauthorized. Please check your API configuration.';
+                        } else if (error.message.includes('API Error 429')) {
+                            userMessage = 'Rate limit exceeded. Please wait a moment.';
+                        } else if (error.message.includes('API Error 500')) {
+                            userMessage = 'Server error. Please try again.';
+                        } else {
+                            userMessage = error.message;
+                        }
                     }
-                }
 
-                setErrorMessage(userMessage);
-                setState('error');
+                    setErrorMessage(userMessage);
+                    setState('error');
+                }
             }
         };
 

@@ -282,41 +282,94 @@ TASK: Create a photorealistic, Instagram-optimized image for this brand's social
         console.log(`🤖 Generating with Gemini 3 Pro Image Preview...`);
         console.log(`   Strategy: ${imagePart ? "Image-to-Image Remix" : "Text-to-Image Generation"}`);
 
-        // STEP 5: Call Gemini 3 API (using fetch, Deno-compatible)
+        // STEP 5: Call Gemini 3 API with 15-second timeout controller
         const parts: any[] = [{ text: prompt }];
         if (imagePart) parts.push(imagePart);
 
         const geminiStartTime = Date.now();
 
-        const response = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${apiKey}`,
-            {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    contents: [{
-                        role: 'user',
-                        parts: parts
-                    }],
-                    generationConfig: {
-                        responseModalities: ["IMAGE"]
-                    }
-                })
+        // 🛡️ TIMEOUT CONTROLLER: Prevent function from hanging
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s limit
+
+        let response;
+        let result;
+        let timedOut = false;
+
+        try {
+            response = await fetch(
+                `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${apiKey}`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        contents: [{
+                            role: 'user',
+                            parts: parts
+                        }],
+                        generationConfig: {
+                            responseModalities: ["IMAGE"]
+                        }
+                    }),
+                    signal: controller.signal
+                }
+            );
+
+            clearTimeout(timeoutId);
+            const geminiDuration = ((Date.now() - geminiStartTime) / 1000).toFixed(2);
+            console.log(`✅ Gemini response received in ${geminiDuration}s`);
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('❌ Gemini API error:', response.status, errorText);
+                throw new Error(`Gemini API error: ${response.status}`);
             }
-        );
 
-        const geminiDuration = ((Date.now() - geminiStartTime) / 1000).toFixed(2);
-        console.log(`✅ Gemini response received in ${geminiDuration}s`);
+            result = await response.json();
+        } catch (error: any) {
+            clearTimeout(timeoutId);
 
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error('❌ Gemini API error:', response.status, errorText);
-            throw new Error(`Gemini API error: ${response.status}`);
+            // 🚨 TIMEOUT DETECTED: Return safe fallback
+            if (error.name === 'AbortError') {
+                console.warn('⏱️ Gemini API timed out after 15s. Returning Unsplash fallback...');
+                timedOut = true;
+
+                // Generate industry-specific Unsplash fallback
+                const industryLower = (brandDNA?.industry || 'business').toLowerCase();
+                let unsplashQuery = 'professional business';
+
+                // Map industry to Unsplash search term
+                if (industryLower.match(/food|restaurant|pizza|cafe|dining|bistro|italian|kitchen/i)) {
+                    unsplashQuery = 'delicious food plated dish restaurant';
+                } else if (industryLower.match(/beauty|hair|salon|spa|fashion|clothing/i)) {
+                    unsplashQuery = 'beauty editorial fashion luxury';
+                } else if (industryLower.match(/tech|software|saas|app|digital/i)) {
+                    unsplashQuery = 'modern technology workspace futuristic';
+                } else if (industryLower.match(/landscaping|outdoor|garden|lawn/i)) {
+                    unsplashQuery = 'lush green garden landscaping outdoor';
+                } else if (industryLower.match(/fitness|gym|wellness|yoga/i)) {
+                    unsplashQuery = 'fitness gym athletic dynamic';
+                } else if (industryLower.match(/real estate|property|home/i)) {
+                    unsplashQuery = 'modern home architecture interior';
+                }
+
+                const fallbackImage = `https://source.unsplash.com/1024x1024/?${encodeURIComponent(unsplashQuery)}`;
+
+                return new Response(
+                    JSON.stringify({
+                        image: fallbackImage,
+                        status: 'timeout_fallback',
+                        message: 'AI generation timed out, using high-quality placeholder'
+                    }),
+                    { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+                );
+            }
+
+            // Other errors: throw to be caught by outer try/catch
+            throw error;
         }
-
-        const result = await response.json();
 
         // STEP 6: Extract Generated Image (Gemini 3 format)
         const candidate = result.candidates?.[0];
