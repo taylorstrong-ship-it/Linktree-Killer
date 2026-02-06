@@ -34,6 +34,23 @@ async function fetchImageAsBase64(url: string): Promise<{ base64: string; mimeTy
     try {
         console.log('📥 Fetching image from:', url.substring(0, 60) + '...');
 
+        // 🛡️ MEMORY SAFETY: Check content-length BEFORE downloading
+        // This prevents OOM crashes on Edge Functions with 256MB RAM limits
+        const headResponse = await fetch(url, { method: 'HEAD' });
+        const contentLength = headResponse.headers.get('content-length');
+
+        if (contentLength) {
+            const sizeInMB = parseInt(contentLength) / (1024 * 1024);
+            console.log(`📊 Image size: ${sizeInMB.toFixed(2)} MB`);
+
+            // 🚨 4MB LIMIT: Skip large images to prevent memory exhaustion
+            if (sizeInMB > 4) {
+                console.warn(`⚠️ Image too large (${sizeInMB.toFixed(2)} MB > 4 MB). Skipping to prevent OOM.`);
+                console.warn('   Falling back to text-to-image generation (Path B)');
+                return null;
+            }
+        }
+
         const response = await fetch(url, {
             headers: {
                 'User-Agent': 'Mozilla/5.0 (compatible; TayloredAI/1.0)',
@@ -375,39 +392,40 @@ OUTPUT: A scroll-stopping Instagram ad that looks like a professional agency cre
     } catch (error: any) {
         console.error('❌ Generation failed:', error);
 
-        // Determine error type and status code
-        let statusCode = 500;
-        let errorMessage = error.message || 'Generation failed';
-        let errorType = 'INTERNAL_ERROR';
+        // 🛡️ IRONCLAD BACKEND: Return graceful fallback instead of 500 error
+        // This prevents the frontend from showing "Preview Unavailable" errors
+
+        // Determine error type for logging
+        let errorType = 'UNKNOWN_ERROR';
 
         if (error.message?.includes('API key')) {
-            statusCode = 500;
             errorType = 'API_KEY_ERROR';
-            errorMessage = 'Server configuration error: Missing API key';
         } else if (error.message?.includes('Gemini API error')) {
-            statusCode = 502;
             errorType = 'GEMINI_API_ERROR';
-            errorMessage = 'External API error: ' + error.message;
         } else if (error.message?.includes('Content blocked')) {
-            statusCode = 400;
             errorType = 'CONTENT_BLOCKED';
-            errorMessage = 'Content moderation: ' + error.message;
         } else if (error.message?.includes('No content generated')) {
-            statusCode = 500;
             errorType = 'NO_CONTENT';
-            errorMessage = 'Generation failed: No content returned from AI';
+        } else if (error.name === 'AbortError') {
+            errorType = 'TIMEOUT';
+        } else if (error.message?.includes('out of memory') || error.message?.includes('OOM')) {
+            errorType = 'OUT_OF_MEMORY';
         }
 
+        console.log(`🤫 Returning graceful fallback (ErrorType: ${errorType})`);
+
+        // 🎯 ALWAYS RETURN 200 OK with image: null
+        // The frontend will keep showing the original hero image
         return new Response(
             JSON.stringify({
                 success: false,
-                error: errorMessage,
-                errorType: errorType,
-                details: error.stack ? error.stack.split('\n')[0] : undefined,
+                image: null,
+                error: errorType,
+                message: 'AI generation unavailable - using original image'
             }),
             {
                 headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-                status: statusCode,
+                status: 200, // ✅ CRITICAL: Return 200, not 500
             }
         );
     }

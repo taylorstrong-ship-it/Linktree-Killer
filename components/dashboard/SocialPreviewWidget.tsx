@@ -195,30 +195,75 @@ REQUIREMENTS:
                     console.log('📝 [STANDARD MODE] No hero image found, using text-to-image generation');
                 }
 
-                const { data, error } = await supabase.functions.invoke('generate-campaign-asset', {
-                    body: {
-                        image: imageSource,
-                        isUrl: isUrl,
-                        brandDNA: {
-                            name: brandData.businessName,
-                            primaryColor: brandData.primaryColor || '#FF6B35',
-                            vibe: smartVibe,
-                            industry: brandData.industry || 'Business',
-                        },
-                        campaign: enrichedCampaign,
-                        sourceImageUrl: heroImage || undefined, // 🎨 Enable beautifier if heroImage exists
+                // 🔥 5-MINUTE CONNECTION: Raw fetch with AbortController for full timeout control
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => {
+                    console.warn('⏱️ [Timeout] 5-minute limit reached, aborting request...');
+                    controller.abort();
+                }, 300000); // 300,000ms = 5 minutes
+
+                console.log('⏰ [Connection] Starting 5-minute timeout window for Gemini 3 Pro rendering...');
+
+                const payload = {
+                    image: imageSource,
+                    isUrl: isUrl,
+                    brandDNA: {
+                        name: brandData.businessName,
+                        primaryColor: brandData.primaryColor || '#FF6B35',
+                        vibe: smartVibe,
+                        industry: brandData.industry || 'Business',
                     },
-                });
+                    campaign: enrichedCampaign,
+                    sourceImageUrl: heroImage || undefined, // 🎨 Enable beautifier if heroImage exists
+                };
+
+                // Get Supabase URL from environment or construct it
+                const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+                const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+                if (!supabaseUrl || !supabaseAnonKey) {
+                    console.error('❌ [Config] Missing Supabase credentials');
+                    throw new Error('Supabase configuration missing');
+                }
+
+                let response: Response;
+                try {
+                    response = await fetch(`${supabaseUrl}/functions/v1/generate-campaign-asset`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${supabaseAnonKey}`,
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(payload),
+                        signal: controller.signal,
+                    });
+
+                    clearTimeout(timeoutId); // Clear timeout on successful response
+                    console.log('✅ [Connection] Request completed within timeout window');
+                } catch (fetchError: any) {
+                    clearTimeout(timeoutId);
+
+                    if (fetchError.name === 'AbortError') {
+                        console.warn('⏱️ [Timeout] Request aborted after 5 minutes');
+                        throw new Error('Generation timed out after 5 minutes');
+                    }
+
+                    console.error('❌ [Fetch Error]', fetchError);
+                    throw fetchError;
+                }
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('❌ [HTTP Error]', response.status, errorText);
+                    throw new Error(`HTTP ${response.status}: ${errorText}`);
+                }
+
+                const data = await response.json();
 
                 console.log('📡 [AI Design] Supabase function response:', {
                     hasData: !!data,
-                    hasError: !!error
+                    success: data?.success
                 });
-
-                if (error) {
-                    console.error('❌ [AI Design] Supabase function error:', error);
-                    throw new Error(error.message || 'Function invocation failed');
-                }
 
                 if (!data) {
                     throw new Error('No response from function');
@@ -269,9 +314,10 @@ REQUIREMENTS:
                 // DO NOT clear generatedImage (keep the heroImage showing)
                 // DO NOT change state (stay on 'success')
             }
+        };
 
-            generatePreview();
-        }, [brandData]);
+        generatePreview();
+    }, [brandData]);
 
     return (
         <div className="relative w-full max-w-md mx-auto">
@@ -286,6 +332,10 @@ REQUIREMENTS:
                     vibe={vibe}
                     campaign={campaign}
                     onRemix={handleEditPage}
+                    isUpgrading={isUpgrading}
+                    enhancementSucceeded={enhancementSucceeded}
+                    brandData={brandData}
+                    router={router}
                 />
             </IPhoneMockup>
         </div>
@@ -305,6 +355,10 @@ interface InstagramPostUIProps {
     vibe: string;
     campaign: string;
     onRemix?: () => void;
+    isUpgrading: boolean;
+    enhancementSucceeded: boolean;
+    brandData: BrandData;
+    router: any;
 }
 
 function InstagramPostUI({
@@ -316,6 +370,10 @@ function InstagramPostUI({
     vibe,
     campaign,
     onRemix,
+    isUpgrading,
+    enhancementSucceeded,
+    brandData,
+    router,
 }: InstagramPostUIProps) {
     return (
         <div className="w-full h-full bg-white dark:bg-zinc-950 flex flex-col">
