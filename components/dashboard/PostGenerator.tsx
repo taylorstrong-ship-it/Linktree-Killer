@@ -382,7 +382,7 @@ export default function PostGenerator() {
         });
 
         try {
-            const supabase = createSupabaseClient();
+            const supabase = createSupabaseClient() as any;
             const { data, error: functionError } = await supabase.functions.invoke('generate-campaign-asset', {
                 body: {
                     brandDNA: {
