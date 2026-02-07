@@ -12,6 +12,7 @@ interface PostData {
     originalImageUrl?: string; // The original user upload (for comparison)
     timestamp?: string;
     showComparison?: boolean; // Enable before/after slider
+    mediaPlaceholderType?: 'shimmer' | 'static'; // Animation type for loading state
 }
 
 interface SocialCardMockupProps {
