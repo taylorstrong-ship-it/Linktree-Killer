@@ -728,7 +728,7 @@ export default function PostGenerator() {
                                     avatarUrl: brandDNA?.logoUrl || brandDNA?.heroImage,
                                     caption: generatedContent?.caption || 'Your taylored content will appear here...',
                                     imageUrl: generatedContent?.imageBase64,
-                                    originalImageUrl: sourceMode === 'enhance' ? userImage : undefined,
+                                    originalImageUrl: sourceMode === 'enhance' ? (userImage || undefined) : undefined,
                                     timestamp: 'Just now',
                                     showComparison: sourceMode === 'enhance' && !!userImage && !!generatedContent,
                                 }}
