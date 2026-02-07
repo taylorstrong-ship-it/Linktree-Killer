@@ -63,8 +63,205 @@ interface BrandDNA {
         type: string;
     }>;
 
+    // 🆕 AI-POWERED BRAND INTELLIGENCE (v4.0)
+    brand_voice?: string;  // e.g., "Warm and welcoming with a playful edge"
+    tone_score?: number;   // 1-10 scale (1=formal, 10=casual)
+    personality_traits?: string[];  // ["Friendly", "Energetic", "Community-focused"]
+    brand_archetype?: string;  // "The Caregiver", "The Explorer", etc.
+    writing_style?: {
+        sentence_length: 'short' | 'medium' | 'long';
+        vocabulary: 'simple' | 'moderate' | 'sophisticated';
+        uses_emojis: boolean;
+        uses_humor: boolean;
+    };
+    social_media_examples?: Array<{
+        type: string;
+        caption: string;
+        visual_description: string;
+        cta: string;
+        hashtags: string[];
+    }>;
+
     // Metadata
     source: string;
+}
+
+// =================================================================
+// 🤖 AI ANALYSIS HELPERS (Brand DNA v4.0)
+// =================================================================
+
+/**
+ * Analyze brand voice and personality using GPT-4o
+ */
+async function analyzeBrandVoice(
+    url: string,
+    companyName: string,
+    markdown: string,
+    socialLinks: Record<string, string>,
+    openaiKey: string
+): Promise<{
+    brand_voice: string;
+    tone_score: number;
+    personality_traits: string[];
+    brand_archetype: string;
+    writing_style: any;
+}> {
+    const prompt = `You are a brand strategist analyzing website content to extract brand voice and personality.
+
+WEBSITE: ${url}
+COMPANY: ${companyName}
+
+CONTENT SAMPLES:
+${markdown.slice(0, 5000)}
+
+SOCIAL MEDIA LINKS:
+${Object.keys(socialLinks).length > 0 ? JSON.stringify(socialLinks, null, 2) : 'None found'}
+
+ANALYZE and extract:
+1. **Brand Voice:** How does this brand communicate? (e.g., "Friendly and approachable", "Professional and authoritative")
+2. **Tone:** Formality scale 1-10 (1=Corporate/Formal, 10=Super Casual/Playful)
+3. **Key Adjectives:** 3-5 words describing personality
+4. **Writing Style:** Sentence structure, vocabulary, emoji usage
+5. **Brand Archetype:** Hero, Caregiver, Explorer, Creator, Ruler, etc.
+
+CRITICAL: Be specific and evidence-based. Quote actual phrases from the content.
+
+Respond ONLY with valid JSON:
+{
+  "brand_voice": "One sentence description of communication style",
+  "tone_score": 7,
+  "personality_traits": ["Friendly", "Energetic", "Professional"],
+  "writing_style": {
+    "sentence_length": "short",
+    "vocabulary": "moderate",
+    "uses_emojis": true,
+    "uses_humor": false
+  },
+  "brand_archetype": "The Caregiver"
+}`;
+
+    try {
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${openaiKey}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                model: 'gpt-4o',  // Upgraded from gpt-4o-mini for better analysis
+                messages: [
+                    { role: 'system', content: 'You are an expert brand strategist. Respond only with valid JSON.' },
+                    { role: 'user', content: prompt }
+                ],
+                response_format: { type: 'json_object' },
+                temperature: 0.3,
+            }),
+        });
+
+        const data = await response.json();
+        const analysis = JSON.parse(data.choices[0]?.message?.content || '{}');
+
+        console.log('🎯 Brand Voice Analysis:', analysis);
+        return analysis;
+    } catch (error) {
+        console.error('⚠️ Brand voice analysis failed:', error);
+        // Return safe defaults
+        return {
+            brand_voice: 'Professional and customer-focused',
+            tone_score: 5,
+            personality_traits: ['Professional', 'Reliable'],
+            brand_archetype: 'The Regular Guy/Gal',
+            writing_style: {
+                sentence_length: 'medium',
+                vocabulary: 'moderate',
+                uses_emojis: false,
+                uses_humor: false
+            }
+        };
+    }
+}
+
+/**
+ * Generate example social media posts using Claude 3.5 Sonnet
+ */
+async function generateSocialMediaExamples(
+    companyName: string,
+    businessType: string,
+    brandVoice: string,
+    personalityTraits: string[],
+    toneScore: number,
+    anthropicKey: string
+): Promise<Array<any>> {
+    const prompt = `You are a social media content creator who has studied this brand's voice.
+
+BRAND: ${companyName}
+INDUSTRY: ${businessType}
+BRAND VOICE: ${brandVoice}
+PERSONALITY: ${personalityTraits.join(', ')}
+TONE: ${toneScore}/10 (1=formal, 10=casual)
+
+TASK: Create 3 example social media posts this brand might actually post.
+
+POST TYPES:
+1. Product/Service Highlight
+2. Behind the Scenes / Team Spotlight  
+3. Customer Testimonial / Value Prop
+
+RULES:
+- Match their exact voice and tone
+- Be industry-specific and realistic
+- Captions: 100-150 characters (Instagram-optimized)
+- If tone > 6, use emojis. If tone < 4, avoid emojis.
+- Include realistic CTAs
+
+Respond ONLY with valid JSON:
+{
+  "examples": [
+    {
+      "type": "product_highlight",
+      "caption": "Actual caption text matching brand voice...",
+      "visual_description": "Describe the image (e.g., 'Close-up of signature latte with house foam art')",
+      "cta": "Book Now",
+      "hashtags": ["#relevant", "#hashtags"]
+    }
+  ]
+}`;
+
+    try {
+        const response = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: {
+                'x-api-key': anthropicKey,
+                'anthropic-version': '2023-06-01',
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                model: 'claude-3-5-sonnet-20241022',
+                max_tokens: 2000,
+                messages: [
+                    { role: 'user', content: prompt }
+                ],
+                temperature: 0.7,
+            }),
+        });
+
+        const data = await response.json();
+        const content = data.content[0]?.text || '{}';
+        const result = JSON.parse(content);
+
+        console.log('📸 Social Media Examples:', result);
+        return result.examples || [];
+    } catch (error) {
+        console.error('⚠️ Social media generation failed:', error);
+        // Return safe defaults
+        return [{
+            type: 'product_highlight',
+            caption: `Check out what makes ${companyName} special!`,
+            visual_description: `Professional photo showcasing ${businessType} services`,
+            cta: 'Learn More',
+            hashtags: [`#${businessType.toLowerCase().replace(' ', '')}`]
+        }];
+    }
 }
 
 serve(async (req) => {
@@ -235,6 +432,35 @@ Respond with ONLY valid JSON:
         }
 
         console.log('✅ Final Industry Classification:', aiAnalysis.business_type);
+
+        // 🆕 STEP 3.5: AI-POWERED BRAND INTELLIGENCE (v4.0)
+        console.log('🤖 Starting AI brand voice analysis...');
+
+        const anthropicKey = Deno.env.get('ANTHROPIC_API_KEY');
+
+        // Analyze brand voice with GPT-4o
+        const brandVoiceAnalysis = await analyzeBrandVoice(
+            url,
+            branding.companyName || 'Unknown',
+            markdown,
+            socialLinks,
+            openaiKey
+        );
+
+        // Generate social media examples with Claude 3.5 if Anthropic key is available
+        let socialExamples = [];
+        if (anthropicKey) {
+            socialExamples = await generateSocialMediaExamples(
+                branding.companyName || 'Unknown',
+                aiAnalysis.business_type || 'general',
+                brandVoiceAnalysis.brand_voice,
+                brandVoiceAnalysis.personality_traits,
+                brandVoiceAnalysis.tone_score,
+                anthropicKey
+            );
+        } else {
+            console.log('⚠️ ANTHROPIC_API_KEY not found - skipping social media example generation');
+        }
 
         // STEP 4: Enhanced Image Extraction with Multi-Tier Fallback + Hero Hunter
         // 🎯 STRATEGY: EXTRACT EVERYTHING, FILTER LATER
@@ -637,6 +863,14 @@ Respond with ONLY valid JSON:
 
             // Business Intelligence
             suggested_ctas: aiAnalysis.suggested_ctas || [],
+
+            // 🆕 AI-POWERED BRAND INTELLIGENCE (v4.0)
+            brand_voice: brandVoiceAnalysis.brand_voice,
+            tone_score: brandVoiceAnalysis.tone_score,
+            personality_traits: brandVoiceAnalysis.personality_traits,
+            brand_archetype: brandVoiceAnalysis.brand_archetype,
+            writing_style: brandVoiceAnalysis.writing_style,
+            social_media_examples: socialExamples,
 
             // Metadata
             source: 'firecrawl_v2_branding',
