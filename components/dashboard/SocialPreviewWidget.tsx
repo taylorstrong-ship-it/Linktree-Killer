@@ -278,6 +278,10 @@ REQUIREMENTS:
                         primaryColor: brandData.primaryColor || '#FF6B35',
                         vibe: smartVibe,
                         industry: brandData.industry || 'Business',
+                        bio: brandData.bio || '', // 🎯 CRITICAL FIX: Enables brand story in AI generation
+                        description: brandData.bio || '', // Fallback for description field
+                        logo_url: brandData.logo_url, // 🎨 Logo for brand integration
+                        brand_images: brandData.brand_images || [], // 📸 Product images for visual ref
                     },
                     campaign: campaign,  // 🎯 CLEAN HEADLINE: "Order Now", "Book Now", etc.
                     userInstructions: enrichedCampaign,  // 🎨 BEAUTIFICATION GUIDANCE: Scene description for visual enhancement
