@@ -142,16 +142,6 @@ export default function BrandDashboard({ brandData }: BrandDashboardProps) {
     return (
         <div className="min-h-screen w-full bg-[#0a0a0a] py-24 px-6">
             <div className="max-w-7xl mx-auto">
-                {/* 🎯 PRIORITY #1: REVIEW GUARD - APPEARS FIRST TO BUY TIME FOR IMAGE GENERATION */}
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.3, duration: 0.8 }}
-                    className="mb-16"
-                >
-                    <ReviewGuardHero />
-                </motion.div>
-
                 {/* SECTION 1: YOUR BUSINESS DNA */}
                 <motion.div
                     initial={{ opacity: 0, y: 30 }}
@@ -246,6 +236,16 @@ export default function BrandDashboard({ brandData }: BrandDashboardProps) {
                     <p className="mt-6 text-xl text-white/50 font-sans max-w-2xl mx-auto">
                         We've synthesized your brand into a deployment-ready ecosystem.
                     </p>
+                </motion.div>
+
+                {/* 🎯 REVIEW GUARD - INTERACTIVE ELEMENT WHILE CONTENT LOADS */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 3.1, duration: 0.8 }}
+                    className="mb-16"
+                >
+                    <ReviewGuardHero />
                 </motion.div>
 
                 {/* SECTION 3: Two Column Layout */}
