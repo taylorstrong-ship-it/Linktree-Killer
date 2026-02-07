@@ -120,7 +120,7 @@ export default function PostGenerator() {
             }
 
             // 🎯 PRIORITY 2: Fall back to Supabase for authenticated users
-            const supabase = createSupabaseClient();
+            const supabase = createSupabaseClient() as any;
 
             try {
                 // Get current user
