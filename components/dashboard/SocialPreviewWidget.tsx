@@ -19,6 +19,7 @@ interface BrandData {
     primaryColor?: string;
     industry?: string;
     bio?: string; // Brand tagline/description for smart headlines
+    suggested_ctas?: any[]; // 🔗 Smart CTA suggestions from brand DNA
 }
 
 interface SocialPreviewWidgetProps {
