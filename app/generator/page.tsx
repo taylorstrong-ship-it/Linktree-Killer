@@ -3,8 +3,9 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase/client'
-import InstagramPreview from '@/components/generator/InstagramPreview'
-import { Sparkles, Zap, TrendingUp } from 'lucide-react'
+import ImageSelector from '@/components/studio/ImageSelector'
+import VariationCarousel from '@/components/studio/VariationCarousel'
+import { Sparkles, Wand2, CheckCircle } from 'lucide-react'
 
 interface BrandDNA {
     company_name?: string
@@ -14,7 +15,17 @@ interface BrandDNA {
     hero_image?: string
     primary_color?: string
     secondary_color?: string
+    accent_color?: string
     brand_personality?: string[]
+    business_type?: string
+    brand_images?: string[]
+}
+
+interface Variation {
+    id: string
+    imageUrl: string
+    layout: string
+    caption?: string
 }
 
 function GeneratorPageContent() {
@@ -24,24 +35,19 @@ function GeneratorPageContent() {
     const [loading, setLoading] = useState(true)
     const [generating, setGenerating] = useState(false)
 
-    // Form state - Initialize from URL params if bridge from dashboard
-    const [prompt, setPrompt] = useState(searchParams.get('prompt') || '')
-    const [vibe, setVibe] = useState<'professional' | 'energetic' | 'minimal'>(
-        (searchParams.get('vibe')?.toLowerCase() as 'professional' | 'energetic' | 'minimal') || 'professional'
-    )
-    const [platform, setPlatform] = useState<'instagram' | 'tiktok' | 'linkedin'>('instagram')
+    // Content Studio state
+    const [selectedImage, setSelectedImage] = useState<string>('')
+    const [imageSource, setImageSource] = useState<'upload' | 'brand'>('brand')
+    const [prompt, setPrompt] = useState('')
+    const [variations, setVariations] = useState<Variation[]>([])
 
-    // Generated content state - Pre-load from dashboard if remixing
-    const [generatedImageUrl, setGeneratedImageUrl] = useState<string>(searchParams.get('image') || '')
-    const [generatedCaption, setGeneratedCaption] = useState('')
-
-    // Load Brand DNA on mount (Smart Fallback: localStorage → Supabase)
+    // Load Brand DNA on mount
     useEffect(() => {
         async function loadBrandDNA() {
             try {
                 console.log('🔍 Loading Brand DNA...')
 
-                // STEP 1: Check localStorage (Guest Mode - Primary source)
+                // Check localStorage first
                 const localData = localStorage.getItem('taylored_brand_data')
                 if (localData) {
                     const parsed = JSON.parse(localData)
@@ -51,10 +57,10 @@ function GeneratorPageContent() {
                     return
                 }
 
-                // STEP 2: Check Supabase (Authenticated users)
+                // Fallback to Supabase for authenticated users
                 const { data: { session } } = await supabase.auth.getSession()
                 if (session?.user) {
-                    console.log('🔐 Authenticated user detected, fetching from Supabase...')
+                    console.log('🔐 Fetching from Supabase...')
                     const { data, error } = await supabase
                         .from('profiles')
                         .select('*')
@@ -62,14 +68,13 @@ function GeneratorPageContent() {
                         .single()
 
                     if (data && !error) {
-                        console.log('✅ Brand DNA loaded from Supabase')
-                        // Transform profile data to Brand DNA format
                         const transformedDNA: BrandDNA = {
                             company_name: data.title,
                             business_name: data.title,
                             logo_url: data.avatar_url,
                             primary_color: data.theme_color,
-                            secondary_color: data.accent_color
+                            secondary_color: data.accent_color,
+                            brand_images: []
                         }
                         setBrandDNA(transformedDNA)
                         setLoading(false)
@@ -77,7 +82,6 @@ function GeneratorPageContent() {
                     }
                 }
 
-                // STEP 3: No data found - user needs to scan
                 console.log('⚠️ No Brand DNA found')
                 setBrandDNA(null)
                 setLoading(false)
@@ -90,116 +94,119 @@ function GeneratorPageContent() {
         loadBrandDNA()
     }, [])
 
-    // 🎯 CLEAN HANDOFF: Receive pending campaign data from SocialPreviewWidget
-    useEffect(() => {
-        try {
-            const pendingData = localStorage.getItem('cva_pending_campaign');
-
-            if (pendingData) {
-                console.log('📥 [Clean Handoff] Pending campaign data detected');
-
-                const campaignData = JSON.parse(pendingData);
-
-                // Load the generated image and prompt
-                if (campaignData.image) {
-                    setGeneratedImageUrl(campaignData.image);
-                    console.log('✅ [Clean Handoff] Loaded generated image');
-                }
-
-                if (campaignData.prompt) {
-                    setPrompt(campaignData.prompt);
-                    console.log('✅ [Clean Handoff] Loaded campaign prompt:', campaignData.prompt);
-                }
-
-                if (campaignData.vibe) {
-                    const normalizedVibe = campaignData.vibe.toLowerCase() as 'professional' | 'energetic' | 'minimal';
-                    setVibe(normalizedVibe);
-                    console.log('✅ [Clean Handoff] Loaded vibe:', normalizedVibe);
-                }
-
-                // If brand data came with it, use it (fallback to existing brandDNA)
-                if (campaignData.brand && !brandDNA) {
-                    setBrandDNA(campaignData.brand);
-                    console.log('✅ [Clean Handoff] Loaded brand data from campaign');
-                }
-
-                // Clear the pending data so it doesn't reload on refresh
-                localStorage.removeItem('cva_pending_campaign');
-                console.log('🧹 [Clean Handoff] Cleared pending campaign data');
-            }
-        } catch (err) {
-            console.error('❌ [Clean Handoff] Error loading pending campaign:', err);
-        }
-    }, [brandDNA]);
-
     async function handleGenerate() {
+        if (!selectedImage) {
+            alert('Please select or upload an image first')
+            return
+        }
+
         if (!prompt.trim()) {
-            alert('Please enter a prompt')
+            alert('Please enter what you want to promote')
             return
         }
 
         if (!brandDNA) {
-            alert('Please scan your brand first')
+            alert('Brand DNA not loaded. Please scan your website first.')
             window.location.href = '/'
             return
         }
 
         setGenerating(true)
+        setVariations([])
 
         try {
-            // TODO: Replace with actual API call to your generation endpoint
-            // For now, simulate the generation process
-            console.log('🎨 Generating content...', { prompt, vibe, platform, brandDNA })
+            console.log('🎨 Generating post via Edge Function...', { prompt, image: selectedImage })
 
-            // Simulate API call delay
-            await new Promise(resolve => setTimeout(resolve, 3000))
+            // Call Supabase Edge Function
+            const response = await fetch(
+                `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/generate-social-post`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`
+                    },
+                    body: JSON.stringify({
+                        user_image_url: selectedImage,
+                        caption_text: prompt,
+                        brand_dna: {
+                            company_name: brandDNA.company_name || brandDNA.business_name,
+                            colors: {
+                                primary: brandDNA.primary_color || '#FF6B35',
+                                secondary: brandDNA.secondary_color || '#1a1a1a',
+                                accent: brandDNA.accent_color || '#00FF41'
+                            },
+                            typography: {
+                                heading: 'Bold Sans-serif',
+                                body: 'Clean Sans-serif'
+                            },
+                            business_type: brandDNA.business_type || 'Restaurant'
+                        },
+                        format: 'instagram_post'
+                    })
+                }
+            )
 
-            // Mock generated content
-            setGeneratedImageUrl('https://picsum.photos/1080/1080?random=' + Date.now())
-            setGeneratedCaption(`🚀 ${prompt}\n\n✨ Generated with AI\n\n#${brandDNA.company_name?.replace(/\s+/g, '')} #${vibe}`)
+            if (!response.ok) {
+                const errorText = await response.text()
+                console.error('Generation failed:', errorText)
+                throw new Error(`Edge Function returned ${response.status}`)
+            }
+
+            const result = await response.json()
+            console.log('✅ Generated:', result)
+
+            // Edge Function returns single image, create variation
+            const variation: Variation = {
+                id: `v1-${Date.now()}`,
+                imageUrl: result.image_url,
+                layout: 'AI Enhanced',
+                caption: result.caption || prompt
+            }
+
+            setVariations([variation])
 
         } catch (err) {
-            console.error('Generation failed:', err)
-            alert('Failed to generate content. Please try again.')
+            console.error('❌ Generation error:', err)
+            alert('Failed to generate post. Please try again.')
         } finally {
             setGenerating(false)
         }
     }
 
+    function handleDownload(variation: Variation) {
+        console.log('📥 Downloaded:', variation.id)
+    }
+
+    function handleRegenerate() {
+        handleGenerate()
+    }
+
     if (loading) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-[#050505]">
+            <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
                 <div className="text-center">
-                    <div className="relative w-16 h-16 mx-auto mb-6">
-                        <div className="absolute inset-0 border-4 border-[#FF6B35]/20 rounded-full"></div>
-                        <div className="absolute inset-0 border-4 border-transparent border-t-[#FF6B35] rounded-full animate-spin"></div>
-                    </div>
-                    <p className="text-gray-400 font-sans">Loading generator...</p>
+                    <div className="w-16 h-16 border-4 border-white/20 border-t-[#FF6B35] rounded-full animate-spin mx-auto mb-4"></div>
+                    <p className="text-gray-400">Loading your brand...</p>
                 </div>
             </div>
         )
     }
 
-    // No Brand DNA - Show CTA
     if (!brandDNA) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-[#050505] p-4">
-                <div className="max-w-md w-full text-center">
-                    <div className="mb-6">
-                        <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-white/5 border border-white/10 flex items-center justify-center">
-                            <Sparkles className="w-10 h-10 text-[#FF6B35]" />
-                        </div>
-                        <h1 className="text-2xl font-bold text-white mb-2">Scan Your Brand First</h1>
-                        <p className="text-gray-400">
-                            We need your brand DNA to create content that feels authentically yours.
-                        </p>
+            <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center p-6">
+                <div className="text-center max-w-md">
+                    <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mx-auto mb-4">
+                        <Sparkles className="w-8 h-8 text-gray-600" />
                     </div>
+                    <h2 className="text-2xl font-bold text-white mb-2">Brand DNA Required</h2>
+                    <p className="text-gray-400 mb-6">Please scan your website first to extract your brand identity.</p>
                     <a
                         href="/"
-                        className="inline-flex items-center gap-2 bg-[#FF6B35] hover:bg-[#FF6B35]/90 text-white px-6 py-3 rounded-xl font-medium transition-colors"
+                        className="inline-block px-6 py-3 bg-gradient-to-r from-[#FF6B35] to-[#00FF41] text-white rounded-xl font-semibold hover:opacity-90 transition-opacity"
                     >
-                        <Zap className="w-5 h-5" />
-                        Start Brand Scan
+                        Scan Your Brand
                     </a>
                 </div>
             </div>
@@ -207,23 +214,26 @@ function GeneratorPageContent() {
     }
 
     return (
-        <div className="min-h-screen bg-[#050505] bg-gradient-to-br from-[#050505] via-slate-900 to-[#050505]">
+        <div className="min-h-screen bg-[#0a0a0a] text-white">
             {/* Header */}
-            <div className="border-b border-white/10 bg-black/50 backdrop-blur-xl">
+            <div className="border-b border-white/10 bg-black/50 backdrop-blur-xl sticky top-0 z-50">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#FF6B35] to-[#00FF41] flex items-center justify-center">
-                                <Sparkles className="w-6 h-6 text-white" />
+                                <Wand2 className="w-5 h-5 text-white" />
                             </div>
                             <div>
-                                <h1 className="text-xl font-bold text-white">Post Generator</h1>
-                                <p className="text-xs text-gray-500">Powered by {brandDNA.company_name || 'Your Brand'}</p>
+                                <h1 className="text-xl font-bold">Content Studio</h1>
+                                <p className="text-sm text-gray-500">
+                                    {brandDNA.company_name || brandDNA.business_name || 'Your Brand'}
+                                    <CheckCircle className="inline w-3 h-3 ml-1 text-[#00FF41]" />
+                                </p>
                             </div>
                         </div>
                         <a
                             href="/"
-                            className="text-gray-400 hover:text-white text-sm transition-colors"
+                            className="text-sm text-gray-400 hover:text-white transition-colors"
                         >
                             ← Back to Home
                         </a>
@@ -231,136 +241,82 @@ function GeneratorPageContent() {
                 </div>
             </div>
 
-            {/* Main Content - Command Center Layout */}
+            {/* Main Content */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-                    {/* Left Column: Command Center (60% on desktop) */}
-                    <div className="lg:col-span-3 space-y-6">
-                        {/* Brand Context Card */}
-                        <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6">
-                            <div className="flex items-center gap-4 mb-4">
-                                {brandDNA.logo_url && (
-                                    <div className="w-12 h-12 rounded-xl overflow-hidden bg-white/5">
-                                        <img
-                                            src={brandDNA.logo_url}
-                                            alt={brandDNA.company_name || 'Brand'}
-                                            className="w-full h-full object-cover"
-                                        />
-                                    </div>
-                                )}
-                                <div>
-                                    <h2 className="text-white font-semibold">{brandDNA.company_name || 'Your Brand'}</h2>
-                                    <p className="text-gray-500 text-sm">Brand DNA Loaded</p>
-                                </div>
-                                <div className="ml-auto">
-                                    <div className="flex items-center gap-2 text-[#00FF41] text-sm">
-                                        <div className="w-2 h-2 rounded-full bg-[#00FF41] animate-pulse"></div>
-                                        Active
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Brand Personality Tags */}
-                            {brandDNA.brand_personality && brandDNA.brand_personality.length > 0 && (
-                                <div className="flex flex-wrap gap-2">
-                                    {brandDNA.brand_personality.slice(0, 3).map((trait, idx) => (
-                                        <span
-                                            key={idx}
-                                            className="px-3 py-1 bg-white/5 border border-white/10 rounded-full text-xs text-gray-400"
-                                        >
-                                            {trait}
-                                        </span>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    {/* Left: Controls */}
+                    <div className="space-y-6">
+                        {/* Image Selection */}
+                        <ImageSelector
+                            brandImages={brandDNA.brand_images || []}
+                            onImageSelected={(url, source) => {
+                                setSelectedImage(url)
+                                setImageSource(source)
+                            }}
+                            selectedImage={selectedImage}
+                        />
 
                         {/* Prompt Input */}
                         <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6">
-                            <label className="block mb-3">
-                                <span className="text-white font-semibold mb-2 block">What are you promoting?</span>
-                                <textarea
-                                    value={prompt}
-                                    onChange={(e) => setPrompt(e.target.value)}
-                                    placeholder="e.g., New product launch, behind-the-scenes, customer testimonial..."
-                                    className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#FF6B35] resize-none"
-                                    rows={4}
-                                />
-                            </label>
-                        </div>
-
-                        {/* Vibe Selector */}
-                        <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6">
-                            <h3 className="text-white font-semibold mb-4">Content Vibe</h3>
-                            <div className="grid grid-cols-3 gap-3">
-                                {(['professional', 'energetic', 'minimal'] as const).map((v) => (
-                                    <button
-                                        key={v}
-                                        onClick={() => setVibe(v)}
-                                        className={`py-3 px-4 rounded-xl font-medium text-sm transition-all ${vibe === v
-                                            ? 'bg-[#FF6B35] text-white'
-                                            : 'bg-white/5 text-gray-400 hover:bg-white/10 border border-white/10'
-                                            }`}
-                                    >
-                                        {v.charAt(0).toUpperCase() + v.slice(1)}
-                                    </button>
-                                ))}
+                            <div className="flex items-center gap-3 mb-4">
+                                <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center">
+                                    <Sparkles className="w-5 h-5 text-[#FF6B35]" />
+                                </div>
+                                <div>
+                                    <h3 className="text-white font-semibold">What's the Special?</h3>
+                                    <p className="text-gray-500 text-sm">Type your promotion or message</p>
+                                </div>
                             </div>
-                        </div>
 
-                        {/* Platform Selector */}
-                        <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6">
-                            <h3 className="text-white font-semibold mb-4">Target Platform</h3>
-                            <div className="grid grid-cols-3 gap-3">
-                                {(['instagram', 'tiktok', 'linkedin'] as const).map((p) => (
-                                    <button
-                                        key={p}
-                                        onClick={() => setPlatform(p)}
-                                        className={`py-3 px-4 rounded-xl font-medium text-sm transition-all ${platform === p
-                                            ? 'bg-[#FF6B35] text-white'
-                                            : 'bg-white/5 text-gray-400 hover:bg-white/10 border border-white/10'
-                                            }`}
-                                    >
-                                        {p.charAt(0).toUpperCase() + p.slice(1)}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
+                            <textarea
+                                value={prompt}
+                                onChange={(e) => setPrompt(e.target.value)}
+                                placeholder="e.g., 50% off rigatoni tonight!"
+                                className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-gray-600 focus:border-[#FF6B35] focus:outline-none resize-none"
+                                rows={3}
+                            />
 
-                        {/* Generate Button */}
-                        <button
-                            onClick={handleGenerate}
-                            disabled={generating || !prompt.trim()}
-                            className="w-full bg-gradient-to-r from-[#FF6B35] to-[#00FF41] hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed text-white py-4 rounded-xl font-bold text-lg transition-all flex items-center justify-center gap-3 shadow-lg shadow-[#FF6B35]/20"
-                        >
-                            {generating ? (
-                                <>
-                                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                                    Generating...
-                                </>
-                            ) : (
-                                <>
-                                    <TrendingUp className="w-5 h-5" />
-                                    Generate Content
-                                </>
-                            )}
-                        </button>
+                            <button
+                                onClick={handleGenerate}
+                                disabled={!selectedImage || !prompt.trim() || generating}
+                                className="w-full mt-4 bg-gradient-to-r from-[#FF6B35] to-[#00FF41] hover:opacity-90 disabled:opacity-30 disabled:cursor-not-allowed text-white py-3 rounded-xl font-semibold transition-all flex items-center justify-center gap-2"
+                            >
+                                {generating ? (
+                                    <>
+                                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                        Generating Magic...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Sparkles className="w-5 h-5" />
+                                        Generate 5 Posts (~10s)
+                                    </>
+                                )}
+                            </button>
+                        </div>
                     </div>
 
-                    {/* Right Column: Live Preview (40% on desktop) */}
-                    <div className="lg:col-span-2">
-                        <div className="sticky top-8">
-                            <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
-                                <div className="w-2 h-2 rounded-full bg-[#00FF41] animate-pulse"></div>
-                                Live Preview
-                            </h3>
-                            <InstagramPreview
-                                brandDNA={brandDNA}
-                                generatedImageUrl={generatedImageUrl}
-                                caption={generatedCaption}
-                                isLoading={generating}
+                    {/* Right: Preview / Variations */}
+                    <div>
+                        {variations.length > 0 ? (
+                            <VariationCarousel
+                                variations={variations}
+                                onDownload={handleDownload}
+                                onRegenerate={handleRegenerate}
                             />
-                        </div>
+                        ) : (
+                            <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-8 text-center h-full flex items-center justify-center">
+                                <div className="max-w-md">
+                                    <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mx-auto mb-4">
+                                        <Sparkles className="w-8 h-8 text-gray-600" />
+                                    </div>
+                                    <h3 className="text-xl font-semibold text-white mb-2">Ready to Create</h3>
+                                    <p className="text-gray-400 text-sm">
+                                        Select an image and type your message to generate 5 professional Instagram posts
+                                    </p>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
@@ -368,12 +324,11 @@ function GeneratorPageContent() {
     )
 }
 
-// Wrap in Suspense to satisfy Next.js useSearchParams() requirement
 export default function GeneratorPage() {
     return (
         <Suspense fallback={
-            <div className="min-h-screen bg-black flex items-center justify-center">
-                <div className="text-zinc-500">Loading generator...</div>
+            <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
+                <div className="w-16 h-16 border-4 border-white/20 border-t-[#FF6B35] rounded-full animate-spin"></div>
             </div>
         }>
             <GeneratorPageContent />
