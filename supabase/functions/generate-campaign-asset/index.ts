@@ -220,111 +220,164 @@ serve(async (req) => {
 
         // 👁️ STEP A: Determine if we have a source image
         const hasSourceImage = !!imagePart;
-        console.log(`🎯 Decision: ${hasSourceImage ? 'PATH A - Enhance Existing Image' : 'PATH B - Generate From Scratch'}`);
+        console.log(`🎯 Decision: ${hasSourceImage ? 'PATH A - Enhance Existing Image' : 'PATH B - Pure AI Generation'}`);
 
-        // 🎨 System Instruction (Same for both paths)
-        systemRole = "You are an elite Creative Director and Graphic Designer. Your goal is to produce a production-ready social media ad.";
+        // 🎨 PURE AI BRAND DETECTIVE SYSTEM
+        // Elite Creative Director: Analyzes bio → Generates complete ad (visual + headline + button)
+        systemRole = `You are an Elite Social Media Design Engine (Gemini 3.0 Flash Thinking).
+
+INPUTS:
+- Brand: "${brandDNA?.name}"
+- Industry: "${industry}"
+- Bio/Story: "${brandDNA?.bio || ''}" (CRITICAL SOURCE MATERIAL - analyze this carefully)
+- Primary Color: "${primaryColor}"
+
+MANDATORY OUTPUT (SINGLE 1080x1080 IMAGE):
+You must generate a COMPLETE, production-ready social media ad with ALL 3 layers integrated:
+
+1. **THE VISUAL (Photorealism):**
+    - Generate a high-end, professional photo that matches the industry and bio context
+    - Examples: If bio mentions "Neapolitan" → wood-fired oven; "Organic" → fresh ingredients; "Family-owned" → warm, inviting setting
+    - **Prop Integration:** Subtly place "${brandDNA?.name}" on a physical object in the scene (menu, sign, bottle, label, chalkboard)
+    - Quality: Make it look like a $5000 professional photoshoot
+
+2. **THE HEADLINE (The "Sherlock" Logic - CRITICAL):**
+    - **Step 1:** CAREFULLY analyze the Bio: "${brandDNA?.bio || ''}"
+    - **Step 2:** Look for: a slogan, tagline, year ("Est. 1995"), or unique claim ("Family Owned", "Voted Best", "Authentic Neapolitan")
+    - **Step 3:** If you find a slogan/tagline in the bio, USE IT EXACTLY as written
+    - **Step 4:** If bio is empty or too long (>60 chars), use industry-specific fallback:
+        * Restaurant: "Taste the Tradition"
+        * Salon/Beauty: "Reveal Your Glow"
+        * E-commerce: "New Collection Drop"
+        * Default: "Experience the Difference"
+    - **Rendering:** Large, elegant typography (Playfair Display, Cormorant, or similar serif) at top or center
+    - **Contrast:** Use white text with dark shadow/scrim for perfect readability
+
+3. **THE BUTTON (CRITICAL - DO NOT SKIP THIS):**
+    - You MUST render a realistic "Call to Action" button graphic near the bottom center
+    - **Text Inside Button:** "${industry.match(/food|restaurant/i) ? 'Order Online' : industry.match(/beauty|salon|hair/i) ? 'Book Appointment' : industry.match(/ecommerce|retail|shop/i) ? 'Shop Now' : 'Learn More'}"
+    - **Icon:** Add a small icon next to the text (🍴 for Restaurant, 📅 for Salon, 🛍️ for E-commerce)
+    - **Style:** Solid pill shape (rounded rectangle), use "${primaryColor}" or high-contrast white
+    - **Shadow:** Add subtle drop shadow to make it look clickable and 3D
+    - **Size:** Make it prominent but not overwhelming (approx 15% of image height)
+
+4. **FINAL POLISH (PRODUCTION QUALITY):**
+    - Ensure all text is PERFECTLY legible (use dark gradients, scrims, or glows behind white text)
+    - The entire image should look like a finished .JPG from a premium agency (Ogilvy, BBDO level)
+    - Leave NO blank space expecting overlays - this is the FINAL, COMPLETE output
+    - Color grading: Rich, saturated, professional (Instagram-ready)
+
+IMPORTANT: This is a COMPLETE ad. All text and buttons must be EMBEDDED in the generated image. No external overlays will be added.
+
+OUTPUT: A single 1080x1080px social media ad ready to post immediately.`;
 
         // ✨ PATH A: We have a source image - ENHANCE IT
         if (hasSourceImage) {
-            // Determine the headline text (prioritize userInstructions)
-            const headlineText = userInstructions || brandDNA?.adHook || campaign || 'Special Offer';
+            // 🎯 CRITICAL FIX: Separate campaign text from beautification instructions
+            // - campaign = Text overlay (e.g., "Order Now - Pizza Palace")
+            // - userInstructions = Industry beautification guidance (e.g., "food photography")
+            const headlineText = campaign || brandDNA?.adHook || 'Special Offer';
             const ctaText = brandDNA?.cta || 'Learn More';
 
-            // Add design guidance based on user instructions
+            // Industry-specific beautification instructions (from frontend)
+            const beautificationGuidance = userInstructions || 'Enhance lighting and composition to look professional and premium.';
+
+            // Add design urgency based on headline keywords
             let designGuidance = '';
-            if (userInstructions) {
-                const lowerInstructions = userInstructions.toLowerCase();
-                if (lowerInstructions.match(/sale|deal|discount|off|limited|special|promo/i)) {
-                    designGuidance = '\n- DESIGN STYLE: Bold, urgent, attention-grabbing (this is a LIMITED TIME OFFER)';
-                } else if (lowerInstructions.match(/new|arrival|launch|introducing|meet/i)) {
-                    designGuidance = '\n- DESIGN STYLE: Fresh, exciting, modern (this is a NEW ANNOUNCEMENT)';
-                } else if (lowerInstructions.match(/event|save the date|join|rsvp/i)) {
-                    designGuidance = '\n- DESIGN STYLE: Elegant, inviting, clear date/time placement';
-                } else if (lowerInstructions.match(/team|meet|about|we are/i)) {
-                    designGuidance = '\n- DESIGN STYLE: Warm, friendly, approachable (this is ABOUT PEOPLE)';
-                }
+            const lowerHeadline = headlineText.toLowerCase();
+            if (lowerHeadline.match(/sale|deal|discount|off|limited|special|promo/i)) {
+                designGuidance = '\n- DESIGN STYLE: Bold, urgent, attention-grabbing (this is a LIMITED TIME OFFER)';
+            } else if (lowerHeadline.match(/new|arrival|launch|introducing|meet/i)) {
+                designGuidance = '\n- DESIGN STYLE: Fresh, exciting, modern (this is a NEW ANNOUNCEMENT)';
+            } else if (lowerHeadline.match(/event|save the date|join|rsvp/i)) {
+                designGuidance = '\n- DESIGN STYLE: Elegant, inviting, clear date/time placement';
+            } else if (lowerHeadline.match(/team|meet|about|we are/i)) {
+                designGuidance = '\n- DESIGN STYLE: Warm, friendly, approachable (this is ABOUT PEOPLE)';
             }
 
-            userPrompt = `You are a Graphic Designer creating a luxury social media ad.
-
-**TASK:** Polish the provided image and add professional overlay text.
-
-**USER'S CONTEXT/MESSAGE:**
-"${headlineText}"
-
-**VISUAL INSTRUCTIONS (DO NOT WRITE THIS TEXT ON THE IMAGE):**
-- Keep the subject EXACTLY as is (do not hallucinate new objects)
-- Fix lighting, color grading, and visual appeal
-- Make it look high-end and professional
-- DO NOT change the product/subject itself${designGuidance}
-
-**TEXT OVERLAY INSTRUCTIONS (ONLY WRITE THIS TEXT):**
-- HEADLINE: "${headlineText}" (Render in large, modern white typography)
-- BUTTON: "${ctaText}" (Render inside a pill-shaped button)
+            userPrompt = `Create a professional Instagram post for ${brandName}.
 
 **BRAND CONTEXT:**
 - Name: ${brandName}
 - Industry: ${industry}
 - Vibe: ${vibe}
-- Primary Color: ${primaryColor}
+- Color Palette: ${primaryColor}
 
-**CRITICAL NEGATIVE CONSTRAINT:**
-- DO NOT write "VISUAL INSTRUCTIONS" on the image
-- DO NOT write "Keep the subject EXACTLY as is" on the image
-- DO NOT write "Fix lighting" on the image
-- ONLY render the HEADLINE and BUTTON text specified above
+**IMAGE BEAUTIFICATION:**
+${beautificationGuidance}
 
-OUTPUT: A polished, professional ad graphic ready for Instagram.`;
+**VISUAL REQUIREMENTS:**
+- Apply ${industry}-specific photography enhancement (lighting, depth, color grading)
+- Keep the subject authentic and true to the source image
+- Professional, high-end aesthetic
+
+**CAMPAIGN TEXT:**
+Create a realistic CTA appropriate for a ${industry} business promoting their services/products:
+- Suggested direction: "${headlineText}"
+- Make it sound natural and authentic for ${brandName}
+- Examples for ${industry}: ${industry.match(/food|restaurant/i) ? '"Order Now", "Reserve Your Table", "Try Our Signature Dish"' :
+                    industry.match(/beauty|salon|hair/i) ? '"Book Your Appointment", "Get Your Glow", "Transform Your Look"' :
+                        industry.match(/retail|shop|ecommerce/i) ? '"Shop Now", "New Arrivals", "Limited Collection"' :
+                            '"Get Started", "Learn More", "Schedule Today"'
+                }
+
+**TEXT STYLING:**
+- Large, bold, modern typography
+- High contrast for readability  
+- Professional placement (top or bottom center)
+
+OUTPUT: An Instagram-ready campaign post that looks like it came from ${brandName}'s official account.`;
+
         }
+
         // 🔥 PATH B: No source image - GENERATE FROM BRAND DNA
         else {
             userPrompt = `You are a Graphic Designer creating a luxury social media ad from scratch.
 
-**TASK:** Create a photorealistic image for this brand: ${brandName}.
+** TASK:** Create a photorealistic image for this brand: ${brandName}.
 
-**VISUAL INSTRUCTIONS (DO NOT WRITE THIS TEXT ON THE IMAGE):**
-- Subject: Based on ${industry}
-  * If Salon/Beauty → Beautiful hair, happy client in modern salon
-  * If Food/Restaurant → Delicious plated dish, professional food photography
-  * If Tech/SaaS → Glowing dashboard on premium laptop
-  * If Landscaping → Lush green gardens, outdoor transformation
-  * If Plumber → Modern, luxurious bathroom
-  * Otherwise → Deduce from industry what the brand's core visual should be
-- Style: Photorealistic, High-End, Professional Lighting
-- NO PEOPLE IN SUITS (unless Law Firm, Consulting, or Corporate Business)
-- NO generic office supplies or stock photos
-- Focus on the actual product/service
+** VISUAL INSTRUCTIONS(DO NOT WRITE THIS TEXT ON THE IMAGE):**
+                - Subject: Based on ${industry}
+  * If Salon / Beauty → Beautiful hair, happy client in modern salon
+                * If Food / Restaurant → Delicious plated dish, professional food photography
+                    * If Tech / SaaS → Glowing dashboard on premium laptop
+                        * If Landscaping → Lush green gardens, outdoor transformation
+                            * If Plumber → Modern, luxurious bathroom
+                                * Otherwise → Deduce from industry what the brand's core visual should be
+                                    - Style: Photorealistic, High - End, Professional Lighting
+                                        - NO PEOPLE IN SUITS(unless Law Firm, Consulting, or Corporate Business)
+                                            - NO generic office supplies or stock photos
+                                                - Focus on the actual product / service
 
-**TEXT OVERLAY INSTRUCTIONS (ONLY WRITE THIS TEXT):**
-- HEADLINE: "${brandDNA?.adHook || campaign || 'Get Started Today'}" (Render in large, elegant typography)
-- BUTTON: "${brandDNA?.cta || 'Book Now'}" (Render inside a pill-shaped button)
+                                                    ** TEXT OVERLAY INSTRUCTIONS(ONLY WRITE THIS TEXT):**
+                                                        - HEADLINE: "${brandDNA?.adHook || campaign || 'Get Started Today'}"(Render in large, elegant typography)
+                                                            - BUTTON: "${brandDNA?.cta || 'Book Now'}"(Render inside a pill - shaped button)
 
-**BRAND CONTEXT:**
-- Name: ${brandName}
-- Industry: ${industry}
-- Description: ${description}
-- Vibe: ${vibe}
+                                                                ** BRAND CONTEXT:**
+                                                                    - Name: ${brandName}
+            - Industry: ${industry}
+            - Description: ${description}
+            - Vibe: ${vibe}
 
-**CRITICAL NEGATIVE CONSTRAINT:**
-- DO NOT write "A high-quality lifestyle shot" on the image
-- DO NOT write "Photorealistic image" on the image
-- DO NOT write "Based on ${industry}" on the image
-- DO NOT write the visual description as text
-- ONLY render the HEADLINE and BUTTON text specified above
+** CRITICAL NEGATIVE CONSTRAINT:**
+                - DO NOT write "A high-quality lifestyle shot" on the image
+                    - DO NOT write "Photorealistic image" on the image
+                        - DO NOT write "Based on ${industry}" on the image
+                            - DO NOT write the visual description as text
+                                - ONLY render the HEADLINE and BUTTON text specified above
 
-OUTPUT: A scroll-stopping Instagram ad that looks like a professional agency created it.`;
+            OUTPUT: A scroll - stopping Instagram ad that looks like a professional agency created it.`;
         }
 
-        const prompt = `${systemRole}\n\n${userPrompt}`.trim();
+        const prompt = `${systemRole} \n\n${userPrompt} `.trim();
 
-        console.log(`🤖 Gemini 3 Prompt Strategy:`);
-        console.log(`   Path: ${hasSourceImage ? 'IMAGE ENHANCEMENT' : 'TEXT-TO-IMAGE GENERATION'}`);
-        console.log(`   Model: ${MODEL_NAME}`);
+        console.log(`🤖 Gemini 3 Prompt Strategy: `);
+        console.log(`   Path: ${hasSourceImage ? 'IMAGE ENHANCEMENT' : 'TEXT-TO-IMAGE GENERATION'} `);
+        console.log(`   Model: ${MODEL_NAME} `);
         console.log(`   Timeout: 60s`);
         console.log(`   Brand: ${brandName} (${industry})`);
-        console.log(`   CTA: ${brandDNA?.cta || 'Learn More'}`);
-        console.log(`   Headline: ${brandDNA?.adHook || campaign}`);
+        console.log(`   CTA: ${brandDNA?.cta || 'Learn More'} `);
+        console.log(`   Headline: ${brandDNA?.adHook || campaign} `);
 
         // STEP 5: Call Gemini 3 API with 15-second timeout controller
         const parts: any[] = [{ text: prompt }];

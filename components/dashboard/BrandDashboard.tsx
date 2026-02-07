@@ -223,6 +223,7 @@ export default function BrandDashboard({ brandData }: BrandDashboardProps) {
 
                 {/* SECTION 2: READY TO LAUNCH HEADER */}
                 <motion.div
+                    id="results-section"
                     initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.8 }}
@@ -358,10 +359,10 @@ export default function BrandDashboard({ brandData }: BrandDashboardProps) {
                                 brandData={{
                                     businessName: brandName,
                                     logo_url: logoUrl,
-                                    hero_image: (brandData as any).hero_image || (brandData as any).og_image || logoUrl,
+                                    hero_image: (brandData as any).dna?.hero_image || (brandData as any).dna?.og_image || logoUrl,
                                     vibe: personality,
                                     primaryColor: primaryColor,
-                                    industry: (brandData as any).industry || `${personality} Services`
+                                    industry: (brandData as any).dna?.industry || `${personality} Services`
                                 }}
                                 handleEditPage={() => {
                                     console.log('🎨 Navigating to generator from preview widget...');

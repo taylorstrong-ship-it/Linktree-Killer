@@ -210,11 +210,14 @@ export default function Home() {
             // Pause 1.5s to let user see the captured data
             await new Promise(resolve => setTimeout(resolve, 1500));
 
-            // ANONYMOUS TRY-FIRST FLOW: Redirect to public preview
+            // PRODUCT-LED FLOW: Set state and scroll to Two Phones view
             setBrandData(transformedData);
             setIsScanning(false);
             setScanComplete(true);
-            router.push('/preview');
+            // Allow UI to update, then scroll to the results section
+            setTimeout(() => {
+                document.querySelector('#results-section')?.scrollIntoView({ behavior: 'smooth' });
+            }, 300);
 
         } catch (err: any) {
             console.error('⚠️ API Failed. Activating Simulation Mode...', err);
@@ -273,7 +276,10 @@ export default function Home() {
             setBrandData(simulationData);
             setIsScanning(false);
             setScanComplete(true);
-            router.push('/preview');
+            // Allow UI to update, then scroll to the results section
+            setTimeout(() => {
+                document.querySelector('#results-section')?.scrollIntoView({ behavior: 'smooth' });
+            }, 300);
         }
     };
 

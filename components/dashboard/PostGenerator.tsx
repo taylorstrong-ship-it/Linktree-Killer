@@ -16,9 +16,16 @@ interface BrandDNA {
     brandName: string;
     logoUrl?: string;
     heroImage?: string;
+    og_image?: string;              // 🆕 OpenGraph image (social optimized)
     colorPalette?: string[];
     vibe?: string;
     tagline?: string;
+    industry?: string;              // 🎯 Enable industry-aware routing
+    suggested_ctas?: Array<{        // 🎯 Extract actual CTAs from scanner
+        title: string;
+        url: string;
+        type: string;
+    }>;
 }
 
 interface GeneratedContent {
@@ -74,10 +81,45 @@ export default function PostGenerator() {
     const [isDragging, setIsDragging] = useState(false);
     const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
 
-    // Load Brand DNA from Supabase
+    // ───────────────────────────────────────────────────────────────────────────
+    // DUAL-MODE DATA LOADING: localStorage (anonymous) → Supabase (authenticated)
+    // ───────────────────────────────────────────────────────────────────────────
+
     useEffect(() => {
         async function loadBrandProfile() {
             setLoadingBrand(true);
+
+            // 🎯 PRIORITY 1: Check localStorage for anonymous scan data
+            const localData = localStorage.getItem('brand_dna') ||
+                localStorage.getItem('taylored_brand_data');
+
+            if (localData) {
+                try {
+                    const parsed = JSON.parse(localData);
+                    console.log('✅ Loading brand data from localStorage (anonymous scanner mode)');
+                    console.log('📦 Parsed data:', parsed);
+
+                    setBrandDNA({
+                        brandName: parsed.company_name || parsed.title || parsed.brandName || 'Your Brand',
+                        logoUrl: parsed.logo_url || parsed.avatar_url,
+                        heroImage: parsed.hero_image,           // 🎯 KEY: Best for social posts
+                        og_image: parsed.og_image,              // 🎯 KEY: Social fallback
+                        vibe: parsed.brand_personality || parsed.vibe || 'Professional',
+                        tagline: parsed.tagline || parsed.description,
+                        colorPalette: parsed.brand_colors || (parsed.primary_color ? [parsed.primary_color] : []),
+                        industry: parsed.industry,              // 🎯 KEY: Enable industry routing
+                        suggested_ctas: parsed.suggested_ctas || [], // 🎯 KEY: Real CTAs
+                    });
+
+                    console.log('✅ Brand DNA loaded from localStorage');
+                    setLoadingBrand(false);
+                    return; // Skip Supabase fetch
+                } catch (err) {
+                    console.warn('⚠️ Failed to parse localStorage, falling back to Supabase:', err);
+                }
+            }
+
+            // 🎯 PRIORITY 2: Fall back to Supabase for authenticated users
             const supabase = createSupabaseClient();
 
             try {
@@ -85,8 +127,8 @@ export default function PostGenerator() {
                 const { data: { user }, error: userError } = await supabase.auth.getUser();
 
                 if (userError || !user) {
-                    console.error('Not authenticated:', userError);
-                    router.push('/login');
+                    console.log('⚠️ No user authenticated and no localStorage data');
+                    setLoadingBrand(false);
                     return;
                 }
 
@@ -99,7 +141,7 @@ export default function PostGenerator() {
 
                 if (profileError || !profile) {
                     console.error('No brand profile found:', profileError);
-                    router.push('/onboarding');
+                    setLoadingBrand(false);
                     return;
                 }
 
@@ -108,9 +150,12 @@ export default function PostGenerator() {
                     brandName: profile.brand_name,
                     logoUrl: profile.logo_url,
                     heroImage: profile.hero_image,
+                    og_image: profile.og_image,
                     vibe: profile.vibe,
                     tagline: profile.ad_hook,
                     colorPalette: profile.primary_color ? [profile.primary_color] : undefined,
+                    industry: profile.industry,
+                    suggested_ctas: profile.suggested_ctas || [],
                 });
             } catch (err) {
                 console.error('Failed to load brand profile:', err);
@@ -193,6 +238,32 @@ export default function PostGenerator() {
         triggerHaptic();
     };
 
+
+    // 🎨 INDUSTRY-AWARE BEAUTIFICATION PROMPT GENERATOR
+    const generateIndustryPrompt = useCallback((industry?: string, brandName?: string) => {
+        if (!industry) return 'Transform this into professional brand photography with cinematic lighting.';
+
+        const ind = industry.toLowerCase();
+
+        if (ind.match(/food|restaurant|pizza|cafe|dining/i)) {
+            return `Transform into professional food photography. Enhance lighting to make food incredibly appetizing, Michelin-star quality. Warm, golden-hour lighting. Add elegant text overlay with campaign message.`;
+        }
+
+        if (ind.match(/beauty|hair|salon|spa|lash|aesthetic/i)) {
+            return `Transform into high-end fashion photography. Soft ring lighting, glossy luxury spa vibe. Natural, healthy skin tones. Add sophisticated text overlay with campaign message.`;
+        }
+
+        if (ind.match(/ecommerce|retail|shop|store|product/i)) {
+            return `Transform into studio product photography. Crisp professional lighting, clean minimal background. Sharp, eye-catching details. Add modern text overlay.`;
+        }
+
+        if (ind.match(/tech|software|saas|app/i)) {
+            return `Transform into modern tech workspace. Futuristic glowing elements, cyberpunk lighting accents. Cutting-edge premium aesthetic. Add sleek text overlay.`;
+        }
+
+        return `Transform into professional brand photography with cinematic lighting. Vibrant but natural colors. Add elegant text overlay.`;
+    }, []);
+
     // 🎨 CANVAS IMAGE GENERATION (Fixed Text Rendering)
     const generateImage = useCallback(async (brandName: string, primaryColor?: string) => {
         return new Promise<string>((resolve) => {
@@ -264,7 +335,7 @@ export default function PostGenerator() {
         setLoadingMessageIndex(0); // Reset to first message
 
         // ====================================================================
-        // 🛡️ ROBUST PAYLOAD BUILDER (Prevents "Brand DNA required" errors)
+        // 🎯 UNIVERSAL BEAUTIFIER: Smart Image + CTA + Industry Routing
         // ====================================================================
         const effectiveBrand = brandDNA || FALLBACK_BRAND;
 
@@ -273,26 +344,57 @@ export default function PostGenerator() {
             effectiveBrand.brandName = "My Awesome Brand"; // Last resort fallback
         }
 
-        console.log('🚀 Sending Payload with Brand:', {
+        // 🎯 SMART IMAGE SELECTION: Prioritize hero over logo
+        const sourceImage = (effectiveBrand as any).heroImage ||        // BEST: Full scene
+            (effectiveBrand as any).og_image ||          // GREAT: Social optimized  
+            effectiveBrand.logoUrl ||                     // OK: Logo
+            userImage ||                                  // User upload
+            null;                                         // text-to-image fallback
+
+        // 🎯 EXTRACT REAL CTA: Use their actual website CTAs
+        const suggestedCtas = (effectiveBrand as any).suggested_ctas || [];
+        const industry = (effectiveBrand as any).industry || '';
+
+        const actualCTA = suggestedCtas[0]?.title ||
+            (industry.match(/food|restaurant/i) ? 'Order Now' :
+                industry.match(/beauty|salon|hair/i) ? 'Book Now' :
+                    industry.match(/ecommerce|retail|shop/i) ? 'Shop Now' :
+                        'Learn More');
+
+        // 🎯 INDUSTRY BEAUTIFICATION PROMPT
+        const beautificationPrompt = generateIndustryPrompt(industry, effectiveBrand.brandName);
+
+        // 🎯 CAMPAIGN TEXT: Simple headline for text overlay (NOT the beautification instructions)
+        // This is what the "Robotic Compositor" will imprint on the image
+        const campaignText = topic.trim() ||  // User override from input field
+            `${actualCTA} - ${effectiveBrand.brandName}`;  // Default: "Order Now - Millie's Italian"
+
+        console.log('🚀 Universal Beautifier Payload:', {
+            mode: sourceImage ? 'image-to-image (BEAUTIFY)' : 'text-to-image',
             brandName: effectiveBrand.brandName,
-            vibe: effectiveBrand.vibe,
-            tagline: effectiveBrand.tagline,
-            topic,
+            industry: industry,
+            sourceImage: sourceImage ? sourceImage.substring(0, 60) + '...' : 'none',
+            cta: actualCTA,
+            campaign: campaignText,
+            prompt: beautificationPrompt.substring(0, 100) + '...',
             format,
-            mode: sourceMode
+            vibe
         });
 
         try {
             const supabase = createSupabaseClient();
             const { data, error: functionError } = await supabase.functions.invoke('generate-campaign-asset', {
                 body: {
-                    brandDNA: effectiveBrand, // Use effective brand with fallback
-                    topic: topic.trim(),
+                    brandDNA: {
+                        name: effectiveBrand.brandName,
+                        vibe: vibe,
+                        industry: industry,
+                        primaryColor: effectiveBrand.colorPalette?.[0] || '#FF6B35',
+                    },
+                    sourceImageUrl: sourceImage,              // 🎯 THEIR ACTUAL IMAGE
+                    campaign: campaignText,                   // 🎯 THEIR ACTUAL CTA
+                    userInstructions: beautificationPrompt,   // 🎯 INDUSTRY PROMPT
                     format,
-                    vibe,
-                    mode: sourceMode,
-                    userImage: sourceMode === 'enhance' ? userImage : undefined,
-                    userInstructions: userInstructions.trim() || undefined,
                 },
             });
 
@@ -341,9 +443,9 @@ export default function PostGenerator() {
             }
 
             setGeneratedContent({
-                imageBase64: data.imageBase64,
-                caption: data.caption,
-                hashtags: data.hashtags,
+                imageBase64: data.image || data.imageBase64,  // Backend returns 'image' field
+                caption: data.caption || campaignText,         // Fallback to our campaign text
+                hashtags: data.hashtags || [],                 // Optional
             });
         } catch (err: any) {
             // ====================================================================

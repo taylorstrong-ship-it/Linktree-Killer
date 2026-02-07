@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Heart, MessageCircle, Send, Bookmark, MoreHorizontal } from 'lucide-react';
+import { Heart, MessageCircle, Send, Bookmark, MoreHorizontal, ArrowRight, Utensils, ShoppingBag, Calendar } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase/client';
 
@@ -17,6 +17,7 @@ interface BrandData {
     vibe?: string;
     primaryColor?: string;
     industry?: string;
+    bio?: string; // Brand tagline/description for smart headlines
 }
 
 interface SocialPreviewWidgetProps {
@@ -81,12 +82,11 @@ export default function SocialPreviewWidget({
                 const isUrl = imageSource.startsWith('http://') || imageSource.startsWith('https://');
 
                 // 🎨 DYNAMIC VIBE SELECTION: Choose vibe based on industry
+                const industry = (brandData.industry || '').toLowerCase(); // Declare here for function-wide scope
                 let smartVibe = brandData.vibe;
 
                 if (!smartVibe) {
                     // Intelligent default based on industry
-                    const industry = (brandData.industry || '').toLowerCase();
-
                     if (industry.includes('beauty') ||
                         industry.includes('fashion') ||
                         industry.includes('food') ||
@@ -99,19 +99,19 @@ export default function SocialPreviewWidget({
                     }
                 }
 
-                const campaignMap: Record<string, string> = {
-                    'Luxury': 'Exclusive Collection',
-                    'Professional': 'Expert Solutions',
-                    'Bold': 'Grand Opening',
-                    'Minimalist': 'New Arrivals',
-                    'Playful': 'Special Offer',
-                    'Modern': 'Now Available',
-                    'Elegant': 'Limited Edition',
-                    'Energetic': 'Fresh Deals',
-                    'Creative': 'Creative Showcase',
-                };
 
-                const campaign = campaignMap[smartVibe] || 'Get Started Today';
+                // 🎯 REAL CTA FROM BRAND DNA: Use their actual suggested CTAs or industry-specific fallbacks
+                const suggestedCtas = (brandData as any).suggested_ctas || [];
+                // Note: industry already declared at line 88
+
+                const actualCTA = suggestedCtas[0]?.title ||
+                    (industry.match(/food|restaurant/i) ? 'Order Online' :
+                        industry.match(/beauty|salon|hair/i) ? 'Book Appointment' :
+                            industry.match(/ecommerce|retail|shop/i) ? 'Shop Now' :
+                                'Learn More');
+
+                // Simple campaign text for text overlay (not a generic "Expert Solutions")
+                const campaign = `${actualCTA} - ${brandData.businessName}`;
 
                 // Store for generator bridge
                 setVibe(smartVibe);
@@ -119,7 +119,7 @@ export default function SocialPreviewWidget({
 
 
                 // 🎬 SMART SCENE ROUTER: Industry-specific visual templates
-                const industry = (brandData.industry || '').toLowerCase();
+                // Note: industry already declared at line 88
                 const brandName = brandData.businessName || 'Brand';
 
                 // 🔍 FUZZY KEYWORD DETECTION: Regex patterns for flexible matching
@@ -213,7 +213,8 @@ REQUIREMENTS:
                         vibe: smartVibe,
                         industry: brandData.industry || 'Business',
                     },
-                    campaign: enrichedCampaign,
+                    campaign: campaign,  // 🎯 CLEAN HEADLINE: "Order Now", "Book Now", etc.
+                    userInstructions: enrichedCampaign,  // 🎨 BEAUTIFICATION GUIDANCE: Scene description for visual enhancement
                     sourceImageUrl: heroImage || undefined, // 🎨 Enable beautifier if heroImage exists
                 };
 
@@ -451,11 +452,34 @@ function InstagramPostUI({
                             transition={{ duration: 0.5 }}
                             className="absolute inset-0"
                         >
-                            <img
-                                src={generatedImage}
-                                alt="AI-generated post"
-                                className="w-full h-full object-cover"
-                            />
+                            {/* 🎨 PURE AI SYSTEM - Single Layer */}
+                            <div className="relative w-full h-full group overflow-hidden rounded-3xl bg-neutral-900">
+
+                                {/* The AI is now the Designer - Complete ad with embedded text/buttons */}
+                                <img
+                                    src={generatedImage}
+                                    alt="AI Generated Campaign"
+                                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                                />
+
+                                {/* Optional: Download button in corner */}
+                                <motion.button
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    transition={{ delay: 0.5 }}
+                                    className="absolute top-4 right-4 p-2 rounded-full bg-black/50 backdrop-blur-sm text-white hover:bg-black/70 transition-colors"
+                                    onClick={() => {
+                                        const link = document.createElement('a');
+                                        link.href = generatedImage;
+                                        link.download = `${brandData.businessName}-campaign.png`;
+                                        link.click();
+                                    }}
+                                    title="Download Campaign Image"
+                                >
+                                    <ArrowRight className="w-4 h-4 rotate-90" />
+                                </motion.button>
+
+                            </div>
                         </motion.div>
                     )}
                 </AnimatePresence>
