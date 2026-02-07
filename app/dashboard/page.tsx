@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Sparkles, Fingerprint, Calendar, ArrowRight } from 'lucide-react'
 import Link from 'next/link'
+import { motion } from 'framer-motion'
+import ReviewGuardHero from '@/components/dashboard/ReviewGuardHero'
 
 interface BrandProfile {
     id: string
@@ -82,18 +84,34 @@ export default function DashboardHub() {
 
             {/* Main Content */}
             <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+                {/* Command Center: Review Guard Hero */}
+                <ReviewGuardHero />
+
+                {/* Spacer */}
+                <div className="h-12" />
+
                 {/* Header */}
-                <div className="mb-12">
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3, duration: 0.6 }}
+                    className="mb-12"
+                >
                     <h1 className="text-4xl sm:text-5xl font-bold text-white mb-2">
                         Welcome back, <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600">{profile.brand_name}</span>.
                     </h1>
                     <p className="text-zinc-400 text-lg">
                         Your Creative Studio is ready.
                     </p>
-                </div>
+                </motion.div>
 
                 {/* Quick Action Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.8, duration: 0.8 }}
+                    className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+                >
                     {/* Card 1: Taylor Content (Primary) */}
                     <Link href="/dashboard/content-generator">
                         <div className="group relative bg-white/5 backdrop-blur-xl border border-orange-500/30 rounded-2xl p-8 hover:bg-white/10 hover:border-orange-500/50 transition-all duration-300 cursor-pointer h-full">
@@ -167,10 +185,15 @@ export default function DashboardHub() {
                             </div>
                         </div>
                     </div>
-                </div>
+                </motion.div>
 
                 {/* Quick Stats (Optional Enhancement) */}
-                <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-4">
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 1.2, duration: 0.8 }}
+                    className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-4"
+                >
                     <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-6">
                         <p className="text-zinc-500 text-sm mb-1">Brand Vibe</p>
                         <p className="text-white text-xl font-bold">{profile.vibe || 'Not set'}</p>
@@ -189,7 +212,7 @@ export default function DashboardHub() {
                             <p className="text-white text-xl font-bold">{profile.primary_color || '#FF6B35'}</p>
                         </div>
                     </div>
-                </div>
+                </motion.div>
             </div>
         </div>
     )

@@ -270,6 +270,16 @@ REQUIREMENTS:
 
                 console.log('⏰ [Connection] Starting 5-minute timeout window for Gemini 3 Pro rendering...');
 
+                // 🍕 CRITICAL LOGIC: For restaurants, use REAL food photos, don't generate new ones
+                // The Edge Function has intelligent selection in PATH B (lines 401-502) that will:
+                // 1. Analyze brand_images array
+                // 2. Pick the BEST product photo (not logo)
+                // 3. Use it as reference for composition
+                // 4. Apply professional retouching (lighting, color grading, composition)
+                //
+                // By NOT sending sourceImageUrl, we trigger PATH B which uses the real scraped photos
+                const isRestaurant = brandData.industry?.match(/food|restaurant|cafe|bistro|dining|pizza|italian|kitchen/i);
+
                 const payload = {
                     image: imageSource,
                     isUrl: isUrl,
@@ -285,8 +295,14 @@ REQUIREMENTS:
                     },
                     campaign: campaign,  // 🎯 CLEAN HEADLINE: "Order Now", "Book Now", etc.
                     userInstructions: enrichedCampaign,  // 🎨 BEAUTIFICATION GUIDANCE: Scene description for visual enhancement
-                    sourceImageUrl: bestProductImage || undefined, // 🎨 BEST product photo selected by intelligent ranking
+                    // 🍕 RESTAURANT FIX: Don't send sourceImageUrl for food businesses
+                    // This forces Edge Function to use PATH B (brand_images intelligent selection)
+                    // which uses REAL food photos from the scraped site
+                    sourceImageUrl: isRestaurant ? undefined : (bestProductImage || undefined),
                 };
+
+                console.log(`🎯 [Image Strategy] ${isRestaurant ? 'USING REAL FOOD PHOTOS from brand_images' : 'Using sourceImageUrl for enhancement'}`);
+                console.log(`📸 [Payload] brand_images count: ${brandData.brand_images?.length || 0}`);
 
                 // Get Supabase URL from environment or construct it
                 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;

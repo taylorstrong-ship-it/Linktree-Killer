@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { Sparkles, Zap, Heart, TrendingUp, Edit3 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import SocialPreviewWidget from './SocialPreviewWidget';
+import ReviewGuardHero from './ReviewGuardHero';
 
 interface BrandData {
     company_name?: string;
@@ -141,11 +142,21 @@ export default function BrandDashboard({ brandData }: BrandDashboardProps) {
     return (
         <div className="min-h-screen w-full bg-[#0a0a0a] py-24 px-6">
             <div className="max-w-7xl mx-auto">
+                {/* 🎯 PRIORITY #1: REVIEW GUARD - APPEARS FIRST TO BUY TIME FOR IMAGE GENERATION */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3, duration: 0.8 }}
+                    className="mb-16"
+                >
+                    <ReviewGuardHero />
+                </motion.div>
+
                 {/* SECTION 1: YOUR BUSINESS DNA */}
                 <motion.div
                     initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.8 }}
+                    transition={{ delay: 0.9, duration: 0.8 }}
                     className="mb-16"
                 >
                     <h2 className="text-center text-3xl md:text-4xl font-serif italic text-white mb-12">
@@ -226,7 +237,7 @@ export default function BrandDashboard({ brandData }: BrandDashboardProps) {
                     id="results-section"
                     initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.8 }}
+                    transition={{ delay: 3.0, duration: 0.8 }}
                     className="text-center mb-16"
                 >
                     <h2 className="text-5xl md:text-7xl font-sans font-bold text-white tracking-tighter">
@@ -244,7 +255,7 @@ export default function BrandDashboard({ brandData }: BrandDashboardProps) {
                     <motion.div
                         initial={{ opacity: 0, x: -30 }}
                         animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.2, duration: 0.8 }}
+                        transition={{ delay: 3.2, duration: 0.8 }}
                         className="lg:sticky lg:top-32"
                     >
                         <div className="text-center mb-8">
@@ -345,7 +356,7 @@ export default function BrandDashboard({ brandData }: BrandDashboardProps) {
                     <motion.div
                         initial={{ opacity: 0, x: 30 }}
                         animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.4, duration: 0.8 }}
+                        transition={{ delay: 3.4, duration: 0.8 }}
                         className="space-y-8"
                     >
                         <div className="text-center mb-8">
@@ -359,10 +370,13 @@ export default function BrandDashboard({ brandData }: BrandDashboardProps) {
                                 brandData={{
                                     businessName: brandName,
                                     logo_url: logoUrl,
-                                    hero_image: (brandData as any).dna?.hero_image || (brandData as any).dna?.og_image || logoUrl,
+                                    hero_image: (brandData as any).hero_image || (brandData as any).og_image || logoUrl,
+                                    brand_images: (brandData as any).brand_images || [],
                                     vibe: personality,
                                     primaryColor: primaryColor,
-                                    industry: (brandData as any).dna?.industry || `${personality} Services`
+                                    industry: (brandData as any).industry || `${personality} Services`,
+                                    bio: brandData.description || '',
+                                    suggested_ctas: brandData.suggested_ctas || brandData.links || []
                                 }}
                                 handleEditPage={() => {
                                     console.log('🎨 Navigating to generator from preview widget...');

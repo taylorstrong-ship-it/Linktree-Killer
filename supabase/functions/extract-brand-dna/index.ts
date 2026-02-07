@@ -99,9 +99,9 @@ serve(async (req) => {
         const firecrawl = new FirecrawlApp({ apiKey: firecrawlKey });
 
         const scrapeResult = await firecrawl.scrapeUrl(url, {
-            formats: ['branding', 'links', 'markdown'], // Added markdown for image extraction fallback
+            formats: ['branding', 'links', 'markdown', 'html'], // ✨ Added html for image extraction fallback
             onlyMainContent: false,
-            waitFor: 2000, // Wait for JS to load
+            waitFor: 3000, // Increased from 2000ms to allow JS to fully load images
         }) as any;
 
         console.log('📊 Firecrawl Response:', JSON.stringify(scrapeResult, null, 2));
@@ -132,21 +132,47 @@ serve(async (req) => {
         console.log('📱 Social Links Extracted:', socialLinks);
 
         // STEP 3: Business Type Detection using OpenAI
-        const businessTypePrompt = `Analyze this website data and determine the business type and suggest 2-3 relevant CTAs.
+        const businessTypePrompt = `You are a business classification expert analyzing a website.
 
-Website: ${url}
+URL: ${url}
 Company: ${branding.companyName || 'Unknown'}
-Content Preview: ${markdown.slice(0, 1000)}
+Content Sample: ${markdown.slice(0, 1500)}
 
-Respond with ONLY a JSON object:
+CLASSIFY into the MOST SPECIFIC industry:
+
+FOOD & HOSPITALITY:
+- "Restaurant" → Keywords: food, menu, dining, reservations, cuisine, italian, pizza, bistro
+- "Cafe" → Keywords: coffee, breakfast, brunch, bakery
+
+BEAUTY & WELLNESS:
+- "Hair Salon" → Keywords: hair, cuts, color, styling, barber
+- "Beauty Spa" → Keywords: facial, massage, skincare, nails, wellness
+
+RETAIL & COMMERCE:
+- "Retail Store" → Physical products, shopping
+- "Ecommerce" → Online store, cart, checkout
+
+SERVICES:
+- "Fitness Gym" → Workouts, training, classes, personal trainer
+- "Real Estate" → Properties, homes, listings, agents
+- "Professional Services" → ONLY for B2B: legal, accounting, consulting
+
+CRITICAL RULES:
+1. If URL contains "restaurant", "bistro", "cafe", "italian", "pizza" → ALWAYS "Restaurant"
+2. If content has "menu", "reservations", "dine-in", "takeout" → ALWAYS "Restaurant"
+3. NEVER use "Professional Services" for customer-facing businesses
+4. Be SPECIFIC, not generic
+
+Respond with ONLY valid JSON:
 {
-  "business_type": "salon" | "restaurant" | "ecommerce" | "service" | "portfolio" | "general",
-  "description": "Brief 1-sentence description (max 150 chars)",
+  "business_type": "Exact industry name from list above",
+  "industry": "Same as business_type",
+  "description": "One sentence about what they do (max 150 chars)",
   "suggested_ctas": [
     {
-      "title": "CTA button text",
-      "url": "best guess URL from links data",
-      "type": "primary" | "secondary"
+      "title": "Primary action (e.g., Order Online, Book Appointment)",
+      "url": "/",
+      "type": "primary"
     }
   ]
 }`;
@@ -172,6 +198,43 @@ Respond with ONLY a JSON object:
         const aiAnalysis = JSON.parse(openaiData.choices[0]?.message?.content || '{}');
 
         console.log('🤖 AI Analysis:', aiAnalysis);
+
+        // 🔧 AGGRESSIVE FALLBACK: Catch ANY generic classification via partial matching
+        const businessTypeLower = (aiAnalysis.business_type || '').toLowerCase();
+        if (businessTypeLower.includes('service') ||
+            businessTypeLower.includes('professional') ||
+            businessTypeLower.includes('general') ||
+            !aiAnalysis.business_type) {
+
+            const urlLower = url.toLowerCase();
+            const contentLower = markdown.slice(0, 2000).toLowerCase();
+
+            console.log(`⚠️ AI returned generic "${aiAnalysis.business_type}", activating keyword fallback...`);
+
+            // Restaurant detection
+            if (urlLower.match(/restaurant|bistro|cafe|pizza|italian|dining|kitchen|eatery/) ||
+                contentLower.match(/menu|reservation|dine|cuisine|food|dish|chef/)) {
+                aiAnalysis.business_type = 'Restaurant';
+                aiAnalysis.industry = 'Restaurant';
+                console.log('🔧 FALLBACK: Detected Restaurant via keywords');
+            }
+            // Salon detection
+            else if (urlLower.match(/salon|hair|beauty|barber/) ||
+                contentLower.match(/haircut|styling|color|spa|facial/)) {
+                aiAnalysis.business_type = 'Hair Salon';
+                aiAnalysis.industry = 'Hair Salon';
+                console.log('🔧 FALLBACK: Detected Hair Salon via keywords');
+            }
+            // Fitness detection
+            else if (urlLower.match(/gym|fitness|yoga|pilates/) ||
+                contentLower.match(/workout|training|class|personal trainer/)) {
+                aiAnalysis.business_type = 'Fitness Gym';
+                aiAnalysis.industry = 'Fitness Gym';
+                console.log('🔧 FALLBACK: Detected Fitness Gym via keywords');
+            }
+        }
+
+        console.log('✅ Final Industry Classification:', aiAnalysis.business_type);
 
         // STEP 4: Enhanced Image Extraction with Multi-Tier Fallback + Hero Hunter
         // 🎯 STRATEGY: EXTRACT EVERYTHING, FILTER LATER
@@ -440,6 +503,57 @@ Respond with ONLY a JSON object:
         const allMarkdownImages = extractImagesFromMarkdown(markdown);
         console.log(`  📸 Found ${allMarkdownImages.length} images in markdown content`);
 
+        // 🚨 HTML FALLBACK: If markdown extraction found ZERO images, parse HTML directly
+        // This handles Squarespace and other JS-heavy sites that load images dynamically
+        if (allMarkdownImages.length === 0 && scrapeResult?.html) {
+            console.log('⚠️ Markdown extraction failed (0 images), activating HTML fallback scraper...');
+            const html = scrapeResult.html;
+
+            // Extract <img> tags with their src attributes
+            const imgRegex = /<img[^>]+src=["']([^"']+)["'][^>]*>/gi;
+            let match;
+            let htmlImageCount = 0;
+
+            while ((match = imgRegex.exec(html)) !== null && htmlImageCount < 15) {
+                const imgSrc = match[1];
+
+                // Convert relative URLs to absolute
+                let absoluteUrl = imgSrc;
+                if (!imgSrc.startsWith('http')) {
+                    try {
+                        absoluteUrl = new URL(imgSrc, url).toString();
+                    } catch (e) {
+                        console.log(`    ⚠️ Skipped invalid URL: ${imgSrc}`);
+                        continue; // Skip invalid URLs
+                    }
+                }
+
+                // Filter out common non-product images
+                const urlLower = absoluteUrl.toLowerCase();
+
+                // Skip logos, favicons, and icons
+                if (urlLower.includes('logo') || urlLower.includes('favicon') ||
+                    urlLower.includes('icon-') || urlLower.includes('/icons/') ||
+                    urlLower.includes('badge') || absoluteUrl === finalLogo) {
+                    console.log(`    ⚠️ Skipped: Looks like logo/icon`);
+                    continue;
+                }
+
+                // Skip tracking pixels and tiny images
+                if (urlLower.includes('1x1') || urlLower.includes('tracking') ||
+                    urlLower.includes('pixel') || urlLower.includes('spacer.gif')) {
+                    console.log(`    ⚠️ Skipped: Tracking pixel`);
+                    continue;
+                }
+
+                allMarkdownImages.push({ url: absoluteUrl, score: 50 });
+                htmlImageCount++;
+                console.log(`    ✅ HTML IMG #${htmlImageCount}: ${absoluteUrl.substring(0, 80)}...`);
+            }
+
+            console.log(`  📊 HTML fallback scraper found ${htmlImageCount} additional images`);
+        }
+
         // Filter out images that are likely the logo
         for (const img of allMarkdownImages) {
             const url = img.url.toLowerCase();
@@ -530,7 +644,61 @@ Respond with ONLY a JSON object:
 
         console.log('✅ Complete Brand DNA:', JSON.stringify(brandDNA, null, 2));
 
-        // STEP 5: Return Brand DNA with success wrapper (homepage expects this format)
+        // ====================================================================
+        // 🚀 STEP 5: PRE-COMPUTATION - Fire-and-Forget Background Generation
+        // ====================================================================
+        // Immediately trigger 3 campaign asset variations in the background
+        // while the client is redirecting to the dashboard.
+        // By the time the dashboard loads, images are already 50% done!
+
+        console.log(`🚀 PRE-COOKING: Triggered background image generation for ${brandDNA.company_name}`);
+
+        const supabaseUrl = Deno.env.get('SUPABASE_URL');
+        const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY');
+
+        if (supabaseUrl && supabaseAnonKey) {
+            const variations = [
+                { format: 'Instagram Post', style: 'vibrant' },
+                { format: 'Story', style: 'bold' },
+                { format: 'Hero', style: 'professional' }
+            ];
+
+            // Fire-and-forget: Don't await these calls
+            variations.forEach(async (variation, index) => {
+                try {
+                    console.log(`  🎨 [${index + 1}/3] Queuing ${variation.format} (${variation.style})...`);
+
+                    // Non-blocking fetch - let it run in background
+                    fetch(`${supabaseUrl}/functions/v1/generate-campaign-asset`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${supabaseAnonKey}`,
+                        },
+                        body: JSON.stringify({
+                            brandDNA,  // Pass fresh brand DNA directly
+                            format: variation.format,
+                            style: variation.style,
+                            precompute: true  // Flag to indicate this is background generation
+                        })
+                    }).catch(error => {
+                        // Silent catch - don't let background errors affect client response
+                        console.error(`  ⚠️ Background generation failed for ${variation.format}:`, error.message);
+                    });
+
+                    console.log(`    ✅ Dispatched ${variation.format} to background queue`);
+                } catch (error) {
+                    console.error(`  ⚠️ Error dispatching ${variation.format}:`, error.message);
+                }
+            });
+
+            console.log('🎯 All 3 variations dispatched! Client response proceeding...');
+        } else {
+            console.warn('⚠️ Supabase credentials missing - skipping pre-computation');
+        }
+
+        // STEP 6: Return Brand DNA with success wrapper (homepage expects this format)
+        // Client gets instant response while images generate in background
         return new Response(
             JSON.stringify({
                 success: true,
