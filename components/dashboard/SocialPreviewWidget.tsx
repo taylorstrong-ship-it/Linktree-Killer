@@ -14,6 +14,7 @@ interface BrandData {
     businessName: string;
     logo_url?: string;
     hero_image?: string;
+    brand_images?: string[];  // 🖼️ ACTUAL product/gallery photos
     vibe?: string;
     primaryColor?: string;
     industry?: string;
@@ -57,19 +58,84 @@ export default function SocialPreviewWidget({
 
         console.log('✅ [Ironclad UI] BrandData received, showing heroImage immediately...');
 
+        // 🧠 INTELLIGENT IMAGE SELECTION: Pick the BEST product photo
+        // - Filter out logos
+        // - Prefer food/product keywords
+        // - Use brand_images array (actual product photos) over hero_image
+        const selectBestProductImage = () => {
+            console.log('🎯 [Smart Selection] Analyzing brand images...');
+
+            // Try brand_images array first (actual product/gallery photos)
+            if (brandData.brand_images && brandData.brand_images.length > 0) {
+                console.log(`  📸 Found ${brandData.brand_images.length} brand images`);
+
+                const rankedImages = brandData.brand_images
+                    .map((url: string, index: number) => {
+                        let score = 100;
+                        const urlLower = url.toLowerCase();
+
+                        // ❌ Filter out logos
+                        const isLogo =
+                            urlLower.includes('logo') ||
+                            urlLower.includes('favicon') ||
+                            urlLower.includes('icon') ||
+                            url === brandData.logo_url;
+
+                        if (isLogo) {
+                            console.log(`  ⚠️ Skipping logo: ${url.substring(url.lastIndexOf('/') + 1)}`);
+                            return { url, score: 0 };
+                        }
+
+                        // ✅ Prefer larger images
+                        if (urlLower.includes('w_1920') || urlLower.includes('w_2500')) score += 50;
+                        if (urlLower.includes('w_1366') || urlLower.includes('w_1200')) score += 40;
+
+                        // ✅ Prefer food/product keywords
+                        if (urlLower.includes('food') || urlLower.includes('dish') ||
+                            urlLower.includes('pasta') || urlLower.includes('pizza')) score += 35;
+                        if (urlLower.includes('product') || urlLower.includes('item')) score += 25;
+
+                        // ✅ First images usually better
+                        if (index === 0) score += 15;
+                        if (index === 1) score += 10;
+
+                        return { url, score };
+                    })
+                    .filter((img: any) => img.score > 0)
+                    .sort((a: any, b: any) => b.score - a.score);
+
+                if (rankedImages.length > 0) {
+                    const bestImage = rankedImages[0].url;
+                    console.log(`  ✅ BEST IMAGE: ${bestImage.substring(bestImage.lastIndexOf('/') + 1)} (score: ${rankedImages[0].score})`);
+                    return bestImage;
+                }
+            }
+
+            // Fallback: hero_image (but only if NOT logo)
+            if (brandData.hero_image && brandData.hero_image !== brandData.logo_url) {
+                console.log('  📸 Fallback: Using hero_image (not logo)');
+                return brandData.hero_image;
+            }
+
+            // Last resort: logo or placeholder
+            console.log('  ⚠️ No product photos found, using logo');
+            return brandData.logo_url || '/images/placeholder.jpg';
+        };
+
+        const bestProductImage = selectBestProductImage();
+
         // 🎯 STEP 1: NEVER FAIL INITIAL STATE - Always have an image
-        const heroImage = brandData.hero_image || brandData.logo_url || '/images/placeholder.jpg';
-        setGeneratedImage(heroImage); // NEVER null or undefined
+        setGeneratedImage(bestProductImage); // NEVER null or undefined
         setState('success');
-        console.log('🖼️ [Ironclad UI] Displaying heroImage instantly:', heroImage?.substring(0, 60) + '...');
+        console.log('🖼️ [Ironclad UI] Displaying best product image:', bestProductImage?.substring(0, 60) + '...');
 
         // 🎯 STEP 2: BACKGROUND UPGRADE - Start AI enhancement after initial render
         const generatePreview = async () => {
             try {
                 setIsUpgrading(true); // Show "✨ Enhancing..." badge
 
-                // Smart image selection: prioritize hero_image over logo
-                const imageSource = brandData.hero_image || brandData.logo_url;
+                // Use the same intelligent selection
+                const imageSource = bestProductImage;
 
                 if (!imageSource) {
                     console.warn('⚠️ [Ironclad UI] No image source available, using placeholder');
@@ -215,7 +281,7 @@ REQUIREMENTS:
                     },
                     campaign: campaign,  // 🎯 CLEAN HEADLINE: "Order Now", "Book Now", etc.
                     userInstructions: enrichedCampaign,  // 🎨 BEAUTIFICATION GUIDANCE: Scene description for visual enhancement
-                    sourceImageUrl: heroImage || undefined, // 🎨 Enable beautifier if heroImage exists
+                    sourceImageUrl: bestProductImage || undefined, // 🎨 BEST product photo selected by intelligent ranking
                 };
 
                 // Get Supabase URL from environment or construct it

@@ -38,6 +38,7 @@ interface BrandDNA {
     favicon_url: string;
     hero_image: string;
     og_image: string;
+    brand_images: string[];  // 🖼️ ACTUAL product/gallery photos (not just meta tags)
 
     // Colors
     primary_color: string;
@@ -173,7 +174,8 @@ Respond with ONLY a JSON object:
         console.log('🤖 AI Analysis:', aiAnalysis);
 
         // STEP 4: Enhanced Image Extraction with Multi-Tier Fallback + Hero Hunter
-        // Helper function to extract images from markdown
+        // 🎯 STRATEGY: EXTRACT EVERYTHING, FILTER LATER
+        // Don't be smart during extraction - grab ALL images and let downstream consumers pick the best ones
         const extractImagesFromMarkdown = (markdown: string): Array<{ url: string, score: number }> => {
             const imageRegex = /!\[.*?\]\((https?:\/\/[^\s)]+)\)/g;
             const images: Array<{ url: string, score: number }> = [];
@@ -181,30 +183,44 @@ Respond with ONLY a JSON object:
 
             while ((match = imageRegex.exec(markdown)) !== null) {
                 const imageUrl = match[1];
+                const urlLower = imageUrl.toLowerCase();
 
-                // Score images based on characteristics
-                let score = 0;
+                // ❌ ONLY exclude OBVIOUS non-photos
+                // Skip tracking pixels (1x1 images)
+                if (urlLower.includes('1x1') || urlLower.includes('tracking') || urlLower.includes('pixel')) {
+                    console.log(`  ⚠️ Skipping tracking pixel: ${imageUrl.substring(0, 60)}...`);
+                    continue;
+                }
 
-                // Larger images get higher scores (look for width/height in URL)
-                if (imageUrl.includes('w_768') || imageUrl.includes('w_854') || imageUrl.includes('w_800')) score += 3;
-                if (imageUrl.includes('w_1366') || imageUrl.includes('w_1200')) score += 5;
+                // Skip really tiny images (likely icons/bullets)
+                if (urlLower.includes('w_50') || urlLower.includes('h_50') ||
+                    urlLower.includes('w_16') || urlLower.includes('h_16')) {
+                    console.log(`  ⚠️ Skipping tiny icon: ${imageUrl.substring(0, 60)}...`);
+                    continue;
+                }
 
-                // Avoid tiny images
-                if (imageUrl.includes('w_50') || imageUrl.includes('h_50')) score -= 10;
-                if (imageUrl.includes('w_100') || imageUrl.includes('h_100')) score -= 5;
+                // ✅ EVERYTHING ELSE: ADD IT!
+                // Score is just for sorting, NOT for filtering
+                let score = 100; // Base score - everyone starts equal
 
-                // Prefer images from static CDNs (likely brand assets)
-                if (imageUrl.includes('wixstatic.com') || imageUrl.includes('cloudinary') || imageUrl.includes('cdn')) score += 2;
+                // Prefer larger images (hints at hero/product photos)
+                if (urlLower.includes('w_1366') || urlLower.includes('w_1200') || urlLower.includes('w_1920')) score += 50;
+                if (urlLower.includes('w_768') || urlLower.includes('w_854') || urlLower.includes('w_800')) score += 30;
 
-                // Avoid tracking pixels and analytics
-                if (imageUrl.includes('tracking') || imageUrl.includes('pixel') || imageUrl.includes('analytics')) score -= 20;
+                // CDN images are likely real brand assets
+                if (urlLower.includes('squarespace-cdn') || urlLower.includes('cloudinary') ||
+                    urlLower.includes('wixstatic') || urlLower.includes('shopify')) score += 20;
 
                 images.push({ url: imageUrl, score });
             }
 
-            // Sort by score descending
+            // Sort by score (best first), but RETURN ALL
             return images.sort((a, b) => b.score - a.score);
         };
+
+        // =================================================================
+        // 🦸 HERO HUNTER: Brute-force HTML <img> tag parser
+        // =================================================================
 
         // 🎯 HERO HUNTER: Brute-force HTML image extraction
         const heroHunter = async (targetUrl: string): Promise<string> => {
@@ -407,6 +423,70 @@ Respond with ONLY a JSON object:
 
         console.log('🏆 Final Logo Selected:', finalLogo || 'NONE - Image extraction failed completely');
 
+        // ====================================================================
+        // 🖼️ STEP 4B: INTELLIGENT GALLERY SCANNER
+        // ====================================================================
+        // Purpose: Find ACTUAL product/service images (food, products, people, etc.)
+        // NOT just meta tag images (which are often just the logo)
+
+        console.log('🖼️ SCANNING FOR PRODUCT/GALLERY IMAGES...');
+        const brandImages: string[] = [];
+
+        // Extract ALL images from markdown
+        const allMarkdownImages = extractImagesFromMarkdown(markdown);
+        console.log(`  📸 Found ${allMarkdownImages.length} images in markdown content`);
+
+        // Filter out images that are likely the logo
+        for (const img of allMarkdownImages) {
+            const url = img.url.toLowerCase();
+
+            // Skip if it's the logo we already extracted
+            if (finalLogo && img.url === finalLogo) {
+                console.log(`  ⚠️ Skipping: This is the logo`);
+                continue;
+            }
+
+            // Skip if it looks like a logo file
+            if (url.includes('logo') || url.includes('brand') || url.includes('favicon')) {
+                console.log(`  ⚠️ Skipping: Looks like a logo (${img.url.substring(0, 60)}...)`);
+                continue;
+            }
+
+            // Skip tiny images (icons, bullets, etc.)
+            if (url.includes('icon-') || url.includes('bullet') || url.includes('-icon.')) {
+                console.log(`  ⚠️ Skipping: Looks like an icon`);
+                continue;
+            }
+
+            // This is likely a real product/gallery image!
+            brandImages.push(img.url);
+            console.log(`  ✅ PRODUCT IMAGE #${brandImages.length}: ${img.url.substring(0, 80)}...`);
+
+            // Limit to 10 images to prevent overwhelming the system
+            if (brandImages.length >= 10) {
+                console.log('  📊 Reached 10 images limit, stopping scan');
+                break;
+            }
+        }
+
+        console.log(`🎯 Gallery Scanner Results: ${brandImages.length} product images found`);
+
+        // If we found NO product images, try the heroImage/ogImage as fallback
+        // (only if it's different from the logo)
+        if (brandImages.length === 0) {
+            console.log('⚠️ No gallery images found, checking if hero/og images are viable...');
+
+            if (heroImage && heroImage !== finalLogo) {
+                brandImages.push(heroImage);
+                console.log(`  ✅ Using hero_image as product photo: ${heroImage}`);
+            } else if (ogImage && ogImage !== finalLogo) {
+                brandImages.push(ogImage);
+                console.log(`  ✅ Using og_image as product photo: ${ogImage}`);
+            } else {
+                console.log('  ⚠️ hero_image and og_image are the same as logo - NO PRODUCT PHOTOS AVAILABLE');
+            }
+        }
+
         const brandDNA: BrandDNA = {
             // Core Identity
             company_name: branding.companyName || url.replace(/https?:\/\/(www\.)?/, '').split('/')[0],
@@ -419,6 +499,7 @@ Respond with ONLY a JSON object:
             favicon_url: branding.images?.favicon || '',
             hero_image: heroImage || ogImage || '',
             og_image: ogImage || '',
+            brand_images: brandImages,  // 🖼️ ACTUAL product/gallery photos
 
             // Colors (with fallbacks)
             primary_color: branding.colors?.primary || '#3B82F6',
@@ -445,12 +526,9 @@ Respond with ONLY a JSON object:
 
         console.log('✅ Complete Brand DNA:', JSON.stringify(brandDNA, null, 2));
 
-        // STEP 5: Return complete Brand DNA
+        // STEP 5: Return Brand DNA directly (not wrapped in success object)
         return new Response(
-            JSON.stringify({
-                success: true,
-                brandDNA,
-            }),
+            JSON.stringify(brandDNA),
             {
                 headers: { ...corsHeaders, 'Content-Type': 'application/json' },
             }

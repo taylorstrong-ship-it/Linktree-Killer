@@ -81,120 +81,82 @@ export async function POST(request: Request) {
         const { url } = await request.json();
         const targetUrl = url.trim().startsWith('http') ? url : `https://${url}`;
 
-        // 1. SETUP KEYS
-        const firecrawlKey = process.env.FIRECRAWL_API_KEY;
-        const openaiKey = process.env.OPENAI_API_KEY;
+        console.log(`🔍 [Scan] Extracting Brand DNA for: ${targetUrl}`);
 
-        // 2. DEFINE THE OUTPUT STRUCTURE
+        // 🎯 HYBRID STRATEGY: Try Edge Function first (full brand_images), fallback to simple scrape
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+        const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+        if (supabaseUrl && supabaseAnonKey) {
+            try {
+                const response = await fetch(`${supabaseUrl}/functions/v1/extract-brand-dna`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${supabaseAnonKey}`
+                    },
+                    body: JSON.stringify({ url: targetUrl }),
+                    signal: AbortSignal.timeout(30000) // 30s timeout
+                });
+
+                if (response.ok) {
+                    const brandData = await response.json();
+                    console.log(`✅ [Scan] Edge Function success! Found ${brandData.brand_images?.length || 0} brand images`);
+                    return NextResponse.json(brandData);
+                }
+                console.warn(`⚠️ [Scan] Edge Function failed (${response.status}), falling back to simple scrape`);
+            } catch (edgeError) {
+                console.warn('⚠️ [Scan] Edge Function timeout/error, falling back:', edgeError);
+            }
+        }
+
+        // FALLBACK: Simple scrape (old logic) but return structure compatible with brand_images
+        console.log('📋 [Scan] Using fallback scrape...');
+        const firecrawlKey = process.env.FIRECRAWL_API_KEY;
+
         let record = {
-            name: "Brand Name",
-            description: "Welcome to my page",
+            business_name: "Brand Name",
+            business_description: "Welcome",
             industry: "Brand",
-            vibe: "Modern",
-            colors: { primary: "#000000", background: "#ffffff" },
-            links: [] as any[],
-            image: ""
+            logo_url: "",
+            brand_images: [] as string[], // 🎯 NEW: Always return array
         };
 
-        let markdown = "";
-
-        // 3. EXECUTE SCAN (Firecrawl Preferred)
         if (firecrawlKey) {
             try {
                 const fcResponse = await fetch('https://api.firecrawl.dev/v0/scrape', {
                     method: 'POST',
-                    headers: { 'Authorization': `Bearer ${firecrawlKey}`, 'Content-Type': 'application/json' },
+                    headers: {
+                        'Authorization': `Bearer ${firecrawlKey}`,
+                        'Content-Type': 'application/json'
+                    },
                     body: JSON.stringify({
                         url: targetUrl,
-                        pageOptions: {
-                            onlyMainContent: false,
-                            waitFor: 5000 // Give Shopify sites time to hydrate
-                        }
+                        pageOptions: { onlyMainContent: false, waitFor: 5000 }
                     })
                 });
 
                 if (fcResponse.ok) {
                     const fcData = await fcResponse.json();
-                    markdown = fcData.data.markdown;
-                    record.image = fcData.data.metadata.ogImage || "";
-                    record.name = fcData.data.metadata.title || "";
-                    record.description = fcData.data.metadata.description || "";
+                    record.logo_url = fcData.data.metadata.ogImage || "";
+                    record.business_name = fcData.data.metadata.title || "";
+                    record.business_description = fcData.data.metadata.description || "";
+
+                    // 🎯 Add logo as first brand_image
+                    if (record.logo_url) {
+                        record.brand_images.push(record.logo_url);
+                    }
                 }
             } catch (e) {
-                console.error("Firecrawl skipped.");
+                console.error("Firecrawl failed:", e);
             }
         }
 
-        // 4. AGGRESSIVE EXTRACTOR (Always run manual fetch to catch Buttons/Links)
-        try {
-            const res = await fetch(targetUrl, { headers: { 'User-Agent': 'Mozilla/5.0' } });
-            const html = await res.text();
-            const $ = cheerio.load(html);
-
-            // Run the new Aggressive Parser
-            const manualLinks = extractLinks($);
-            if (manualLinks.length > 0) {
-                record.links = manualLinks;
-            }
-
-            // Fallback for metadata if Firecrawl failed
-            if (!markdown) {
-                record.name = $('title').text().split('|')[0].trim();
-                record.description = $('meta[name="description"]').attr('content') || "";
-                record.image = $('meta[property="og:image"]').attr('content') || "";
-                markdown = $('body').text().substring(0, 3000);
-            }
-        } catch (e) {
-            console.error("Manual fetch failed", e);
-        }
-
-        // 5. THE BRAIN (OpenAI - Enforcing "Industry" detection)
-        if (openaiKey && markdown) {
-            const openai = new OpenAI({ apiKey: openaiKey });
-            try {
-                const completion = await openai.chat.completions.create({
-                    messages: [
-                        {
-                            role: "system",
-                            content: `You are a Brand Expert. Analyze the content.
-              Rules:
-              1. "industry": Be specific (e.g., "Hair Salon", "SaaS", "Pet Services"). DO NOT use generic terms like "Business".
-              2. "colors": Extract the dominant hex code.
-              3. "links": Find social/booking links.
-
-              Return JSON ONLY:
-              {
-                "name": "Clean Brand Name",
-                "description": "Short bio (max 120 chars)",
-                "industry": "Specific Niche",
-                "vibe": "One word (e.g. Luxury)",
-                "colors": { "primary": "#hex", "background": "#hex" },
-                "links": [ { "label": "Instagram", "url": "...", "type": "instagram" } ]
-              }`
-                        },
-                        { role: "user", content: `URL: ${targetUrl}\nContent: ${markdown.substring(0, 4000)}` }
-                    ],
-                    model: "gpt-3.5-turbo",
-                    response_format: { type: "json_object" }
-                });
-
-                const aiData = JSON.parse(completion.choices[0].message.content || '{}');
-
-                // Merge AI data (AI wins)
-                record.name = aiData.name || record.name;
-                record.description = aiData.description || record.description;
-                record.industry = aiData.industry || "Brand"; // This fixes the "Business detected" issue
-                record.colors = aiData.colors || record.colors;
-                record.links = aiData.links || [];
-
-            } catch (e) {
-                console.error("AI Analysis failed", e);
-            }
-        }
-
+        console.log(`✅ [Scan] Fallback complete. Logo: ${record.logo_url ? 'found' : 'none'}`);
         return NextResponse.json(record);
 
     } catch (error) {
+        console.error('[Scan] Fatal error:', error);
         return NextResponse.json({ error: 'Scan Failed' }, { status: 500 });
     }
 }

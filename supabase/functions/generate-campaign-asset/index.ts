@@ -370,9 +370,160 @@ OUTPUT: An Instagram-ready campaign post that looks like it came from ${brandNam
         console.log(`   CTA: ${brandDNA?.cta || 'Learn More'} `);
         console.log(`   Headline: ${brandDNA?.adHook || campaign} `);
 
-        // STEP 5: Call Gemini 3 API with 15-second timeout controller
-        const parts: any[] = [{ text: prompt }];
-        if (imagePart) parts.push(imagePart);
+        // ====================================================================
+        // 🎨 STEP 5A: BUILD MULTI-MODAL PARTS ARRAY
+        // ====================================================================
+        // Strategy: Send ACTUAL brand assets (logo + product photos) as reference images
+        // This creates authentic, on-brand output vs. AI hallucinating logos from text
+
+        console.log('🎨 Building multi-modal parts array...');
+        const parts: any[] = [];
+
+        // PART 1: BRAND LOGO (if available)
+        if (brandDNA?.logo_url) {
+            console.log(`📸 Fetching brand logo: ${brandDNA.logo_url}`);
+            const logoImage = await fetchImageAsBase64(brandDNA.logo_url);
+
+            if (logoImage) {
+                parts.push({
+                    inlineData: {
+                        mimeType: logoImage.mimeType,
+                        data: logoImage.base64
+                    }
+                });
+                console.log(`  ✅ Logo added to parts array (${logoImage.mimeType})`);
+            } else {
+                console.log('  ⚠️ Logo fetch failed - will generate text-based logo');
+            }
+        }
+
+
+        // PART 2: PRODUCT/HERO PHOTO (if available and not already in imagePart)
+        // 🧠 INTELLIGENT SELECTION: Pick the BEST product photo, not just first one
+        if (!hasSourceImage) {
+            let productImageUrl = null;
+
+            console.log('🎯 SMART IMAGE SELECTION: Analyzing brand_images array...');
+
+            // PRIORITY 1: Use brand_images array with INTELLIGENT RANKING
+            if (brandDNA?.brand_images && brandDNA.brand_images.length > 0) {
+                console.log(`  📸 Found ${brandDNA.brand_images.length} brand images to analyze`);
+
+                // 🧠 RANK images by quality indicators
+                const rankedImages = brandDNA.brand_images
+                    .map((url, index) => {
+                        let score = 100; // Base score
+                        const urlLower = url.toLowerCase();
+
+                        // ❌ FILTER OUT LOGOS (they're not product photos!)
+                        const isLogo =
+                            urlLower.includes('logo') ||
+                            urlLower.includes('favicon') ||
+                            urlLower.includes('icon') ||
+                            urlLower.includes('badge') ||
+                            url === brandDNA.logo_url;
+
+                        if (isLogo) {
+                            console.log(`  ⚠️ Skipping logo: ${url.substring(url.lastIndexOf('/') + 1)}`);
+                            return { url, score: 0, reason: 'logo' };
+                        }
+
+                        // ✅ PREFER larger images (better quality)
+                        if (urlLower.includes('w_1920') || urlLower.includes('w_2500')) score += 50;
+                        if (urlLower.includes('w_1366') || urlLower.includes('w_1200')) score += 40;
+                        if (urlLower.includes('w_854') || urlLower.includes('w_768')) score += 20;
+
+                        // ✅ PREFER specific product/food keywords
+                        if (urlLower.includes('food') || urlLower.includes('dish') ||
+                            urlLower.includes('plate') || urlLower.includes('meal')) score += 30;
+                        if (urlLower.includes('product') || urlLower.includes('item')) score += 25;
+                        if (urlLower.includes('pasta') || urlLower.includes('pizza')) score += 35;
+
+                        // ✅ PREFER first few images (usually hero shots)
+                        if (index === 0) score += 15;
+                        if (index === 1) score += 10;
+                        if (index === 2) score += 5;
+
+                        // ✅ CDN images are usually professional quality
+                        if (urlLower.includes('squarespace-cdn') || urlLower.includes('cloudinary') ||
+                            urlLower.includes('shopify') || urlLower.includes('wixstatic')) score += 15;
+
+                        return { url, score, reason: 'product' };
+                    })
+                    .filter(img => img.score > 0)  // Remove logos
+                    .sort((a, b) => b.score - a.score);  // Best first
+
+                if (rankedImages.length > 0) {
+                    productImageUrl = rankedImages[0].url;
+                    console.log(`  ✅ BEST IMAGE SELECTED (score: ${rankedImages[0].score})`);
+                    console.log(`     URL: ${productImageUrl.substring(productImageUrl.lastIndexOf('/') + 1)}`);
+                    console.log(`  📊 Top 3 candidates:`);
+                    rankedImages.slice(0, 3).forEach((img, i) => {
+                        const filename = img.url.substring(img.url.lastIndexOf('/') + 1);
+                        console.log(`     ${i + 1}. ${filename} (score: ${img.score})`);
+                    });
+                } else {
+                    console.log('  ⚠️ All brand_images were logos - trying fallback...');
+                }
+            }
+
+            // PRIORITY 2: Fallback to hero_image (but only if different from logo)
+            if (!productImageUrl && brandDNA?.hero_image && brandDNA.hero_image !== brandDNA?.logo_url) {
+                productImageUrl = brandDNA.hero_image;
+                console.log(`  📸 Using hero_image as fallback: ${productImageUrl}`);
+            }
+
+            // PRIORITY 3: Fallback to og_image (but only if different from logo)
+            if (!productImageUrl && brandDNA?.og_image && brandDNA.og_image !== brandDNA?.logo_url) {
+                productImageUrl = brandDNA.og_image;
+                console.log(`  📸 Using og_image as fallback: ${productImageUrl}`);
+            }
+
+            if (!productImageUrl) {
+                console.log('  ⚠️ No product photos available - will generate from scratch');
+            }
+
+            if (productImageUrl) {
+                console.log(`📸 Fetching product photo: ${productImageUrl}`);
+                const productImage = await fetchImageAsBase64(productImageUrl);
+
+                if (productImage) {
+                    parts.push({
+                        inlineData: {
+                            mimeType: productImage.mimeType,
+                            data: productImage.base64
+                        }
+                    });
+                    console.log(`  ✅ Product photo added to parts array (${productImage.mimeType})`);
+                } else {
+                    console.log('  ⚠️ Product photo fetch failed - will generate from scratch');
+                }
+            }
+        }
+
+        // PART 3: TEXT PROMPT (instructions on how to use the reference images)
+        const enhancedPrompt = parts.length > 0
+            ? `REFERENCE IMAGES PROVIDED:
+${parts.length >= 1 ? '- Image 1: Brand LOGO (use this EXACTLY at top center, do not redraw)' : ''}
+${parts.length >= 2 ? '- Image 2: Product PHOTO (enhance and use as hero, apply pro retouching)' : ''}
+
+COMPOSITION INSTRUCTIONS:
+${prompt}
+
+CRITICAL: Use the provided reference images AS-IS. Do not hallucinate new logos or products.`
+            : prompt;
+
+        parts.push({ text: enhancedPrompt });
+
+        // PART 4: SOURCE IMAGE (if provided for enhancement path)
+        if (imagePart) {
+            parts.push(imagePart);
+            console.log('  ✅ Source image added to parts array (enhancement mode)');
+        }
+
+        console.log(`🎯 Final parts array: ${parts.length} parts`);
+        console.log(`   - Reference images: ${parts.filter(p => p.inlineData).length}`);
+        console.log(`   - Text prompts: ${parts.filter(p => p.text).length}`);
 
         const geminiStartTime = Date.now();
 
