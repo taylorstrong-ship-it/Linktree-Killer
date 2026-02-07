@@ -384,7 +384,10 @@ Respond with ONLY a JSON object:
                 }
             }
 
-            // TIER 5: 🎯 HERO HUNTER - Brute-force HTML parsing
+            // TIER 5: 🎯 HERO HUNTER - DISABLED (Too slow, Firecrawl already got images)
+            // The Hero Hunter fetches HTML again after Firecrawl already processed it
+            // This causes timeouts. If we need it, we should pass Firecrawl's HTML to it.
+            /*
             if (!finalLogo) {
                 console.log('🔍 ACTIVATING HERO HUNTER (TIER 5)...');
                 const heroUrl = await heroHunter(url);
@@ -395,6 +398,7 @@ Respond with ONLY a JSON object:
                     console.log('⚠️ HERO HUNTER FAILED - No images found in HTML');
                 }
             }
+            */
 
             // TIER 6: Last resort - use favicon if available
             if (!finalLogo && branding.images?.favicon) {
@@ -526,9 +530,12 @@ Respond with ONLY a JSON object:
 
         console.log('✅ Complete Brand DNA:', JSON.stringify(brandDNA, null, 2));
 
-        // STEP 5: Return Brand DNA directly (not wrapped in success object)
+        // STEP 5: Return Brand DNA with success wrapper (homepage expects this format)
         return new Response(
-            JSON.stringify(brandDNA),
+            JSON.stringify({
+                success: true,
+                brandDNA: brandDNA
+            }),
             {
                 headers: { ...corsHeaders, 'Content-Type': 'application/json' },
             }
