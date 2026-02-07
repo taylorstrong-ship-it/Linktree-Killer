@@ -90,7 +90,7 @@ export default function ContentStudioPage() {
         try {
             // Step 1: Upload raw file to Supabase
             console.log('📤 Uploading to Supabase...')
-            let imageUrl = uploadedUrl
+            let imageUrl: string | null = uploadedUrl
 
             if (!imageUrl) {
                 imageUrl = await uploadToSupabase()
@@ -272,8 +272,8 @@ export default function ContentStudioPage() {
                                         key={item.value}
                                         onClick={() => setFormat(item.value as Format)}
                                         className={`p-3 rounded-xl border transition-all ${format === item.value
-                                                ? 'border-[#FF6B35] bg-[#FF6B35]/10'
-                                                : 'border-white/10 bg-black/30 hover:border-white/30'
+                                            ? 'border-[#FF6B35] bg-[#FF6B35]/10'
+                                            : 'border-white/10 bg-black/30 hover:border-white/30'
                                             }`}
                                     >
                                         <p className="text-white font-medium text-sm">{item.label}</p>
