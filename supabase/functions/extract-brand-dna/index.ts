@@ -82,6 +82,18 @@ interface BrandDNA {
         hashtags: string[];
     }>;
 
+    // 🀄 VISUAL SOCIAL POSTS (v5.0) - Instagram-ready with Gemini-enhanced images
+    visual_social_posts?: Array<{
+        type: string;
+        caption: string;
+        visual_description: string;
+        cta: string;
+        hashtags: string[];
+        original_image_url: string;
+        enhanced_image_url: string;
+        enhancement_success: boolean;
+    }> | null;
+
     // Metadata
     source: string;
 }
@@ -261,6 +273,215 @@ Respond ONLY with valid JSON:
             cta: 'Learn More',
             hashtags: [`#${businessType.toLowerCase().replace(' ', '')}`]
         }];
+    }
+}
+
+/**
+ * 🎯 SELECT TOP IMAGES FOR SOCIAL POSTS
+ * 
+ * Intelligently ranks and selects the best N brand images for social media.
+ * Filters out logos/icons and prioritizes high-quality product/service photos.
+ */
+function selectTopImages(
+    brandImages: string[],
+    industry: string,
+    count: number = 3
+): string[] {
+    console.log(`🎯 Selecting top ${count} images from ${brandImages.length} candidates...`);
+
+    if (brandImages.length === 0) {
+        console.log('⚠️ No brand images available');
+        return [];
+    }
+
+    // Score and rank images
+    const rankedImages = brandImages
+        .map((url, index) => {
+            let score = 100; // Base score
+            const urlLower = url.toLowerCase();
+
+            // ✅ PREFER larger images (better quality)
+            if (urlLower.includes('w_1920') || urlLower.includes('w_2500')) score += 50;
+            if (urlLower.includes('w_1366') || urlLower.includes('w_1200')) score += 40;
+            if (urlLower.includes('w_854') || urlLower.includes('w_768')) score += 20;
+
+            // ✅ INDUSTRY-SPECIFIC SCORING
+            const industryLower = industry.toLowerCase();
+            if (industryLower.includes('food') || industryLower.includes('restaurant')) {
+                if (urlLower.includes('food') || urlLower.includes('dish') ||
+                    urlLower.includes('plate') || urlLower.includes('meal')) score += 40;
+                if (urlLower.includes('pasta') || urlLower.includes('pizza') ||
+                    urlLower.includes('sushi') || urlLower.includes('dessert')) score += 35;
+            }
+            if (industryLower.includes('salon') || industryLower.includes('hair') || industryLower.includes('beauty')) {
+                if (urlLower.includes('hair') || urlLower.includes('style') ||
+                    urlLower.includes('cut') || urlLower.includes('color')) score += 40;
+                if (urlLower.includes('salon') || urlLower.includes('beauty')) score += 35;
+            }
+            if (industryLower.includes('retail') || industryLower.includes('ecommerce') || industryLower.includes('shop')) {
+                if (urlLower.includes('product') || urlLower.includes('item')) score += 40;
+            }
+
+            // ✅ PREFER first few images (usually hero shots)
+            if (index === 0) score += 15;
+            if (index === 1) score += 10;
+            if (index === 2) score += 5;
+
+            // ✅ CDN images are usually professional quality
+            if (urlLower.includes('squarespace-cdn') || urlLower.includes('cloudinary') ||
+                urlLower.includes('shopify') || urlLower.includes('wixstatic') ||
+                urlLower.includes('imgix')) score += 15;
+
+            // ✅ Gallery/product indicators
+            if (urlLower.includes('gallery') || urlLower.includes('portfolio')) score += 10;
+
+            return { url, score };
+        })
+        .sort((a, b) => b.score - a.score)  // Best first
+        .slice(0, count);  // Take top N
+
+    const selectedUrls = rankedImages.map(img => img.url);
+
+    console.log(`✅ Selected ${selectedUrls.length} images:`);
+    rankedImages.forEach((img, i) => {
+        const filename = img.url.substring(img.url.lastIndexOf('/') + 1, img.url.lastIndexOf('/') + 40);
+        console.log(`   ${i + 1}. ${filename}... (score: ${img.score})`);
+    });
+
+    return selectedUrls;
+}
+
+/**
+ * 🎨 ENHANCE IMAGE WITH GEMINI 3 + ADD DESIGN ELEMENTS
+ * 
+ * Takes a brand's actual product photo and:
+ * 1. Enhances quality (lighting, color, sharpness)
+ * 2. Adds design overlays (text, CTA, branding)
+ * 3. Returns Instagram-ready post
+ */
+async function enhanceImageWithDesign(
+    imageUrl: string,
+    brandName: string,
+    brandColors: { primary: string; secondary: string },
+    postConcept: {
+        caption: string;
+        cta: string;
+    },
+    industry: string,
+    geminiKey: string
+): Promise<{ enhanced_url: string; success: boolean }> {
+    console.log(`🎨 Enhancing image with Gemini 3: ${imageUrl.substring(0, 60)}...`);
+
+    try {
+        // Step 1: Fetch source image as Base64
+        console.log('  📥 Fetching source image...');
+        const response = await fetch(imageUrl);
+        if (!response.ok) {
+            throw new Error(`Failed to fetch image: ${response.status}`);
+        }
+
+        const arrayBuffer = await response.arrayBuffer();
+        const uint8Array = new Uint8Array(arrayBuffer);
+        const base64 = btoa(String.fromCharCode(...uint8Array));
+        const mimeType = response.headers.get('content-type') || 'image/jpeg';
+
+        console.log(`  ✅ Image fetched: ${(arrayBuffer.byteLength / 1024).toFixed(2)} KB`);
+
+        // Step 2: Build Gemini prompt
+        const industrySpecific = industry.toLowerCase().includes('food') || industry.toLowerCase().includes('restaurant')
+            ? 'Increase appetite appeal - vivid colors, professional food photography, bokeh depth of field'
+            : industry.toLowerCase().includes('salon') || industry.toLowerCase().includes('hair') || industry.toLowerCase().includes('beauty')
+                ? 'Emphasize texture, shine, and professional hair styling. Make it look like a magazine cover'
+                : 'Professional photography enhancement with premium aesthetic';
+
+        const systemRole = `You are an Elite Creative Director creating Instagram posts for ${industry} businesses.
+        
+MISSION: Transform this product photo into a scroll-stopping Instagram post (1080x1080).
+
+STEPS:
+1. **ENHANCE THE IMAGE:**
+   - ${industrySpecific}
+   - Improve lighting, color balance, and sharpness
+   - Keep the subject authentic - DO NOT replace or hallucinate new elements
+
+2. **ADD DESIGN OVERLAYS:**
+   - Brand Name: "${brandName}" (top center, elegant modern typography)
+   - Caption: "${postConcept.caption}" (make it pop, ensure high contrast)
+   - CTA: "${postConcept.cta}" (pill-shaped button, color: ${brandColors.primary})
+   - Make overlays look professionally integrated, not slapped on
+   
+3. **COMPOSITION:**
+   - Instagram 1:1 ratio (1080x1080)
+   - Safe zones: 15% top/bottom clear space for text
+   - Text should interact naturally with the image
+
+OUTPUT: A single, cohesive Instagram post ready to publish.`;
+
+        // Step 3: Call Gemini API
+        console.log('  🚀 Calling Gemini 3 Pro Image API...');
+        const geminiResponse = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-image-preview:generateContent?key=${geminiKey}`,
+            {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    contents: [{
+                        role: 'user',
+                        parts: [
+                            {
+                                inlineData: {
+                                    data: base64,
+                                    mimeType: mimeType
+                                }
+                            },
+                            {
+                                text: systemRole
+                            }
+                        ],
+                    }],
+                    generationConfig: {
+                        responseModalities: ["IMAGE"]
+                    }
+                }),
+            }
+        );
+
+        if (!geminiResponse.ok) {
+            const errorText = await geminiResponse.text();
+            console.error('  ❌ Gemini API error:', errorText.substring(0, 200));
+            throw new Error(`Gemini API failed: ${geminiResponse.status}`);
+        }
+
+        const result = await geminiResponse.json();
+
+        // Step 4: Extract enhanced image
+        const candidate = result.candidates?.[0];
+        const contentParts = candidate?.content?.parts || [];
+        const inlineData = contentParts[0]?.inlineData;
+
+        if (!inlineData || !inlineData.data) {
+            throw new Error('No image data in Gemini response');
+        }
+
+        const enhancedBase64 = inlineData.data;
+        const enhancedMimeType = inlineData.mimeType || 'image/png';
+        const enhancedDataUri = `data:${enhancedMimeType};base64,${enhancedBase64}`;
+
+        console.log('  ✅ Image enhanced successfully with design overlays');
+
+        return {
+            enhanced_url: enhancedDataUri,
+            success: true
+        };
+    } catch (error) {
+        console.error('  ⚠️ Image enhancement failed:', error);
+        // Fallback to original image
+        return {
+            enhanced_url: imageUrl,
+            success: false
+        };
     }
 }
 
@@ -461,6 +682,14 @@ Respond with ONLY valid JSON:
         } else {
             console.log('⚠️ ANTHROPIC_API_KEY not found - skipping social media example generation');
         }
+
+        // STEP 3.6: 🀄 VISUAL SOCIAL MEDIA GENERATION (v5.0)
+        // Generate Instagram-ready posts with enhanced images + design overlays
+        let visualSocialPosts = null;
+
+        // We need: brand images array, social concepts, and Gemini key
+        // Note: We'll do image extraction first, THEN enhance them
+        console.log('📋 Preparing for visual social post generation...');
 
         // STEP 4: Enhanced Image Extraction with Multi-Tier Fallback + Hero Hunter
         // 🎯 STRATEGY: EXTRACT EVERYTHING, FILTER LATER
@@ -831,6 +1060,74 @@ Respond with ONLY valid JSON:
             }
         }
 
+        // 🀄 STEP 3.7: GENERATE VISUAL SOCIAL POSTS (v5.0)
+        // Now that we have brandImages array, generate Instagram posts with Gemini enhancements
+        if (socialExamples.length > 0 && brandImages.length > 0) {
+            const geminiKey = Deno.env.get('GEMINI_API_KEY') ||
+                Deno.env.get('GOOGLE_API_KEY') ||
+                Deno.env.get('GOOGLE_AI_API_KEY');
+
+            if (geminiKey) {
+                console.log('🎨 ============ VISUAL SOCIAL GENERATION ============');
+                console.log(`🖼️ Found ${brandImages.length} brand images and ${socialExamples.length} text concepts`);
+
+                // Select top 3 images for social posts
+                const selectedImages = selectTopImages(
+                    brandImages,
+                    aiAnalysis.business_type || 'general',
+                    3
+                );
+
+                if (selectedImages.length > 0) {
+                    console.log(`✅ Selected ${selectedImages.length} images for enhancement`);
+
+                    // Enhance each image with design overlays
+                    try {
+                        visualSocialPosts = await Promise.all(
+                            socialExamples.slice(0, selectedImages.length).map(async (concept: any, idx: number) => {
+                                const imageUrl = selectedImages[idx];
+
+                                const enhanced = await enhanceImageWithDesign(
+                                    imageUrl,
+                                    branding.companyName || 'Unknown',
+                                    {
+                                        primary: branding.colors?.primary || '#FF6B35',
+                                        secondary: branding.colors?.secondary || branding.colors?.primary || '#FF6B35'
+                                    },
+                                    {
+                                        caption: concept.caption,
+                                        cta: concept.cta
+                                    },
+                                    aiAnalysis.business_type || 'general',
+                                    geminiKey
+                                );
+
+                                return {
+                                    ...concept,
+                                    original_image_url: imageUrl,
+                                    enhanced_image_url: enhanced.enhanced_url,
+                                    enhancement_success: enhanced.success
+                                };
+                            })
+                        );
+
+                        console.log(`✅ Generated ${visualSocialPosts.length} visual social posts`);
+                        const successCount = visualSocialPosts.filter((p: any) => p.enhancement_success).length;
+                        console.log(`   🌟 ${successCount}/${visualSocialPosts.length} successfully enhanced with Gemini`);
+                    } catch (error) {
+                        console.error('❌ Visual social post generation failed:', error);
+                        visualSocialPosts = null;
+                    }
+                } else {
+                    console.log('⚠️ No suitable images selected for enhancement');
+                }
+            } else {
+                console.log('⚠️ GEMINI_API_KEY not found - skipping visual enhancement');
+            }
+        } else {
+            console.log('⚠️ Skipping visual social posts (need both text concepts and images)');
+        }
+
         const brandDNA: BrandDNA = {
             // Core Identity
             company_name: branding.companyName || url.replace(/https?:\/\/(www\.)?/, '').split('/')[0],
@@ -871,6 +1168,9 @@ Respond with ONLY valid JSON:
             brand_archetype: brandVoiceAnalysis.brand_archetype,
             writing_style: brandVoiceAnalysis.writing_style,
             social_media_examples: socialExamples,
+
+            // \ud83c\udc04 VISUAL SOCIAL POSTS (v5.0) - Instagram-ready with enhanced images
+            visual_social_posts: visualSocialPosts,
 
             // Metadata
             source: 'firecrawl_v2_branding',

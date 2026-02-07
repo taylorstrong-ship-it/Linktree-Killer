@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { Sparkles, Zap, Heart, TrendingUp, Edit3 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import SocialPreviewWidget from './SocialPreviewWidget';
+import { SocialPostCarousel } from './SocialPostCarousel';
 import ReviewGuardHero from './ReviewGuardHero';
 
 interface BrandData {
@@ -19,6 +20,16 @@ interface BrandData {
     theme_color?: string;
     brand_colors?: string[];
     links?: Array<{ title: string; url: string }>;
+    visual_social_posts?: Array<{
+        type: string;
+        caption: string;
+        visual_description: string;
+        cta: string;
+        hashtags: string[];
+        original_image_url: string;
+        enhanced_image_url: string;
+        enhancement_success: boolean;
+    }> | null;
 }
 
 interface BrandDashboardProps {
@@ -384,6 +395,22 @@ export default function BrandDashboard({ brandData }: BrandDashboardProps) {
                                 }}
                             />
                         </div>
+
+                        {/* 🀄 Visual Social Posts Carousel (v5.0) */}
+                        {brandData.visual_social_posts && brandData.visual_social_posts.length > 0 && (
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.5, duration: 0.8 }}
+                                className="mt-12"
+                            >
+                                <div className="text-center mb-6">
+                                    <h3 className="text-lg font-bold text-white/90 mb-1">Visual Social Posts</h3>
+                                    <p className="text-white/50 text-xs">Instagram-ready with AI-enhanced images</p>
+                                </div>
+                                <SocialPostCarousel posts={brandData.visual_social_posts} />
+                            </motion.div>
+                        )}
 
                         {/* Footer */}
                         <div className="text-center pt-12">
