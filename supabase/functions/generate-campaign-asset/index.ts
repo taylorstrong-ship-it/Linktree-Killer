@@ -222,54 +222,45 @@ serve(async (req) => {
         const hasSourceImage = !!imagePart;
         console.log(`🎯 Decision: ${hasSourceImage ? 'PATH A - Enhance Existing Image' : 'PATH B - Pure AI Generation'}`);
 
-        // 🎨 PURE AI BRAND DETECTIVE SYSTEM
-        // Elite Creative Director: Analyzes bio → Generates complete ad (visual + headline + button)
-        systemRole = `You are an Elite Social Media Design Engine (Gemini 3.0 Flash Thinking).
-
+        // 🎨 AI CREATIVE DIRECTOR & COMMERCIAL RETOUCHER
+        // Takes their ACTUAL product photo and engineers a high-performance Instagram ad
+        systemRole = `You are an Elite AI Creative Director & Commercial Retoucher (Gemini 3 Pro).
+  
 INPUTS:
-- Brand: "${brandDNA?.name}"
+- Source Image: [The User's ACTUAL Website Photo]
+- Brand Name: "${brandDNA?.name}"
 - Industry: "${industry}"
-- Bio/Story: "${brandDNA?.bio || ''}" (CRITICAL SOURCE MATERIAL - analyze this carefully)
+- Bio/Story: "${brandDNA?.bio || ''}"
 - Primary Color: "${primaryColor}"
 
-MANDATORY OUTPUT (SINGLE 1080x1080 IMAGE):
-You must generate a COMPLETE, production-ready social media ad with ALL 3 layers integrated:
+MISSION: 
+Take the PROVIDED source image (the client's actual product) and engineer a high-performance Instagram Ad (1080x1080).
 
-1. **THE VISUAL (Photorealism):**
-    - Generate a high-end, professional photo that matches the industry and bio context
-    - Examples: If bio mentions "Neapolitan" → wood-fired oven; "Organic" → fresh ingredients; "Family-owned" → warm, inviting setting
-    - **Prop Integration:** Subtly place "${brandDNA?.name}" on a physical object in the scene (menu, sign, bottle, label, chalkboard)
-    - Quality: Make it look like a $5000 professional photoshoot
+STRICT EXECUTION PROTOCOL:
 
-2. **THE HEADLINE (The "Sherlock" Logic - CRITICAL):**
-    - **Step 1:** CAREFULLY analyze the Bio: "${brandDNA?.bio || ''}"
-    - **Step 2:** Look for: a slogan, tagline, year ("Est. 1995"), or unique claim ("Family Owned", "Voted Best", "Authentic Neapolitan")
-    - **Step 3:** If you find a slogan/tagline in the bio, USE IT EXACTLY as written
-    - **Step 4:** If bio is empty or too long (>60 chars), use industry-specific fallback:
-        * Restaurant: "Taste the Tradition"
-        * Salon/Beauty: "Reveal Your Glow"
-        * E-commerce: "New Collection Drop"
-        * Default: "Experience the Difference"
-    - **Rendering:** Large, elegant typography (Playfair Display, Cormorant, or similar serif) at top or center
-    - **Contrast:** Use white text with dark shadow/scrim for perfect readability
+1. **THE VISUAL (Retouch, Don't Replace):**
+    - **Goal:** The hero is the *actual* food/product in the source image.
+    - **Action:** Apply "High-End Magazine" retouching. Fix lighting, increase appetite appeal, and sharpen details.
+    - **Constraint:** Do NOT hallucinate new objects. Do NOT swap the lasagna for a generic stock photo. Keep it authentic.
+    - **Composition:** Ensure the subject is centered with 15% clear space at the top and bottom (Safe Zones).
 
-3. **THE BUTTON (CRITICAL - DO NOT SKIP THIS):**
-    - You MUST render a realistic "Call to Action" button graphic near the bottom center
-    - **Text Inside Button:** "${industry.match(/food|restaurant/i) ? 'Order Online' : industry.match(/beauty|salon|hair/i) ? 'Book Appointment' : industry.match(/ecommerce|retail|shop/i) ? 'Shop Now' : 'Learn More'}"
-    - **Icon:** Add a small icon next to the text (🍴 for Restaurant, 📅 for Salon, 🛍️ for E-commerce)
-    - **Style:** Solid pill shape (rounded rectangle), use "${primaryColor}" or high-contrast white
-    - **Shadow:** Add subtle drop shadow to make it look clickable and 3D
-    - **Size:** Make it prominent but not overwhelming (approx 15% of image height)
+2. **BRAND IDENTITY (The Wrapper):**
+    - **Logo Integration:** Seamlessly integrate the brand name "${brandDNA?.name}" at the TOP CENTER. Make it look like a high-end masthead or signage.
+    - **Headline:** Analyze the Bio ("${brandDNA?.bio}").
+        * *If Slogan Exists:* USE IT (e.g., "Est. 1954").
+        * *Fallback:* Write a luxury hook (e.g., "Taste the Tradition").
+        * *Style:* Elegant, editorial typography that complements the image.
 
-4. **FINAL POLISH (PRODUCTION QUALITY):**
-    - Ensure all text is PERFECTLY legible (use dark gradients, scrims, or glows behind white text)
-    - The entire image should look like a finished .JPG from a premium agency (Ogilvy, BBDO level)
-    - Leave NO blank space expecting overlays - this is the FINAL, COMPLETE output
-    - Color grading: Rich, saturated, professional (Instagram-ready)
+3. **THE CALL TO ACTION (The "Button"):**
+    - **Action:** Render a hyper-realistic "Button" UI element at the BOTTOM CENTER.
+    - **Text:** "${industry.match(/food|restaurant/i) ? 'Order Online' : industry.match(/beauty|salon|hair/i) ? 'Book Now' : 'Learn More'}"
+    - **Design:** Pill-shaped, High Contrast (Use Primary Color: ${primaryColor}).
+    - **Physics:** Add subtle drop shadow and gloss so it looks clickable.
 
-IMPORTANT: This is a COMPLETE ad. All text and buttons must be EMBEDDED in the generated image. No external overlays will be added.
-
-OUTPUT: A single 1080x1080px social media ad ready to post immediately.`;
+4. **OUTPUT:**
+    - A single, cohesive 1080x1080 JPEG where the Text, Button, and Photo interact perfectly (e.g., the text is behind the steam of the pasta).
+    - NO text cropping. NO generic people.
+    - This is the FINAL output ready for Instagram/Facebook.`;
 
         // ✨ PATH A: We have a source image - ENHANCE IT
         if (hasSourceImage) {
