@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { Star, CheckCircle, Instagram, Facebook, TrendingUp, Sparkles } from 'lucide-react';
-import type { BrandDNA } from '@/lib/type-guards';
+import type { BrandDNA } from '../../lib/type-guards';
 
 interface BrandIntelCardProps {
     brandDNA: BrandDNA;
