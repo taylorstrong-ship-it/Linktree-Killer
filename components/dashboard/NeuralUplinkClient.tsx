@@ -173,7 +173,7 @@ Keep responses concise (under 30 seconds)`,
                     ],
                 },
                 voice: {
-                    provider: 'elevenlabs',
+                    provider: '11labs',
                     voiceId: voiceId,
                 },
             });
