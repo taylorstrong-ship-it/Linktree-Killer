@@ -20,20 +20,6 @@ const DEMO_BRAND_DNA = {
 
     // Colors
     primary_color: '#F59E0B',
-
-    // Additional context
-    tone: 'Professional and innovative',
-    business_intel: {
-        services: [
-            'AI-powered social media automation',
-            'Brand DNA extraction',
-            'Custom AI agent development',
-            'Voice AI integration',
-        ],
-        hours: 'Available 24/7 via AI assistants',
-        specialization: 'High-performance AI software for businesses',
-        contact: 'Automated demos available on demand',
-    },
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
