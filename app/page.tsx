@@ -601,7 +601,15 @@ export default function Home() {
                                         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-1 bg-gradient-to-r from-transparent via-[#DC0000] to-transparent"></div>
 
                                         {/* Neural Uplink Component */}
-                                        {brandData?.dna && <NeuralUplink brandDNA={brandData.dna} />}
+                                        {(() => {
+                                            console.log('🔍 DEBUG: Voice Agent Check', {
+                                                hasBrandData: !!brandData,
+                                                hasDNA: !!brandData?.dna,
+                                                dnaCompanyName: brandData?.dna?.company_name,
+                                                scanComplete
+                                            });
+                                            return brandData?.dna && <NeuralUplink brandDNA={brandData.dna} />;
+                                        })()}
 
                                         {/* Footer Info */}
                                         <div className="mt-8 pt-8 border-t border-white/10">
