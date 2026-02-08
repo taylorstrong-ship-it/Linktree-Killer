@@ -8,7 +8,20 @@ import NeuralUplink from '@/components/dashboard/NeuralUplink';
 // ─────────────────────────────────────────────────────────────────────────────
 
 const DEMO_BRAND_DNA = {
-    business_name: 'Taylored AI Solutions',
+    // Core Identity
+    company_name: 'Taylored AI Solutions',
+    business_type: 'AI Software & Automation',
+    industry: 'Technology',
+    description: 'High-performance AI software for businesses',
+
+    // Visual Assets
+    logo_url: '',
+    brand_images: [],
+
+    // Colors
+    primary_color: '#F59E0B',
+
+    // Additional context
     tone: 'Professional and innovative',
     business_intel: {
         services: [
