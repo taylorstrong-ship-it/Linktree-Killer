@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import SocialPreviewWidget from './SocialPreviewWidget';
 import { SocialPostCarousel } from './SocialPostCarousel';
 import ReviewGuardHero from './ReviewGuardHero';
+import BrandIntelCard from './BrandIntelCard';
 
 interface BrandData {
     company_name?: string;
@@ -164,7 +165,7 @@ export default function BrandDashboard({ brandData }: BrandDashboardProps) {
                         Your Business DNA
                     </h2>
 
-                    {/* 3-Column Grid: Logo, Typography, Color Palette */}
+                    {/* 3-Column Grid: Logo, Typography, Brand Intelligence */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                         {/* Logo Card */}
                         <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-8 flex flex-col items-center justify-center min-h-[240px]">
@@ -195,6 +196,9 @@ export default function BrandDashboard({ brandData }: BrandDashboardProps) {
                                 {personality || 'Professional'}
                             </p>
                         </div>
+
+                        {/* Brand Intelligence Card */}
+                        <BrandIntelCard brandDNA={brandData as any} />
 
                         {/* Color Palette Card */}
                         <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-8 flex flex-col items-center justify-center min-h-[240px]">

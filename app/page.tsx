@@ -162,6 +162,12 @@ export default function Home() {
                     title: cta.title,
                     url: cta.url
                 })),
+                // ✨ BRAND INTEL CARD: Expose intelligence data at top level
+                business_intel: dna.business_intel,
+                social_links: dna.social_links,
+                visual_social_posts: dna.visual_social_posts,
+                primary_color: dna.primary_color,
+                secondary_color: dna.secondary_color,
                 // Keep full DNA for future use
                 dna: dna
             };
