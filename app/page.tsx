@@ -25,10 +25,15 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Sparkles, ChevronDown, Smartphone, Palette, Type, Fingerprint } from 'lucide-react';
 import { safeFontString, safeColorString } from '@/lib/type-guards';
 import MatrixOverlay from '@/components/hub/MatrixOverlay';
+import dynamic from 'next/dynamic';
 // import BioLinkBuilder from '@/components/hub/BioLinkBuilder'; // TEMP: Disabled for speed
 // import AdCampaignGenerator from '@/components/hub/AdCampaignGenerator'; // TEMP: Disabled for speed
 // import BrandDashboard from '@/components/dashboard/BrandDashboard'; // TEMP: Disabled for speed
 import AuthModal from '@/components/AuthModal';
+
+// 🎯 DYNAMIC IMPORTS: Load heavy components only after scan completes
+const PhonePreview = dynamic(() => import('@/components/PhonePreview'), { ssr: false });
+const NeuralUplink = dynamic(() => import('@/components/dashboard/NeuralUplink'), { ssr: false });
 
 // --- HYBRID DNA INTERFACE (STORY MODE) ---
 
@@ -489,12 +494,158 @@ export default function Home() {
                                 {error && <div className="text-red-400 font-sans bg-red-900/20 p-4 rounded-xl inline-block">{error}</div>}
                             </div>
                         </div>
-                    ) : null
+                    ) : (
+                        /* 🎯 RESULTS SECTION: Two Phones + Voice Agent */
+                        <div id="results-section" className="min-h-screen py-20 px-4">
+                            {/* Section Header */}
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="text-center mb-16"
+                            >
+                                <h2 className="text-4xl sm:text-5xl font-serif italic text-white mb-4">
+                                    Your <span className="text-[#FFAD7A]">Taylored</span> Preview
+                                </h2>
+                                <p className="text-white/60 text-lg">
+                                    See how your brand transforms into a stunning link page
+                                </p>
+                            </motion.div>
+
+                            {/* Two Phone Comparison */}
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.95 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                transition={{ delay: 0.2 }}
+                                className="max-w-7xl mx-auto mb-24"
+                            >
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
+                                    {/* Before Phone - Generic */}
+                                    <div className="flex flex-col items-center">
+                                        <div className="text-white/40 font-sans text-sm mb-4 uppercase tracking-wider">Before</div>
+                                        <div className="w-full max-w-[380px] aspect-[9/19] bg-black rounded-[3rem] p-3 shadow-2xl border-8 border-gray-800">
+                                            <PhonePreview
+                                                title="Generic Link Page"
+                                                description="Just another link page"
+                                                avatar_url=""
+                                                background_image=""
+                                                background_type="mesh"
+                                                video_background_url=""
+                                                font_style="modern"
+                                                theme_color="#3b82f6"
+                                                accent_color="#8b5cf6"
+                                                animation_speed="medium"
+                                                animation_type="drift"
+                                                texture_overlay="none"
+                                                enable_spotlight={false}
+                                                lead_gen_enabled={false}
+                                                links={[
+                                                    { title: 'Link 1', url: '#' },
+                                                    { title: 'Link 2', url: '#' },
+                                                    { title: 'Link 3', url: '#' }
+                                                ]}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* After Phone - Branded */}
+                                    <div className="flex flex-col items-center">
+                                        <div className="text-[#FFAD7A] font-sans text-sm mb-4 uppercase tracking-wider">After → Taylored</div>
+                                        <div className="w-full max-w-[380px] aspect-[9/19] bg-black rounded-[3rem] p-3 shadow-2xl border-8 border-gray-800 ring-4 ring-[#FFAD7A]/30">
+                                            <PhonePreview
+                                                title={brandData?.title || 'Your Brand'}
+                                                description={brandData?.bio || brandData?.description || 'Your brand description'}
+                                                avatar_url={brandData?.avatar_url || ''}
+                                                background_image=""
+                                                background_type="mesh"
+                                                video_background_url=""
+                                                font_style="modern"
+                                                theme_color={brandData?.theme_color || '#3b82f6'}
+                                                accent_color={brandData?.brand_colors?.[1] || '#8b5cf6'}
+                                                animation_speed="medium"
+                                                animation_type="lava"
+                                                texture_overlay="none"
+                                                enable_spotlight={false}
+                                                lead_gen_enabled={false}
+                                                links={brandData?.links || []}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            </motion.div>
+
+                            {/* Voice Agent Section - Ferrari Styled */}
+                            <motion.div
+                                initial={{ opacity: 0, y: 40 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.4 }}
+                                className="max-w-7xl mx-auto"
+                            >
+                                {/* Section Header */}
+                                <div className="text-center mb-12">
+                                    <h3 className="text-3xl sm:text-4xl font-serif italic text-white mb-3">
+                                        Talk to Your <span className="text-[#DC0000]">AI Agent</span>
+                                    </h3>
+                                    <p className="text-white/60 text-base sm:text-lg">
+                                        Powered by your brand DNA • Instant voice responses
+                                    </p>
+                                </div>
+
+                                {/* Voice Agent Container - Ferrari Red Accent */}
+                                <div className="relative">
+                                    {/* Glow effect */}
+                                    <div className="absolute inset-0 bg-[#DC0000] rounded-3xl blur-3xl opacity-20"></div>
+
+                                    {/* Main container */}
+                                    <div className="relative bg-gradient-to-br from-black via-gray-900 to-black border border-[#DC0000]/30 rounded-3xl p-8 sm:p-12 shadow-2xl">
+                                        {/* Red accent line */}
+                                        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-1 bg-gradient-to-r from-transparent via-[#DC0000] to-transparent"></div>
+
+                                        {/* Neural Uplink Component */}
+                                        {brandData?.dna && <NeuralUplink brandDNA={brandData.dna} />}
+
+                                        {/* Footer Info */}
+                                        <div className="mt-8 pt-8 border-t border-white/10">
+                                            <div className="flex items-center justify-center gap-3 text-white/40 text-sm">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-2 h-2 bg-[#DC0000] rounded-full animate-pulse"></div>
+                                                    <span>Live AI</span>
+                                                </div>
+                                                <span>•</span>
+                                                <span>Gemini 2.0 Flash</span>
+                                                <span>•</span>
+                                                <span>Ultra-Low Latency</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Launch Builder Button */}
+                                <div className="text-center mt-12">
+                                    <button
+                                        onClick={handleLaunch}
+                                        className="group relative overflow-hidden
+                                                   px-8 py-4 rounded-2xl
+                                                   bg-[#FFAD7A] hover:bg-[#FFAD7A]/90
+                                                   text-[#121212] font-sans font-bold text-lg
+                                                   transition-all duration-300
+                                                   shadow-[0_0_30px_rgba(255,173,122,0.5)] hover:shadow-[0_0_50px_rgba(255,173,122,0.8)]
+                                                   hover:scale-105 active:scale-95"
+                                    >
+                                        <span className="relative z-10 flex items-center gap-2">
+                                            Launch Full Builder
+                                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                                            </svg>
+                                        </span>
+                                    </button>
+                                </div>
+                            </motion.div>
+                        </div>
+                    )
                     }
                 </div>
 
+            </main>
         </div>
-            </main >
-        </div >
     );
 }
