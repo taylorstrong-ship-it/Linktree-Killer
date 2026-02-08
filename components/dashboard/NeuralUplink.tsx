@@ -1,7 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { BrandDNA } from '@/types/brand';
+import { BrandDNA } from '@/lib/type-guards';
 
 // 🛡️ NUCLEAR FIX: Dynamic import with SSR disabled
 // This prevents Vapi from EVER running on the server
