@@ -146,7 +146,10 @@ export default function NeuralUplink({ brandDNA }: NeuralUplinkProps) {
                 model: {
                     provider: 'google',
                     model: 'gemini-2.0-flash-exp',
-                    systemPrompt: `You are the AI voice assistant for ${businessName}, a business with the archetype "${archetype}".
+                    messages: [
+                        {
+                            role: 'system',
+                            content: `You are the AI voice assistant for ${businessName}, a business with the archetype "${archetype}".
 
 Your personality: ${tone}
 
@@ -166,6 +169,8 @@ Your role:
 - If you don't know something, say so honestly - never make up information
 
 Keep responses concise (under 30 seconds)`,
+                        },
+                    ],
                 },
                 voice: {
                     provider: 'elevenlabs',
