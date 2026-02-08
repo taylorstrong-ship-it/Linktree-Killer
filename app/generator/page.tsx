@@ -18,7 +18,15 @@ interface BrandDNA {
     accent_color?: string
     brand_personality?: string[]
     business_type?: string
-    brand_images?: string[]
+    brand_images?: string[]  // Real product photos from scan
+    industry?: string        // For scene routing in Edge Function
+    bio?: string             // Brand description/tagline
+    suggested_ctas?: any[]   // Smart CTAs from Brand DNA
+
+    // Preview from dashboard widget (if user came from "Open Studio")
+    preview_image?: string
+    preview_prompt?: string
+    preview_vibe?: string
 }
 
 interface Variation {
@@ -131,6 +139,10 @@ function GeneratorPageContent() {
                         caption_text: prompt,
                         brand_dna: {
                             company_name: brandDNA.company_name || brandDNA.business_name,
+                            logo_url: brandDNA.logo_url,              // For logo overlay
+                            brand_images: brandDNA.brand_images || [], // For using real product photos
+                            industry: brandDNA.industry,              // For scene routing
+                            bio: brandDNA.bio,                        // For brand story
                             colors: {
                                 primary: brandDNA.primary_color || '#FF6B35',
                                 secondary: brandDNA.secondary_color || '#1a1a1a',
@@ -140,7 +152,7 @@ function GeneratorPageContent() {
                                 heading: 'Bold Sans-serif',
                                 body: 'Clean Sans-serif'
                             },
-                            business_type: brandDNA.business_type || 'Restaurant'
+                            business_type: brandDNA.business_type || brandDNA.industry || 'Restaurant'
                         },
                         format: 'instagram_post'
                     })

@@ -1,0 +1,131 @@
+{
+  "success": true,
+  "brandDNA": {
+    "company_name": "hearinglife.com",
+    "business_type": "Restaurant",
+    "industry": "Restaurant",
+    "description": "HearingLife provides hearing aid solutions and related services to improve auditory health.",
+    "logo_url": "https://assets-ue.rt.demant.com/-/media/project/retail/hearinglife/us/images/logos/hearinglife-logo.svg?iar=0&rev=0fd76248a51e468ab54e79971ab5bca6&hash=1CB423A5D72EDC4752E5953A9B1242CA",
+    "favicon_url": "https://www.hearinglife.com/-/media/project/retail/shared/images/icons/config/favicon-16x16-(1).png?rev=-1",
+    "hero_image": "https://assets-ue.rt.demant.com/-/media/project/retail/hearinglife/us/images/logos/2023-logo-hearinglife-speechbubble_icon.jpg?rev=77423994b3564b66b2e9eeca4d05d8a2",
+    "og_image": "https://assets-ue.rt.demant.com/-/media/project/retail/hearinglife/us/images/logos/2023-logo-hearinglife-speechbubble_icon.jpg?rev=77423994b3564b66b2e9eeca4d05d8a2",
+    "brand_images": [
+      "https://assets-ue.rt.demant.com/-/media/project/retail/shared/images/icons/components/web20-icon_calendar.svg?iar=0&rev=89c214ece8f044d9b0b6ff57dc9e32f9&hash=0E7A898D431AB6443A8047BB6AC8DE5D",
+      "https://assets-ue.rt.demant.com/-/media/project/retail/shared/images/icons/components/web20-icon_location.svg?iar=0&rev=c2a294e2009d4ae4b8e0ec20bcf3fb0e&hash=8D072129082603623876F696B1992E19",
+      "https://assets-ue.rt.demant.com/-/media/project/retail/shared/images/icons/components/web20-icon_message.svg?iar=0&rev=44e3894d7b384811ba60f2171697d78a&hash=9D01331FEDE98AC8E34294465FA0EB66",
+      "https://assets-ue.rt.demant.com/-/media/project/retail/shared/images/icons/components/web20-icon_email.svg?iar=0&rev=1a271118e8b749e98358fa45ed750e0b&hash=136653BA76501B4A4AB232F5B551E3B1",
+      "https://assets-ue.rt.demant.com/-/media/project/retail/shared/images/icons/components/web20-icon_phone.svg?rev=a851b3ca0daf4465af91d7fca9f3cc6f",
+      "https://assets-ue.rt.demant.com/-/media/project/retail/shared/images/icons/components/web20-icon_location.svg?rev=c2a294e2009d4ae4b8e0ec20bcf3fb0e",
+      "https://assets-ue.rt.demant.com/-/media/project/retail/shared/images/icons/components/web20-icon_ear.svg?rev=5eee0257c732420c905045930264bdc6",
+      "https://assets-ue.rt.demant.com/-/media/project/retail/hearinglife/us/images/content-images---744-x-496/icon-hearinglife-ondemand.svg?rev=164e3a9f18bd47e09d5f24ef01f02f18",
+      "https://assets-ue.rt.demant.com/-/media/project/retail/shared/images/icons/components/web20-icon_person-headphones.svg?rev=86ed658309924dd78c7a0df3bd4f10c6",
+      "https://assets-ue.rt.demant.com/-/media/project/retail/shared/images/icons/components/web20-icon_person-headphones.svg?rev=86ed658309924dd78c7a0df3bd4f10c6",
+      "https://assets-ue.rt.demant.com/-/media/project/retail/shared/images/icons/components/web20-icon_hearing-aid-bte.svg?rev=554eb4c807dd4ae5986f3b4eeffe8d4a",
+      "https://assets-ue.rt.demant.com/-/media/project/retail/shared/images/icons/components/web20-icon_location-map.svg?rev=7ee25ab00c714a61b392bac7176b94d7",
+      "https://assets-ue.rt.demant.com/-/media/project/retail/hearinglife/us/homepage/2026-02-home-mobile-zeal-2.jpg?rev=41b12b7ffb4b44b0b9ff913df909bf83",
+      "https://assets-ue.rt.demant.com/-/media/project/retail/hearinglife/us/images/content-images---744-x-496/2026-oticon-zeal-new-white/2026-oticon-zeal-new-white-2.png?rev=abd75e4d364b434c80c86e45a14ef58d&hash=15EBF3B476432AAB8BFEE805A07DC2BB",
+      "https://assets-ue.rt.demant.com/-/media/project/retail/hearinglife/us/homepage/2026-02-home-desktop-zeal-2.jpg?rev=7bf64d527c4a4325b84f12cbded4e808"
+    ],
+    "primary_color": "#D93B30",
+    "secondary_color": "#8B5CF6",
+    "accent_color": "#005DA9",
+    "background_color": "#FFFFFF",
+    "text_primary_color": "#005DA9",
+    "text_secondary_color": "#6B7280",
+    "color_scheme": "light",
+    "fonts": [
+      {
+        "family": "Proxima Nova",
+        "role": "body"
+      }
+    ],
+    "typography": {
+      "fontFamilies": {
+        "primary": "Proxima Nova",
+        "heading": "Proxima Nova"
+      },
+      "fontStacks": {
+        "heading": [
+          "Proxima Nova",
+          "proxima-nova",
+          "fallback-font",
+          "Helvetica",
+          "sans-serif"
+        ],
+        "body": [
+          "Proxima Nova",
+          "proxima-nova",
+          "fallback-font",
+          "Helvetica",
+          "sans-serif"
+        ],
+        "paragraph": [
+          "Proxima Nova",
+          "proxima-nova",
+          "fallback-font",
+          "Helvetica",
+          "sans-serif"
+        ]
+      },
+      "fontSizes": {
+        "h1": "60px",
+        "h2": "40px",
+        "body": "18px"
+      }
+    },
+    "social_links": {
+      "twitter": "https://twitter.com/HearingLife",
+      "facebook": "https://www.facebook.com/HearingLifeUSA/",
+      "linkedin": "https://www.linkedin.com/company/hearing-life/",
+      "instagram": "https://www.instagram.com/hearinglife_usa/",
+      "youtube": "https://www.youtube.com/HearingLifeUSA"
+    },
+    "suggested_ctas": [
+      {
+        "title": "Book Appointment",
+        "url": "https://www.hearinglife.com/book-appointment",
+        "type": "primary"
+      }
+    ],
+    "brand_voice": "Friendly and supportive, focusing on accessibility and care.",
+    "tone_score": 6,
+    "personality_traits": [
+      "Supportive",
+      "Professional",
+      "Approachable"
+    ],
+    "brand_archetype": "The Caregiver",
+    "writing_style": {
+      "sentence_length": "short",
+      "vocabulary": "simple",
+      "uses_emojis": false,
+      "uses_humor": false
+    },
+    "social_media_examples": [
+      {
+        "type": "product_highlight",
+        "caption": "Check out what makes Unknown special!",
+        "visual_description": "Professional photo showcasing Restaurant services",
+        "cta": "Learn More",
+        "hashtags": [
+          "#restaurant"
+        ]
+      }
+    ],
+    "visual_social_posts": [
+      {
+        "type": "product_highlight",
+        "caption": "Check out what makes Unknown special!",
+        "visual_description": "Professional photo showcasing Restaurant services",
+        "cta": "Learn More",
+        "hashtags": [
+          "#restaurant"
+        ],
+        "original_image_url": "https://assets-ue.rt.demant.com/-/media/project/retail/shared/images/icons/components/web20-icon_calendar.svg?iar=0&rev=89c214ece8f044d9b0b6ff57dc9e32f9&hash=0E7A898D431AB6443A8047BB6AC8DE5D",
+        "enhanced_image_url": "https://assets-ue.rt.demant.com/-/media/project/retail/shared/images/icons/components/web20-icon_calendar.svg?iar=0&rev=89c214ece8f044d9b0b6ff57dc9e32f9&hash=0E7A898D431AB6443A8047BB6AC8DE5D",
+        "enhancement_success": false
+      }
+    ],
+    "source": "firecrawl_v2_branding"
+  }
+}

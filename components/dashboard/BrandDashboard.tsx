@@ -391,8 +391,10 @@ export default function BrandDashboard({ brandData }: BrandDashboardProps) {
                                     primaryColor: primaryColor,
                                     industry: (brandData as any).industry || `${personality} Services`,
                                     bio: brandData.description || '',
-                                    suggested_ctas: brandData.suggested_ctas || brandData.links || []
+                                    suggested_ctas: brandData.suggested_ctas || brandData.links || [],
+                                    visual_social_posts: (brandData as any).visual_social_posts || [] // 🎯 Pre-generated posts from extraction
                                 }}
+                                initialPosts={(brandData as any).visual_social_posts} // 🎯 CRITICAL: Pass pre-generated posts
                                 handleEditPage={() => {
                                     console.log('🎨 Navigating to generator from preview widget...');
                                     router.push('/generator?remix=true');
@@ -400,21 +402,6 @@ export default function BrandDashboard({ brandData }: BrandDashboardProps) {
                             />
                         </div>
 
-                        {/* 🀄 Visual Social Posts Carousel (v5.0) */}
-                        {brandData.visual_social_posts && brandData.visual_social_posts.length > 0 && (
-                            <motion.div
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 0.5, duration: 0.8 }}
-                                className="mt-12"
-                            >
-                                <div className="text-center mb-6">
-                                    <h3 className="text-lg font-bold text-white/90 mb-1">Visual Social Posts</h3>
-                                    <p className="text-white/50 text-xs">Instagram-ready with AI-enhanced images</p>
-                                </div>
-                                <SocialPostCarousel posts={brandData.visual_social_posts} />
-                            </motion.div>
-                        )}
 
                         {/* Footer */}
                         <div className="text-center pt-12">

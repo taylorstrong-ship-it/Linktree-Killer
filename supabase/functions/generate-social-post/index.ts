@@ -70,7 +70,7 @@ serve(async (req) => {
 
         // Initialize Gemini
         const genAI = new GoogleGenerativeAI(googleApiKey);
-        const model = genAI.getGenerativeModel({ model: 'gemini-3-pro-image-preview' });
+        const model = genAI.getGenerativeModel({ model: 'gemini-3-pro-image-preview' }); // Latest 2026 image generation model with reasoning
 
         // Initialize Supabase client
         const supabase = createClient(supabaseUrl, supabaseServiceKey);

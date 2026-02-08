@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Upload, Check, Image as ImageIcon } from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
 
@@ -13,6 +13,22 @@ interface ImageSelectorProps {
 export default function ImageSelector({ brandImages = [], onImageSelected, selectedImage }: ImageSelectorProps) {
     const [uploading, setUploading] = useState(false)
     const [uploadedUrl, setUploadedUrl] = useState<string>('')
+
+    // 🎯 Auto-select preview image from dashboard if user came from "Open Studio"
+    useEffect(() => {
+        try {
+            const localData = localStorage.getItem('taylored_brand_data');
+            if (localData) {
+                const parsed = JSON.parse(localData);
+                if (parsed.preview_image && !selectedImage) {
+                    console.log('✅ [Preview Handoff] Auto-selecting dashboard preview image');
+                    onImageSelected(parsed.preview_image, 'brand');
+                }
+            }
+        } catch (err) {
+            console.error('[Preview Handoff] Failed to load preview:', err);
+        }
+    }, []);
 
     async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
         const file = e.target.files?.[0]

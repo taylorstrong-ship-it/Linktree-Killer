@@ -9,7 +9,7 @@ import { NextResponse } from "next/server";
 export const runtime = 'edge';
 export const maxDuration = 60; // Vercel Pro: up to 60s for Edge Functions
 
-const MODEL_NAME = "gemini-2.0-flash-exp";
+const MODEL_NAME = "gemini-3-flash-preview"; // Latest 2026 model (PhD-level reasoning)
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SECURE API HANDLER

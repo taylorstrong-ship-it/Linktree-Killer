@@ -23,12 +23,12 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Sparkles, ChevronDown, Smartphone, Palette, Type, Fingerprint } from 'lucide-react';
-import MatrixOverlay from '@/components/hub/MatrixOverlay';
-import BioLinkBuilder from '@/components/hub/BioLinkBuilder';
-import AdCampaignGenerator from '@/components/hub/AdCampaignGenerator';
-import BrandDashboard from '@/components/dashboard/BrandDashboard';
-import AuthModal from '@/components/AuthModal';
 import { safeFontString, safeColorString } from '@/lib/type-guards';
+import MatrixOverlay from '@/components/hub/MatrixOverlay';
+// import BioLinkBuilder from '@/components/hub/BioLinkBuilder'; // TEMP: Disabled for speed
+// import AdCampaignGenerator from '@/components/hub/AdCampaignGenerator'; // TEMP: Disabled for speed
+// import BrandDashboard from '@/components/dashboard/BrandDashboard'; // TEMP: Disabled for speed
+import AuthModal from '@/components/AuthModal';
 
 // --- HYBRID DNA INTERFACE (STORY MODE) ---
 
@@ -489,12 +489,11 @@ export default function Home() {
                                 {error && <div className="text-red-400 font-sans bg-red-900/20 p-4 rounded-xl inline-block">{error}</div>}
                             </div>
                         </div>
-                    ) : (
-                        /* Brand Dashboard takes over the full layout after scan */
-                        <BrandDashboard brandData={brandData} />
-                    )
+                    ) : null
                     }
                 </div>
+
+        </div>
             </main >
         </div >
     );

@@ -58,7 +58,7 @@ export async function POST(req: Request) {
         const assistant = await vapi.assistants.create({
             model: {
                 provider: "openai",
-                model: "gpt-4-turbo",
+                model: "gpt-4o", // Latest flagship model (upgraded from gpt-4-turbo)
                 messages: [
                     {
                         role: "system",

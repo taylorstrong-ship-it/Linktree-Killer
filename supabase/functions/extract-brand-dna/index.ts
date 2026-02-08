@@ -94,8 +94,25 @@ interface BrandDNA {
         enhancement_success: boolean;
     }> | null;
 
-    // Metadata
-    source: string;
+    // 🧠 DEEP SOUL EXTRACTION (v6.0) - "20-Year Employee" Intelligence
+    business_intel?: {
+        archetype: string;  // "The Friendly Neighbor", "The Rebel", "The Jester"
+        vibe_keywords: string[];  // ["Cozy", "Loud", "Fast", "Upscale"]
+        atmosphere: string;  // "Quiet Date Night" | "Loud Sports Bar" | "Family Friendly"
+        signature_items: string[];  // Top 3 signature menu items/services
+        unique_features: string[];  // Specific claims ("Grass-fed beef", "Imported flour")
+        policies: {
+            reservations?: string;  // "Required" | "Recommended" | "Walk-ins welcome"
+            parking?: string;  // "Valet" | "Street" | "Lot" | "None"
+            dietary?: string;  // "GF menu" | "Vegan options" | "Keto-friendly"
+            dress_code?: string;  // "Casual" | "Business Casual" | "Formal"
+            hours_note?: string;  // "Late night" | "Breakfast only" | "24/7"
+        };
+        price_range?: string;  // "$" | "$$" | "$$$" | "$$$$"
+        insider_tips?: string[];  // ["Ask for the truffle fries", "Sit at the bar for faster service"]
+        source: string; // Metadata
+    };
+
 }
 
 // =================================================================
@@ -110,7 +127,7 @@ async function analyzeBrandVoice(
     companyName: string,
     markdown: string,
     socialLinks: Record<string, string>,
-    openaiKey: string
+    anthropicKey: string
 ): Promise<{
     brand_voice: string;
     tone_score: number;
@@ -118,60 +135,122 @@ async function analyzeBrandVoice(
     brand_archetype: string;
     writing_style: any;
 }> {
-    const prompt = `You are a brand strategist analyzing website content to extract brand voice and personality.
+    const prompt = `You are an elite brand strategist conducting a DEEP SOUL extraction.
+
+Your mission: Analyze this website as if you need to train an AI agent to sound like a 20-year employee who knows EVERYTHING about this business.
 
 WEBSITE: ${url}
 COMPANY: ${companyName}
 
 CONTENT SAMPLES:
-${markdown.slice(0, 5000)}
+${markdown.slice(0, 8000)}
 
 SOCIAL MEDIA LINKS:
 ${Object.keys(socialLinks).length > 0 ? JSON.stringify(socialLinks, null, 2) : 'None found'}
 
-ANALYZE and extract:
-1. **Brand Voice:** How does this brand communicate? (e.g., "Friendly and approachable", "Professional and authoritative")
-2. **Tone:** Formality scale 1-10 (1=Corporate/Formal, 10=Super Casual/Playful)
-3. **Key Adjectives:** 3-5 words describing personality
-4. **Writing Style:** Sentence structure, vocabulary, emoji usage
-5. **Brand Archetype:** Hero, Caregiver, Explorer, Creator, Ruler, etc.
+=== DEEP SOUL EXTRACTION PROTOCOL ===
 
-CRITICAL: Be specific and evidence-based. Quote actual phrases from the content.
+1. 🎭 **ARCHETYPE** (The Soul):
+   - Identify the brand archetype: The Caregiver, The Rebel, The Jester, The Hero, The Explorer, The Creator, The Ruler, The Sage, The Innocent, The Everyman, The Lover, The Magician
+   - Evidence: Quote specific phrases that reveal this archetype
+   - Example: "The Caregiver" if language emphasizes nurturing, family, warmth
 
-Respond ONLY with valid JSON:
+2. 🎶 **ATMOSPHERE** (The Vibe):
+   - Is this a "Quiet Date Night" spot or a "Loud Sports Bar"?
+   - Options: "Intimate & Romantic", "Loud & Energetic", "Cozy & Casual", "Upscale & Refined", "Fast & Convenient", "Family-Friendly Chaos"
+   - Be SPECIFIC. Don't say "welcoming" - say "The kind of place where regulars hug the bartender"
+
+3. 🔥 **SIGNATURE ITEMS** (The Killers):
+   - Extract the top 3 menu items / services that are HIGHLIGHTED or REPEATED
+   - Look for: "Famous for", "Signature", "Award-winning", "Customer favorite"
+   - Include specific details: "Truffle Mushroom Pizza (hand-stretched dough)" not just "Pizza"
+
+4. ✨ **UNIQUE FEATURES** (The Secrets):
+   - Specific sourcing claims: "Grass-fed beef", "Imported Italian flour", "Organic ingredients"
+   - Special techniques: "Wood-fired", "Handmade daily", "Family recipe since 1950"
+   - Certifications: "Certified organic", "Sustainable seafood", "Fair trade"
+
+5. 📋 **POLICIES** (The Intel):
+   - 📞 Reservations: "Required" | "Recommended" | "Walk-ins welcome" | "Call ahead"
+   - 🅿️ Parking: "Valet" | "Street only" | "Parking lot" | "Garage nearby" | "None mentioned"
+   - 🥗 Dietary: "Gluten-free menu" | "Vegan options" | "Keto-friendly" | "Nut-free" | "None mentioned"
+   - 👔 Dress Code: "Casual" | "Business Casual" | "Smart Casual" | "Formal" | "None mentioned"
+   - ⏰ Hours Note: "Late night (past midnight)" | "Breakfast only" | "24/7" | "Weekend brunch" | "Standard"
+
+6. 💰 **PRICE RANGE** (The Reality Check):
+   - Based on menu prices, descriptive language, and neighborhood:
+   - "$" = Budget-friendly (<$15/person)
+   - "$$" = Moderate ($15-30/person)
+   - "$$$" = Upscale ($30-60/person)
+   - "$$$$" = Fine Dining (>$60/person)
+
+7. 🕵️ **INSIDER TIPS** (The Secrets):
+   - Extract 2-3 insider tips a 20-year employee would share:
+   - Examples: "Ask for the corner booth", "Truffle fries aren't on the menu but they'll make them", "Tuesday nights are half-price wine"
+   - Look for: mentions of "secret menu", "ask your server about", "hidden gem", special deals
+
+8. 🎯 **VIBE KEYWORDS** (The Descriptors):
+   - 4-6 adjectives that capture the FEELING:
+   - Be SPECIFIC: ["Dimly-lit", "Bustling", "Romantic", "Rustic"] not ["Nice", "Good", "Great"]
+
+9. 🗣️ **BRAND VOICE** (The Tone):
+   - How does this brand communicate? One descriptive sentence.
+   - Examples: "Warm and family-oriented with Italian grandma energy" | "Edgy and irreverent like a punk rock dive bar" | "Polished and professional with subtle luxury cues"
+
+10. 📈 **TONE SCORE** (The Scale):
+   - Rate 1-10: (1 = Corporate/Formal, 10 = Super Casual/Playful)
+   - Evidence: Quote phrases that justify this score
+
+11. ✍️ **WRITING STYLE**:
+   - Sentence length: "short" (mostly <10 words) | "medium" (10-20 words) | "long" (>20 words)
+   - Vocabulary: "simple" (everyday words) | "moderate" (some industry terms) | "sophisticated" (elevated language)
+   - Uses emojis: true/false
+   - Uses humor: true/false
+
+12. 🎨 **PERSONALITY TRAITS** (The Character):
+   - 3-5 adjectives: ["Welcoming", "Energetic", "Traditional", "Innovative", "Community-focused"]
+
+CRITICAL RULES:
+- Be EVIDENCE-BASED: Quote actual text from the website
+- Be SPECIFIC: "Wood-fired Margherita pizza" not "pizza"
+- Think like a DATA SCIENTIST: Extract facts, not assumptions
+- Think like an INSIDER: What would a 20-year employee know that a first-time visitor doesn't?
+
+Respond with ONLY valid JSON (no markdown, no code blocks):
 {
-  "brand_voice": "One sentence description of communication style",
+  "brand_voice": "One vivid sentence describing communication style",
   "tone_score": 7,
-  "personality_traits": ["Friendly", "Energetic", "Professional"],
+  "personality_traits": ["Welcoming", "Family-oriented", "Traditional"],
+  "brand_archetype": "The Caregiver",
   "writing_style": {
-    "sentence_length": "short",
-    "vocabulary": "moderate",
-    "uses_emojis": true,
-    "uses_humor": false
-  },
-  "brand_archetype": "The Caregiver"
+    "sentence_length": "medium",
+    "vocabulary": "simple",
+    "uses_emojis": false,
+    "uses_humor": true
+  }
 }`;
 
     try {
-        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        const response = await fetch('https://api.anthropic.com/v1/messages', {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${openaiKey}`,
+                'x-api-key': anthropicKey,
+                'anthropic-version': '2023-06-01',
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                model: 'gpt-4o',  // Upgraded from gpt-4o-mini for better analysis
-                messages: [
-                    { role: 'system', content: 'You are an expert brand strategist. Respond only with valid JSON.' },
-                    { role: 'user', content: prompt }
-                ],
-                response_format: { type: 'json_object' },
+                model: 'claude-opus-4.6', // NEWEST: Feb 5, 2026 - Most intelligent for brand psychology
+                max_tokens: 2000,
                 temperature: 0.3,
+                messages: [
+                    { role: 'user', content: prompt + '\n\nRespond with ONLY valid JSON, no other text.' }
+                ],
             }),
         });
 
         const data = await response.json();
-        const analysis = JSON.parse(data.choices[0]?.message?.content || '{}');
+        const content = data.content?.[0]?.text || '{}';
+        const analysis = JSON.parse(content);
 
         console.log('🎯 Brand Voice Analysis:', analysis);
         return analysis;
@@ -194,7 +273,8 @@ Respond ONLY with valid JSON:
 }
 
 /**
- * Generate example social media posts using Claude 3.5 Sonnet
+ * Generate example social media posts using Claude Sonnet 5
+ * UPGRADED: Using Claude Sonnet 5 (Feb 3, 2026) - Best for authentic brand writing
  */
 async function generateSocialMediaExamples(
     companyName: string,
@@ -209,7 +289,7 @@ async function generateSocialMediaExamples(
 BRAND: ${companyName}
 INDUSTRY: ${businessType}
 BRAND VOICE: ${brandVoice}
-PERSONALITY: ${personalityTraits.join(', ')}
+PERSONALITY: ${personalityTraits?.join(', ') || 'Professional'}
 TONE: ${toneScore}/10 (1=formal, 10=casual)
 
 TASK: Create 3 example social media posts this brand might actually post.
@@ -248,7 +328,7 @@ Respond ONLY with valid JSON:
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                model: 'claude-3-5-sonnet-20241022',
+                model: 'claude-sonnet-5-20260203', // NEWEST: Feb 3, 2026 - Best for brand writing
                 max_tokens: 2000,
                 messages: [
                     { role: 'user', content: prompt }
@@ -273,6 +353,44 @@ Respond ONLY with valid JSON:
             cta: 'Learn More',
             hashtags: [`#${businessType.toLowerCase().replace(' ', '')}`]
         }];
+    }
+}
+
+/**
+ * 🧠 DEEP SOUL EXTRACTION - Brand Intelligence using Claude Opus 4.6
+ * UPGRADED: Using Claude Opus 4.6 (Feb 5, 2026) - Most intelligent model for brand psychology
+ * Extracts insider business knowledge for "20-year employee" AI intelligence
+ */
+async function extractDeepSoulIntel(
+    url: string, companyName: string, businessType: string, markdown: string, openaiKey: string
+): Promise<{ archetype: string; vibe_keywords: string[]; atmosphere: string; signature_items: string[]; unique_features: string[]; policies: Record<string, string>; price_range: string; insider_tips: string[]; } | null> {
+    const prompt = `Extract DEEP operational knowledge from this ${businessType}:
+
+URL: ${url}
+BUSINESS: ${companyName}
+CONTENT: ${markdown.slice(0, 10000)}
+
+Extract: 1) ATMOSPHERE ("Intimate & Romantic" | "Loud & Energetic" | "Cozy & Casual" | "Upscale & Refined" | "Fast & Convenient" | "Family-Friendly"), 2) VIBE (4-6 specific adjectives), 3) SIGNATURE ITEMS (top 3), 4) UNIQUE FEATURES (2-4 specifics), 5) POLICIES (reservations/parking/dietary/dress_code/hours), 6) PRICE ("$"/"$$"/"$$$"/"$$$$"), 7) INSIDER TIPS (1-3), 8) ARCHETYPE (Caregiver/Rebel/Jester/Hero/Everyman/Lover/Explorer)
+
+JSON only:
+{"archetype":"The Caregiver","atmosphere":"Cozy & Casual","vibe_keywords":["Rustic","Welcoming"],"signature_items":["Truffle Pizza"],"unique_features":["Wood-fired oven"],"policies":{"reservations":"Recommended","parking":"Street"},"price_range":"$$","insider_tips":["Ask for truffle fries"]}`;
+
+    try {
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${openaiKey}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                model: 'gpt-5.2', messages: [{ role: 'system', content: 'Business intelligence analyst. JSON only.' }, { role: 'user', content: prompt }],
+                response_format: { type: 'json_object' }, temperature: 0.3,
+            }),
+        });
+        const data = await response.json();
+        const intel = JSON.parse(data.choices[0]?.message?.content || '{}');
+        console.log('🧠 Deep Soul Intel:', intel);
+        return intel;
+    } catch (error) {
+        console.error('⚠️ Deep Soul extraction failed:', error);
+        return null;
     }
 }
 
@@ -517,9 +635,10 @@ serve(async (req) => {
         const firecrawl = new FirecrawlApp({ apiKey: firecrawlKey });
 
         const scrapeResult = await firecrawl.scrapeUrl(url, {
-            formats: ['branding', 'links', 'markdown', 'html'], // ✨ Added html for image extraction fallback
+            formats: ['branding', 'links', 'markdown', 'html'], // ✨ HTML for advanced image extraction
             onlyMainContent: false,
-            waitFor: 3000, // Increased from 2000ms to allow JS to fully load images
+            waitFor: 5000, // ⬆️ Increased to 5s for lazy-loaded images (Instagram, etc.)
+            removeBase64Images: false, // Keep inline images
         }) as any;
 
         console.log('📊 Firecrawl Response:', JSON.stringify(scrapeResult, null, 2));
@@ -602,7 +721,7 @@ Respond with ONLY valid JSON:
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                model: 'gpt-4o-mini',
+                model: 'gpt-5.2', // FLAGSHIP: Latest reasoning model for business classification (Feb 2026)
                 messages: [
                     { role: 'system', content: 'You are a business analyst. Respond only with valid JSON.' },
                     { role: 'user', content: businessTypePrompt }
@@ -659,13 +778,13 @@ Respond with ONLY valid JSON:
 
         const anthropicKey = Deno.env.get('ANTHROPIC_API_KEY');
 
-        // Analyze brand voice with GPT-4o
+        // Analyze brand voice with Claude Opus 4.6
         const brandVoiceAnalysis = await analyzeBrandVoice(
             url,
             branding.companyName || 'Unknown',
             markdown,
             socialLinks,
-            openaiKey
+            anthropicKey
         );
 
         // Generate social media examples with Claude 3.5 if Anthropic key is available
@@ -681,6 +800,22 @@ Respond with ONLY valid JSON:
             );
         } else {
             console.log('⚠️ ANTHROPIC_API_KEY not found - skipping social media example generation');
+        }
+
+        // 🧠 STEP 3.7: DEEP SOUL INTELLIGENCE EXTRACTION (v6.0)
+        console.log('🧠 Starting Deep Soul Intelligence extraction...');
+        const deepSoulIntel = await extractDeepSoulIntel(
+            url,
+            branding.companyName || 'Unknown',
+            aiAnalysis.business_type || 'general',
+            markdown,
+            openaiKey
+        );
+
+        if (deepSoulIntel) {
+            console.log('✅ Deep Soul Intelligence extracted:', deepSoulIntel);
+        } else {
+            console.log('⚠️ Deep Soul extraction failed - using defaults');
         }
 
         // STEP 3.6: 🀄 VISUAL SOCIAL MEDIA GENERATION (v5.0)
@@ -958,122 +1093,179 @@ Respond with ONLY valid JSON:
         const allMarkdownImages = extractImagesFromMarkdown(markdown);
         console.log(`  📸 Found ${allMarkdownImages.length} images in markdown content`);
 
-        // 🚨 HTML FALLBACK: If markdown extraction found ZERO images, parse HTML directly
-        // This handles Squarespace and other JS-heavy sites that load images dynamically
-        if (allMarkdownImages.length === 0 && scrapeResult?.html) {
-            console.log('⚠️ Markdown extraction failed (0 images), activating HTML fallback scraper...');
+        // 🚨 ENHANCED HTML SCRAPER: Always run, not just fallback (finds more images)
+        // This captures srcset, data-src, background-image, and modern patterns
+        if (scrapeResult?.html) {
+            console.log('🔍 ENHANCED HTML SCRAPER: Scanning for images with advanced patterns...');
             const html = scrapeResult.html;
-
-            // Extract <img> tags with their src attributes
-            const imgRegex = /<img[^>]+src=["']([^"']+)["'][^>]*>/gi;
-            let match;
             let htmlImageCount = 0;
 
-            while ((match = imgRegex.exec(html)) !== null && htmlImageCount < 15) {
+            // Pattern 1: Standard <img src="...">
+            const imgSrcRegex = /<img[^>]+src=["']([^"']+)["'][^>]*>/gi;
+            let match;
+            while ((match = imgSrcRegex.exec(html)) !== null && htmlImageCount < 20) {
                 const imgSrc = match[1];
-
-                // Convert relative URLs to absolute
-                let absoluteUrl = imgSrc;
-                if (!imgSrc.startsWith('http')) {
-                    try {
-                        absoluteUrl = new URL(imgSrc, url).toString();
-                    } catch (e) {
-                        console.log(`    ⚠️ Skipped invalid URL: ${imgSrc}`);
-                        continue; // Skip invalid URLs
+                if (imgSrc && !imgSrc.startsWith('data:')) {
+                    const absoluteUrl = imgSrc.startsWith('http') ? imgSrc :
+                        (() => { try { return new URL(imgSrc, url).toString(); } catch { return null; } })();
+                    if (absoluteUrl) {
+                        allMarkdownImages.push({ url: absoluteUrl, score: 100 });
+                        htmlImageCount++;
+                        console.log(`    ✅ [IMG SRC] #${htmlImageCount}: ${absoluteUrl.substring(0, 70)}...`);
                     }
                 }
-
-                // Filter out common non-product images
-                const urlLower = absoluteUrl.toLowerCase();
-
-                // Skip logos, favicons, and icons
-                if (urlLower.includes('logo') || urlLower.includes('favicon') ||
-                    urlLower.includes('icon-') || urlLower.includes('/icons/') ||
-                    urlLower.includes('badge') || absoluteUrl === finalLogo) {
-                    console.log(`    ⚠️ Skipped: Looks like logo/icon`);
-                    continue;
-                }
-
-                // Skip tracking pixels and tiny images
-                if (urlLower.includes('1x1') || urlLower.includes('tracking') ||
-                    urlLower.includes('pixel') || urlLower.includes('spacer.gif')) {
-                    console.log(`    ⚠️ Skipped: Tracking pixel`);
-                    continue;
-                }
-
-                allMarkdownImages.push({ url: absoluteUrl, score: 50 });
-                htmlImageCount++;
-                console.log(`    ✅ HTML IMG #${htmlImageCount}: ${absoluteUrl.substring(0, 80)}...`);
             }
 
-            console.log(`  📊 HTML fallback scraper found ${htmlImageCount} additional images`);
+            // Pattern 2: Lazy-loaded images <img data-src="..." data-lazy-src="...">
+            const lazySrcRegex = /<img[^>]+data-(?:lazy-)?src=["']([^"']+)["'][^>]*>/gi;
+            while ((match = lazySrcRegex.exec(html)) !== null && htmlImageCount < 20) {
+                const imgSrc = match[1];
+                if (imgSrc && !imgSrc.startsWith('data:')) {
+                    const absoluteUrl = imgSrc.startsWith('http') ? imgSrc :
+                        (() => { try { return new URL(imgSrc, url).toString(); } catch { return null; } })();
+                    if (absoluteUrl) {
+                        allMarkdownImages.push({ url: absoluteUrl, score: 110 }); // Higher score (lazy = important)
+                        htmlImageCount++;
+                        console.log(`    ✅ [LAZY SRC] #${htmlImageCount}: ${absoluteUrl.substring(0, 70)}...`);
+                    }
+                }
+            }
+
+            // Pattern 3: Responsive images <source srcset="...">, <img srcset="...">
+            const srcsetRegex = /(?:source|img)[^>]+srcset=["']([^"']+)["'][^>]*>/gi;
+            while ((match = srcsetRegex.exec(html)) !== null && htmlImageCount < 20) {
+                // srcset format: "image.jpg 1x, image@2x.jpg 2x" - take the first URL
+                const srcsetValue = match[1];
+                const firstUrl = srcsetValue.split(',')[0].trim().split(' ')[0];
+                if (firstUrl && !firstUrl.startsWith('data:')) {
+                    const absoluteUrl = firstUrl.startsWith('http') ? firstUrl :
+                        (() => { try { return new URL(firstUrl, url).toString(); } catch { return null; } })();
+                    if (absoluteUrl) {
+                        allMarkdownImages.push({ url: absoluteUrl, score: 120 }); // Srcset = high quality
+                        htmlImageCount++;
+                        console.log(`    ✅ [SRCSET] #${htmlImageCount}: ${absoluteUrl.substring(0, 70)}...`);
+                    }
+                }
+            }
+
+            // Pattern 4: Background images in inline styles
+            const bgImageRegex = /background-image:\s*url\(["']?([^"')]+)["']?\)/gi;
+            while ((match = bgImageRegex.exec(html)) !== null && htmlImageCount < 20) {
+                const bgUrl = match[1];
+                if (bgUrl && !bgUrl.startsWith('data:')) {
+                    const absoluteUrl = bgUrl.startsWith('http') ? bgUrl :
+                        (() => { try { return new URL(bgUrl, url).toString(); } catch { return null; } })();
+                    if (absoluteUrl) {
+                        allMarkdownImages.push({ url: absoluteUrl, score: 90 }); // BG images often heroes
+                        htmlImageCount++;
+                        console.log(`    ✅ [BG IMAGE] #${htmlImageCount}: ${absoluteUrl.substring(0, 70)}...`);
+                    }
+                }
+            }
+
+            console.log(`  📊 Enhanced HTML scraper found ${htmlImageCount} additional images`);
         }
 
-        // Filter out images that are likely the logo
+        // Filter out images with MINIMAL filtering (only skip obvious junk)
+        const rejectionReasons: Record<string, number> = {};
+
         for (const img of allMarkdownImages) {
             const url = img.url.toLowerCase();
 
-            // Skip if it's the logo we already extracted
+            // Skip if it's the EXACT logo we already extracted (by URL, not pattern)
             if (finalLogo && img.url === finalLogo) {
-                console.log(`  ⚠️ Skipping: This is the logo`);
+                rejectionReasons['duplicate-logo'] = (rejectionReasons['duplicate-logo'] || 0) + 1;
+                console.log(`  ⚠️ Skipping: This is the exact logo URL`);
                 continue;
             }
 
-            // Skip if it looks like a logo file
-            if (url.includes('logo') || url.includes('brand') || url.includes('favicon')) {
-                console.log(`  ⚠️ Skipping: Looks like a logo (${img.url.substring(0, 60)}...)`);
+            // ✅ RELAXED FILTERING: Only skip OBVIOUS junk
+            // Removed 'logo', 'brand' keywords - too aggressive!
+
+            // Skip tracking pixels and 1x1 images
+            if (url.includes('1x1') || url.includes('tracking') || url.includes('pixel.gif') || url.includes('spacer.gif')) {
+                rejectionReasons['tracking-pixel'] = (rejectionReasons['tracking-pixel'] || 0) + 1;
+                console.log(`  ⚠️ Skipping: Tracking pixel`);
                 continue;
             }
 
-            // Skip tiny images (icons, bullets, etc.)
-            if (url.includes('icon-') || url.includes('bullet') || url.includes('-icon.')) {
-                console.log(`  ⚠️ Skipping: Looks like an icon`);
+            // Skip ONLY if filename is literally 'favicon' or 'apple-touch-icon'
+            if (url.includes('favicon.') || url.includes('apple-touch-icon')) {
+                rejectionReasons['favicon'] = (rejectionReasons['favicon'] || 0) + 1;
+                console.log(`  ⚠️ Skipping: Favicon`);
                 continue;
             }
 
-            // This is likely a real product/gallery image!
+            // ✅ ACCEPT EVERYTHING ELSE! Let downstream consumers (selectTopImages) do smart ranking
             brandImages.push(img.url);
-            console.log(`  ✅ PRODUCT IMAGE #${brandImages.length}: ${img.url.substring(0, 80)}...`);
+            console.log(`  ✅ BRAND IMAGE #${brandImages.length}: ${img.url.substring(0, 80)}...`);
 
-            // Limit to 10 images to prevent overwhelming the system
-            if (brandImages.length >= 10) {
-                console.log('  📊 Reached 10 images limit, stopping scan');
+            // Limit to 15 images (increased from 10)
+            if (brandImages.length >= 15) {
+                console.log('  📊 Reached 15 images limit, stopping scan');
                 break;
             }
         }
 
-        console.log(`🎯 Gallery Scanner Results: ${brandImages.length} product images found`);
+        // 📊 DIAGNOSTIC REPORT
+        console.log('📊 Image Filtering Report:');
+        console.log(`  - Total scanned: ${allMarkdownImages.length}`);
+        console.log(`  - Accepted: ${brandImages.length}`);
+        console.log(`  - Rejected: ${Object.values(rejectionReasons).reduce((a, b) => a + b, 0)}`);
+        if (Object.keys(rejectionReasons).length > 0) {
+            console.log('  - Rejection breakdown:', rejectionReasons);
+        }
+
+        // 🎯 Deduplicate images (remove near-duplicates with same basename)
+        const uniqueImages = new Set<string>();
+        const deduplicatedImages: string[] = [];
+
+        for (const imgUrl of brandImages) {
+            // Extract basename without query params (e.g., "photo.jpg" from "/path/photo.jpg?w=1200")
+            const basename = imgUrl.split('/').pop()?.split('?')[0] || imgUrl;
+
+            if (!uniqueImages.has(basename)) {
+                uniqueImages.add(basename);
+                deduplicatedImages.push(imgUrl);
+            }
+        }
+
+        console.log(`🎯 Deduplication: ${brandImages.length} → ${deduplicatedImages.length} unique images`);
+        const finalBrandImages = deduplicatedImages;
+
+        console.log(`🎯 Gallery Scanner Results: ${finalBrandImages.length} product images found`);
 
         // If we found NO product images, try the heroImage/ogImage as fallback
         // (only if it's different from the logo)
-        if (brandImages.length === 0) {
+        if (finalBrandImages.length === 0) {
             console.log('⚠️ No gallery images found, checking if hero/og images are viable...');
 
             if (heroImage && heroImage !== finalLogo) {
-                brandImages.push(heroImage);
+                finalBrandImages.push(heroImage);
                 console.log(`  ✅ Using hero_image as product photo: ${heroImage}`);
             } else if (ogImage && ogImage !== finalLogo) {
-                brandImages.push(ogImage);
+                finalBrandImages.push(ogImage);
                 console.log(`  ✅ Using og_image as product photo: ${ogImage}`);
             } else {
                 console.log('  ⚠️ hero_image and og_image are the same as logo - NO PRODUCT PHOTOS AVAILABLE');
             }
         }
 
-        // 🀄 STEP 3.7: GENERATE VISUAL SOCIAL POSTS (v5.0)
-        // Now that we have brandImages array, generate Instagram posts with Gemini enhancements
-        if (socialExamples.length > 0 && brandImages.length > 0) {
+        // 🀄 STEP 3.7: GENERATE VISUAL SOCIAL POSTS (v5.1)
+        // Generate Instagram posts - works with OR without brand images!
+        // Path A: Enhance real photos | Path B: Generate from scratch
+        if (socialExamples.length > 0) {
             const geminiKey = Deno.env.get('GEMINI_API_KEY') ||
                 Deno.env.get('GOOGLE_API_KEY') ||
                 Deno.env.get('GOOGLE_AI_API_KEY');
 
             if (geminiKey) {
                 console.log('🎨 ============ VISUAL SOCIAL GENERATION ============');
-                console.log(`🖼️ Found ${brandImages.length} brand images and ${socialExamples.length} text concepts`);
+                console.log(`🖼️ Found ${finalBrandImages.length} brand images and ${socialExamples.length} text concepts`);
 
                 // Select top 3 images for social posts
                 const selectedImages = selectTopImages(
-                    brandImages,
+                    finalBrandImages,
                     aiAnalysis.business_type || 'general',
                     3
                 );
@@ -1081,11 +1273,19 @@ Respond with ONLY valid JSON:
                 if (selectedImages.length > 0) {
                     console.log(`✅ Selected ${selectedImages.length} images for enhancement`);
 
-                    // Enhance each image with design overlays
+                    // 🎯 CRITICAL FIX: Always generate 3 posts for carousel
+                    // Strategy: Use first 3 concepts, repeat images if needed
+                    const targetPostCount = 3;
+                    const conceptsToUse = socialExamples.slice(0, targetPostCount);
+
+                    console.log(`🎯 Generating ${conceptsToUse.length} visual posts (target: ${targetPostCount})`);
+
+                    // Enhance each concept with available images (cycle through images if we have fewer than 3)
                     try {
                         visualSocialPosts = await Promise.all(
-                            socialExamples.slice(0, selectedImages.length).map(async (concept: any, idx: number) => {
-                                const imageUrl = selectedImages[idx];
+                            conceptsToUse.map(async (concept: any, idx: number) => {
+                                // Cycle through available images (e.g., if 2 images, use [0,1,0] for 3 posts)
+                                const imageUrl = selectedImages[idx % selectedImages.length];
 
                                 const enhanced = await enhanceImageWithDesign(
                                     imageUrl,
@@ -1119,14 +1319,83 @@ Respond with ONLY valid JSON:
                         visualSocialPosts = null;
                     }
                 } else {
-                    console.log('⚠️ No suitable images selected for enhancement');
+                    // PATH B: Generate from scratch (text-to-image fallback)
+                    console.log('🎨 PATH B: No real photos available - generating images from scratch with Gemini');
+                    console.log(`   Creating ${Math.min(3, socialExamples.length)} visual posts using text-to-image`);
+
+                    try {
+                        // Generate images from text descriptions
+                        visualSocialPosts = await Promise.all(
+                            socialExamples.slice(0, 3).map(async (concept: any) => {
+                                // Build text-to-image prompt
+                                const textToImagePrompt = `Create a professional Instagram post image (1080x1080) for a ${aiAnalysis.business_type || 'business'}.
+
+BRAND: ${branding.companyName || 'Business'}
+CONCEPT: ${concept.visual_description}
+CAPTION: ${concept.caption}
+CTA: ${concept.cta}
+COLOR SCHEME: ${branding.colors?.primary || '#FF6B35'}
+
+INCLUDE:
+- Brand name "${branding.companyName || 'Business'}" (elegant typography, top center)
+- Visual representation of: ${concept.visual_description}
+- Caption text: "${concept.caption}" (ensure readability)
+- CTA button: "${concept.cta}" (color: ${branding.colors?.primary || '#FF6B35'})
+
+STYLE: Modern, professional, Instagram-ready. Match the ${aiAnalysis.business_type || 'business'} industry aesthetic.`;
+
+                                console.log(`   🎨 Generating post ${socialExamples.indexOf(concept) + 1}/3...`);
+
+                                // Call Gemini for text-to-image
+                                const geminiResponse = await fetch(
+                                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-image-preview:generateContent?key=${geminiKey}`,
+                                    {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({
+                                            contents: [{
+                                                role: 'user',
+                                                parts: [{ text: textToImagePrompt }]
+                                            }],
+                                            generationConfig: {
+                                                responseModalities: ["IMAGE"]
+                                            }
+                                        })
+                                    }
+                                );
+
+                                if (!geminiResponse.ok) {
+                                    throw new Error(`Gemini text-to-image failed: ${geminiResponse.status}`);
+                                }
+
+                                const result = await geminiResponse.json();
+                                const inlineData = result.candidates?.[0]?.content?.parts?.[0]?.inlineData;
+
+                                if (!inlineData?.data) {
+                                    throw new Error('No image data in Gemini response');
+                                }
+
+                                const generatedDataUri = `data:${inlineData.mimeType || 'image/png'};base64,${inlineData.data}`;
+
+                                return {
+                                    ...concept,
+                                    original_image_url: '', // No original - generated from scratch
+                                    enhanced_image_url: generatedDataUri,
+                                    enhancement_success: true
+                                };
+                            })
+                        );
+
+                        console.log(`✅ PATH B SUCCESS: Generated ${visualSocialPosts.length} posts from scratch`);
+                    } catch (error) {
+                        console.error('❌ PATH B FAILED:', error);
+                        visualSocialPosts = null;
+                    }
                 }
             } else {
                 console.log('⚠️ GEMINI_API_KEY not found - skipping visual enhancement');
             }
-        } else {
-            console.log('⚠️ Skipping visual social posts (need both text concepts and images)');
-        }
+        } // End visual social generation
 
         const brandDNA: BrandDNA = {
             // Core Identity
@@ -1169,8 +1438,14 @@ Respond with ONLY valid JSON:
             writing_style: brandVoiceAnalysis.writing_style,
             social_media_examples: socialExamples,
 
-            // \ud83c\udc04 VISUAL SOCIAL POSTS (v5.0) - Instagram-ready with enhanced images
+            // 🀄 VISUAL SOCIAL POSTS (v5.0) - Instagram-ready with enhanced images
             visual_social_posts: visualSocialPosts,
+
+            // 🧠 DEEP SOUL EXTRACTION (v6.0) - "20-Year Employee" Intelligence
+            business_intel: deepSoulIntel ? {
+                ...deepSoulIntel,
+                source: 'gpt-5.2_deep_soul_extraction'
+            } : undefined,
 
             // Metadata
             source: 'firecrawl_v2_branding',

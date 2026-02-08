@@ -84,7 +84,7 @@ export async function POST(request: Request) {
                         },
                         { role: "user", content: `URL: ${targetUrl}\nContent: ${markdown.substring(0, 4000)}` }
                     ],
-                    model: "gpt-3.5-turbo",
+                    model: "gpt-4o-mini", // Latest cost-effective model (upgraded from gpt-3.5-turbo)
                     response_format: { type: "json_object" }
                 });
 

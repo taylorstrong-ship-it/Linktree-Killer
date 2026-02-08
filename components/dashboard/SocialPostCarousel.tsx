@@ -49,23 +49,23 @@ export function SocialPostCarousel({ posts }: Props) {
                     </div>
                 )}
 
-                {/* Navigation Arrows (show on hover) */}
+                {/* Navigation Arrows - Always Visible */}
                 {posts.length > 1 && (
                     <>
                         <button
                             onClick={prev}
-                            className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 p-2 rounded-full transition opacity-0 group-hover:opacity-100"
+                            className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/70 backdrop-blur-sm hover:bg-red-600/90 border border-white/10 p-3 rounded-full transition-all duration-200 hover:scale-110 shadow-lg"
                             aria-label="Previous post"
                         >
-                            <ChevronLeft className="w-6 h-6 text-white" />
+                            <ChevronLeft className="w-5 h-5 text-white" />
                         </button>
 
                         <button
                             onClick={next}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 p-2 rounded-full transition opacity-0 group-hover:opacity-100"
+                            className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/70 backdrop-blur-sm hover:bg-red-600/90 border border-white/10 p-3 rounded-full transition-all duration-200 hover:scale-110 shadow-lg"
                             aria-label="Next post"
                         >
-                            <ChevronRight className="w-6 h-6 text-white" />
+                            <ChevronRight className="w-5 h-5 text-white" />
                         </button>
                     </>
                 )}

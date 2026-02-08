@@ -17,6 +17,18 @@ const nextConfig = {
             },
         ];
     },
+    // 🛡️ CRITICAL: Exclude node modules from client bundle (fixes Vapi hang)
+    webpack: (config, { isServer }) => {
+        if (!isServer) {
+            config.resolve.fallback = {
+                ...config.resolve.fallback,
+                fs: false,
+                net: false,
+                tls: false,
+            };
+        }
+        return config;
+    },
 };
 
 export default nextConfig;

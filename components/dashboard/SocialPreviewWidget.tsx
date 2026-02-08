@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Heart, MessageCircle, Send, Bookmark, MoreHorizontal, ArrowRight, Utensils, ShoppingBag, Calendar } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -9,6 +9,13 @@ import { supabase } from '@/lib/supabase/client';
 // ─────────────────────────────────────────────────────────────────────────────
 // TYPE DEFINITIONS
 // ─────────────────────────────────────────────────────────────────────────────
+
+interface VisualSocialPost {
+    image_url?: string;
+    enhanced_image_url?: string;
+    caption: string;
+    hashtags: string[];
+}
 
 interface BrandData {
     businessName: string;
@@ -20,11 +27,13 @@ interface BrandData {
     industry?: string;
     bio?: string; // Brand tagline/description for smart headlines
     suggested_ctas?: any[]; // 🔗 Smart CTA suggestions from brand DNA
+    visual_social_posts?: VisualSocialPost[]; // 🎯 Pre-generated posts from extraction
 }
 
 interface SocialPreviewWidgetProps {
     brandData: BrandData;
     handleEditPage?: () => void;
+    initialPosts?: VisualSocialPost[]; // 🎯 Pre-generated posts from Brand DNA extraction
 }
 
 type GenerationState = 'idle' | 'loading' | 'success' | 'error';
@@ -33,9 +42,18 @@ type GenerationState = 'idle' | 'loading' | 'success' | 'error';
 // COMPONENT
 // ─────────────────────────────────────────────────────────────────────────────
 
+// Carousel post variation type
+interface PostVariation {
+    image: string;
+    caption: string;
+    hashtags: string[];
+    theme: string;
+}
+
 export default function SocialPreviewWidget({
     brandData,
     handleEditPage,
+    initialPosts,
 }: SocialPreviewWidgetProps) {
     const [state, setState] = useState<GenerationState>('success'); // ✨ IRONCLAD: Always start successful
     const [generatedImage, setGeneratedImage] = useState<string | null>(null);
@@ -46,18 +64,56 @@ export default function SocialPreviewWidget({
     const [campaign, setCampaign] = useState<string>('Get Started Today');
     const router = useRouter();
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // AUTO-GENERATE ON MOUNT (WITH RACE CONDITION FIX)
-    // ─────────────────────────────────────────────────────────────────────────
+    // 🛡️ LOOP BREAKER: Prevent infinite re-renders from initialPosts
+    const hasLoadedRef = useRef(false);
 
+    // 🎠 CAROUSEL STATE
+    const [activeSlide, setActiveSlide] = useState(0);
+    const [postVariations, setPostVariations] = useState<PostVariation[]>([]);
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // EFFECT 1: Check for pre-generated posts ONCE on mount
+    // ─────────────────────────────────────────────────────────────────────────
     useEffect(() => {
+        // 🎯 PRIORITY 1: Check for pre-generated visual posts from Brand DNA extraction
+        // 🛡️ CRITICAL: Only runs ONCE on mount to prevent infinite loop
+        if (initialPosts && initialPosts.length > 0 && !hasLoadedRef.current) {
+            const firstPost = initialPosts[0];
+            const preGeneratedImage = firstPost.enhanced_image_url || firstPost.image_url;
+
+            if (preGeneratedImage) {
+                console.log('🎨 [Smart Data Flow] Using pre-generated visual post from extraction');
+                console.log('   Caption:', firstPost.caption?.substring(0, 50) + '...');
+                console.log('   Hashtags:', firstPost.hashtags?.join(' '));
+
+                setGeneratedImage(preGeneratedImage);
+                setState('success');
+                setEnhancementSucceeded(true);
+                hasLoadedRef.current = true; // 🛡️ STOP THE LOOP
+
+                // Hide success indicator after 2 seconds
+                setTimeout(() => setEnhancementSucceeded(false), 2000);
+            }
+        }
+    }, []); // ✅ EMPTY DEPS = Runs ONCE on mount only
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // EFFECT 2: Generate posts if no pre-generated content available
+    // ─────────────────────────────────────────────────────────────────────────
+    useEffect(() => {
+        // 🛡️ Skip if we already loaded pre-generated content
+        if (hasLoadedRef.current) {
+            console.log('⏭️ [Smart Data Flow] Skipping generation - using pre-generated content');
+            return;
+        }
+
         // 🛡️ GUARD CLAUSE: Wait for real brandData to arrive from database
         if (!brandData || Object.keys(brandData).length === 0) {
             console.log('⏸️ [Optimistic UI] Waiting for brandData to arrive...');
             return;
         }
 
-        console.log('✅ [Ironclad UI] BrandData received, showing heroImage immediately...');
+        console.log('✅ [Ironclad UI] No pre-generated posts, proceeding with smart generation...');
 
         // 🧠 INTELLIGENT IMAGE SELECTION: Pick the BEST product photo
         // - Filter out logos
@@ -405,7 +461,7 @@ REQUIREMENTS:
         };
 
         generatePreview();
-    }, [brandData]);
+    }, [brandData]); // ✅ REMOVED initialPosts dependency - it's checked once on mount, no need to watch for changes
 
     return (
         <div className="relative w-full max-w-md mx-auto">
@@ -625,19 +681,45 @@ function InstagramPostUI({
                             exit={{ opacity: 0, y: 10 }}
                             transition={{ delay: 0.6 }}
                             onClick={() => {
-                                // 🎯 CLEAN HANDOFF: Use localStorage instead of URL params to avoid URI_TOO_LONG
-                                const campaignData = {
-                                    image: generatedImage,
-                                    brand: brandData,
-                                    prompt: campaign,
-                                    vibe: vibe,
-                                    timestamp: Date.now(),
+                                // 🎯 COMPLETE BRAND DNA HANDOFF
+                                // Fix for localStorage key mismatch: generator reads from 'taylored_brand_data'
+                                const completeBrandDNA = {
+                                    // Core Identity
+                                    company_name: brandData.businessName,
+                                    business_name: brandData.businessName,
+                                    logo_url: brandData.logo_url,
+
+                                    // Visual Assets - CRITICAL for using real product photos
+                                    brand_images: brandData.brand_images || [],
+                                    hero_image: brandData.hero_image,
+
+                                    // Branding
+                                    primary_color: brandData.primaryColor,
+                                    industry: brandData.industry,
+                                    bio: brandData.bio,
+                                    business_type: brandData.industry,
+
+                                    // Content Strategy
+                                    suggested_ctas: brandData.suggested_ctas || [],
+
+                                    // Preview from dashboard widget (for seamless handoff)
+                                    preview_image: generatedImage,
+                                    preview_prompt: campaign,
+                                    preview_vibe: vibe,
                                 };
 
-                                localStorage.setItem('cva_pending_campaign', JSON.stringify(campaignData));
-                                console.log('✅ [Clean Handoff] Campaign data saved to localStorage');
+                                // 🔑 Use consistent localStorage key that generator expects
+                                localStorage.setItem('taylored_brand_data', JSON.stringify(completeBrandDNA));
 
-                                // Navigate cleanly without query params
+                                console.log('✅ [Brand DNA Handoff] Saved complete DNA:', {
+                                    company: completeBrandDNA.company_name,
+                                    images_count: completeBrandDNA.brand_images?.length,
+                                    has_logo: !!completeBrandDNA.logo_url,
+                                    has_preview: !!completeBrandDNA.preview_image,
+                                    industry: completeBrandDNA.industry,
+                                });
+
+                                // Navigate cleanly to generator
                                 router.push('/generator');
                             }}
                             className="w-full py-2 rounded-lg mt-2
